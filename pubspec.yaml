@@ -1,0 +1,38 @@
+name: swarved
+description: SwarVed — a personal music player.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.2.1
+
+  # Playback
+  just_audio: ^0.9.36
+  just_audio_background: ^0.0.1-beta.11   # Android/iOS/macOS only — see main.dart
+  just_audio_media_kit: ^2.1.0             # Windows/Linux backend for just_audio
+  media_kit_libs_windows_audio: any
+  audio_session: ^0.1.18
+
+  # Local library access + metadata
+  file_picker: ^6.1.1
+  path: ^1.9.0
+  path_provider: ^2.1.2
+  flutter_taglib: ^1.6.0
+
+  # State + persistence
+  provider: ^6.1.2
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
