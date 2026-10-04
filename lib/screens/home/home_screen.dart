@@ -7,7 +7,7 @@ import '../../theme/typography.dart';
 import '../../widgets/note_card.dart';
 import '../../widgets/page_body.dart';
 import '../../widgets/swar_chips.dart';
-import '../library_screen.dart';
+import '../folder/folder_screen.dart';
 import 'folder_tile_grid.dart';
 
 enum _HomeFilter { all, folders, notes }
@@ -70,11 +70,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             const SizedBox(height: 12),
             FolderTileGrid(
               byFolder: library.byFolder,
-              onOpenFolder: (folder, tracks) {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => LibraryScreen(title: folder, tracks: tracks),
-                ));
-              },
+              onOpenFolder: (folder, tracks) => FolderScreen.open(
+                context,
+                title: folder,
+                tracks: tracks,
+              ),
             ),
           ],
           if (showNote) ...[
