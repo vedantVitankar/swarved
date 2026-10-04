@@ -11,13 +11,19 @@ import 'stats_service.dart';
 bool get _supportsBackgroundPlayback =>
     Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
 
+/// A manual skip/switch only counts toward listening stats once the user
+/// has actually heard at least this much of the track. A natural full
+/// completion always counts in full, regardless of this threshold (see
+/// _logCurrentListen below) — a 10-second jingle that plays to the end
+/// should still count, even though it's under 30 seconds.
+const _kMinPartialListenThreshold = Duration(seconds: 30);
+
 class PlayerService extends ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
   final StatsService statsService;
 
   List<Track> _queue = [];
   int _currentIndex = -1;
-  DateTime? _currentTrackStartedAt;
 
   PlayerService(this.statsService) {
     _player.playerStateStream.listen((_) => notifyListeners());
@@ -25,8 +31,10 @@ class PlayerService extends ChangeNotifier {
 
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
-        _logCurrentListen();
-        next();
+        // Log the just-finished track as a full, natural completion —
+        // then advance WITHOUT letting next() log it a second time.
+        _logCurrentListen(completedNaturally: true);
+        _advanceAfterCompletion();
       }
     });
   }
@@ -44,7 +52,7 @@ class PlayerService extends ChangeNotifier {
   int get currentIndex => _currentIndex;
 
   Future<void> playQueue(List<Track> tracks, {int startIndex = 0}) async {
-    _logCurrentListen();
+    _logCurrentListen(completedNaturally: false);
     _queue = tracks;
     _currentIndex = startIndex;
     await _loadCurrent();
@@ -56,8 +64,6 @@ class PlayerService extends ChangeNotifier {
     if (track == null) return;
 
     if (_supportsBackgroundPlayback) {
-      // just_audio_background requires a MediaItem tag on every source —
-      // it's how the lock-screen/notification knows what's playing.
       await _player.setAudioSource(
         AudioSource.uri(
           Uri.file(track.filePath),
@@ -71,11 +77,8 @@ class PlayerService extends ChangeNotifier {
         ),
       );
     } else {
-      // Windows/Linux: no background service involved, plain file load.
       await _player.setFilePath(track.filePath);
     }
-
-    _currentTrackStartedAt = DateTime.now();
   }
 
   Future<void> togglePlayPause() async {
@@ -86,38 +89,81 @@ class PlayerService extends ChangeNotifier {
     }
   }
 
+  /// User-initiated skip forward. Logs the OLD track (by actual position
+  /// reached, subject to the 30s threshold) before switching.
   Future<void> next() async {
     if (_currentIndex < _queue.length - 1) {
-      _logCurrentListen();
+      _logCurrentListen(completedNaturally: false);
       _currentIndex++;
       await _loadCurrent();
       await _player.play();
     }
   }
 
+  /// User-initiated skip backward. Same logging rules as next().
   Future<void> previous() async {
     if (_currentIndex > 0) {
-      _logCurrentListen();
+      _logCurrentListen(completedNaturally: false);
       _currentIndex--;
       await _loadCurrent();
       await _player.play();
     }
   }
 
+  /// Internal-only advance used after a track finishes on its own.
+  /// Deliberately does NOT call _logCurrentListen() — the completion
+  /// handler above already logged it, with the correct "full length"
+  /// semantics. Logging here too would double-count every completed track.
+  Future<void> _advanceAfterCompletion() async {
+    if (_currentIndex < _queue.length - 1) {
+      _currentIndex++;
+      await _loadCurrent();
+      await _player.play();
+    }
+    // If this was the last track in the queue, playback simply stops —
+    // no wraparound, nothing further to log.
+  }
+
   Future<void> seek(Duration position) => _player.seek(position);
 
-  void _logCurrentListen() {
+  /// The single place listening time gets recorded. Two distinct modes:
+  ///
+  /// - completedNaturally: true  → the track played to the end on its
+  ///   own. Always logs the FULL track length, with no threshold — even
+  ///   a track shorter than 30 seconds counts if it played in full.
+  ///
+  /// - completedNaturally: false → the user skipped/switched away mid
+  ///   track. Logs exactly how far the playhead got (_player.position,
+  ///   not wall-clock time — immune to pauses/buffering skewing the
+  ///   number), and only counts if that's 30 seconds or more.
+  void _logCurrentListen({required bool completedNaturally}) {
     final track = current;
-    final startedAt = _currentTrackStartedAt;
-    if (track == null || startedAt == null) return;
-    final listened = DateTime.now().difference(startedAt);
-    if (listened.inSeconds < 3) return; // ignore accidental skips
+    if (track == null) return;
+
+    final Duration listened;
+    if (completedNaturally) {
+      final playerDuration = _player.duration;
+      listened = (playerDuration != null && playerDuration > Duration.zero)
+          ? playerDuration
+          : track.duration;
+    } else {
+      final pos = _player.position;
+      final dur = _player.duration;
+      // Defensive clamp: position should never exceed duration, but
+      // guard against any rare floating-point/backend rounding blip.
+      listened = (dur != null && dur > Duration.zero && pos > dur) ? dur : pos;
+    }
+
+    if (listened <= Duration.zero) return;
+    if (!completedNaturally && listened < _kMinPartialListenThreshold) return;
+
     statsService.logListen(track, listened);
   }
 
   @override
   void dispose() {
-    _logCurrentListen();
+    // App closing mid-track is the same as a manual skip — same rules.
+    _logCurrentListen(completedNaturally: false);
     _player.dispose();
     super.dispose();
   }
