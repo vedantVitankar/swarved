@@ -87,4 +87,10 @@ class AppType {
     fontSize: 11,
     color: AppColors.textSecondary,
   );
+
+  static TextStyle label = GoogleFonts.inter(
+    fontWeight: FontWeight.w400,
+    fontSize: 12,
+    color: AppColors.textPrimary,
+  );
 }

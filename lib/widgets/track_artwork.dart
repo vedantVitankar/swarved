@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 
 /// The one place album-art rendering (with its empty-state icon) lives.
-/// Used by TrackTile, MiniPlayerBar, ContinueCard, and NowPlayingScreen.
+/// Used by TrackTile, MiniPlayerBar, and NowPlayingScreen.
 class TrackArtwork extends StatelessWidget {
   final List<int>? bytes;
   final double size;
@@ -27,7 +27,8 @@ class TrackArtwork extends StatelessWidget {
       ),
       child: bytes != null
           ? Image.memory(Uint8List.fromList(bytes!), fit: BoxFit.cover)
-          : Icon(Icons.album_outlined, color: AppColors.textFaint, size: iconSize),
+          : Icon(Icons.album_outlined,
+              color: AppColors.textFaint, size: iconSize),
     );
   }
 }

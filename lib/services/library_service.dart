@@ -30,7 +30,7 @@ class LibraryService extends ChangeNotifier {
   LibraryProblem? problem;
 
   /// Tracks grouped by their immediate parent folder name, for the
-  /// folder ledger module on the home screen.
+  /// folder tiles on the home screen.
   Map<String, List<Track>> get byFolder {
     final map = <String, List<Track>>{};
     for (final t in tracks) {

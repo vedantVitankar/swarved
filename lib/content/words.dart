@@ -40,5 +40,5 @@ class Words {
 
   static const searchSoon = 'Soon you can look for any song from here.';
   static const librarySoon = 'All your folders will be gathered here.';
-  static const usSoon = 'This corner is just for the two of us.';
+  static const usSubline = 'This corner is just for the two of us.';
 }

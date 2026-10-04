@@ -23,4 +23,10 @@ class Labels {
   static String playingFrom(String folder) => 'Playing from $folder';
 
   static String songCount(int count) => count == 1 ? '1 song' : '$count songs';
+
+  // Logbook.
+  static const logbook = 'Logbook';
+  static const noPlaysYet = 'No plays logged yet';
+  static String minutesToday(int minutes) => '$minutes min today';
+  static String mostPlayed(String artist) => 'Most played · $artist';
 }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'content/labels.dart';
 import 'content/words.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/us/us_screen.dart';
 import 'services/library_service.dart';
 import 'theme/colors.dart';
 import 'widgets/coming_soon.dart';
@@ -41,7 +42,7 @@ class _RootShellState extends State<RootShell> {
           HomeScreen(),
           ComingSoon(title: Labels.navSearch, message: Words.searchSoon),
           ComingSoon(title: Labels.navLibrary, message: Words.librarySoon),
-          ComingSoon(title: Labels.navUs, message: Words.usSoon),
+          UsScreen(),
         ],
       ),
       bottomNavigationBar: Column(

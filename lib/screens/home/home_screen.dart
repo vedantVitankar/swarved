@@ -1,28 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/track.dart';
+import '../../content/labels.dart';
+import '../../content/words.dart';
 import '../../services/library_service.dart';
-import '../../services/player_service.dart';
-import '../../services/stats_service.dart';
 import '../../theme/typography.dart';
+import '../../widgets/note_card.dart';
+import '../../widgets/page_body.dart';
+import '../../widgets/swar_chips.dart';
 import '../library_screen.dart';
-import 'continue_card.dart';
 import 'empty_library_state.dart';
-import 'folder_ledger.dart';
-import 'logbook_card.dart';
+import 'folder_tile_grid.dart';
 
-class HomeScreen extends StatelessWidget {
+enum _HomeFilter { all, folders, notes }
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  _HomeFilter _filter = _HomeFilter.all;
+
+  static const _chipLabels = [
+    Labels.chipAll,
+    Labels.chipFolders,
+    Labels.chipNotes,
+  ];
 
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryService>();
-    final stats = context.watch<StatsService>();
-    // player.playQueue is a method call in a button callback — this
-    // screen never displays player state, so read() instead of watch()
-    // stops it rebuilding (and re-decoding the ContinueCard artwork) on
-    // every position tick during playback.
-    final player = context.read<PlayerService>();
 
     if (library.rootPath == null) {
       return EmptyLibraryState(
@@ -32,59 +41,41 @@ class HomeScreen extends StatelessWidget {
       );
     }
 
-    final recent = stats.recentUnique;
-    final continueTrack = recent.isNotEmpty
-        ? library.tracks.cast<Track?>().firstWhere(
-              (t) => t?.filePath == recent.first.trackPath,
-              orElse: () => null,
-            )
-        : null;
+    final showFolders = _filter != _HomeFilter.notes;
+    final showNote = _filter != _HomeFilter.folders;
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('SWARVED', style: AppType.display),
-                Text('${library.tracks.length} tracks', style: AppType.readout),
-              ],
-            ),
-            const SizedBox(height: 28),
-            if (continueTrack != null) ...[
-              ContinueCard(
-                track: continueTrack,
-                onPlay: () => player.playQueue(
-                  library.tracks,
-                  startIndex: library.tracks.indexOf(continueTrack),
-                ),
-              ),
-              const SizedBox(height: 28),
-            ],
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: FolderLedger(
-                    byFolder: library.byFolder,
-                    onOpenFolder: (folder, tracks) {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) =>
-                            LibraryScreen(title: folder, tracks: tracks),
-                      ));
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(flex: 6, child: LogbookCard(stats: stats)),
-              ],
+    return PageBody(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(Words.greeting(DateTime.now()), style: AppType.display),
+          const SizedBox(height: 4),
+          Text(Words.homeSubline, style: AppType.goldLabel),
+          const SizedBox(height: 12),
+          SwarChips(
+            labels: _chipLabels,
+            selected: _filter.index,
+            onSelected: (i) => setState(() => _filter = _HomeFilter.values[i]),
+          ),
+          if (showFolders) ...[
+            const SizedBox(height: 12),
+            FolderTileGrid(
+              byFolder: library.byFolder,
+              onOpenFolder: (folder, tracks) {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => LibraryScreen(title: folder, tracks: tracks),
+                ));
+              },
             ),
           ],
-        ),
+          if (showNote) ...[
+            const SizedBox(height: 14),
+            const NoteCard(
+              label: Words.noteForYouLabel,
+              note: Words.noteForYou,
+            ),
+          ],
+        ],
       ),
     );
   }
