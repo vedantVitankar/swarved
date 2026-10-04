@@ -25,7 +25,11 @@ class HomeScreen extends StatelessWidget {
     final player = context.read<PlayerService>();
 
     if (library.rootPath == null) {
-      return EmptyLibraryState(onChoose: library.pickAndScanFolder);
+      return EmptyLibraryState(
+        problem: library.problem,
+        onChoose: library.pickAndScanFolder,
+        onOpenSettings: library.openPermissionSettings,
+      );
     }
 
     final recent = stats.recentUnique;
@@ -50,7 +54,6 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 28),
-
             if (continueTrack != null) ...[
               ContinueCard(
                 track: continueTrack,
@@ -61,7 +64,6 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 28),
             ],
-
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

@@ -5,6 +5,9 @@ import 'package:flutter_taglib/flutter_taglib.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/track.dart';
+import '../models/library_problem.dart';
+import '../models/track.dart';
+import 'storage_permission_service.dart';
 
 const _kLibraryPathKey = 'library_root_path';
 const _kAudioExtensions = {'.mp3', '.m4a', '.flac', '.wav', '.ogg', '.aac'};
@@ -15,9 +18,17 @@ const _kAudioExtensions = {'.mp3', '.m4a', '.flac', '.wav', '.ogg', '.aac'};
 /// which avoids the CMake/symlink extraction bug that blocked audiotags
 /// on Windows.
 class LibraryService extends ChangeNotifier {
+  LibraryService({StoragePermissionService? permission})
+      : _permission = permission ?? StoragePermissionService();
+
+  final StoragePermissionService _permission;
+
   String? rootPath;
   List<Track> tracks = [];
   bool isScanning = false;
+
+  /// Why the last attempt to open a library failed; null when all is well.
+  LibraryProblem? problem;
 
   /// Tracks grouped by their immediate parent folder name, for the
   /// folder ledger module on the home screen.
@@ -38,15 +49,28 @@ class LibraryService extends ChangeNotifier {
   }
 
   Future<void> pickAndScanFolder() async {
+    if (!await _permission.ensureGranted()) {
+      problem = LibraryProblem.noPermission;
+      notifyListeners();
+      return;
+    }
+    problem = null;
+    notifyListeners();
+
     final selected = await FilePicker.getDirectoryPath();
     if (selected == null) return;
     await scanFolder(selected);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_kLibraryPathKey, selected);
+    if (problem == null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kLibraryPathKey, selected);
+    }
   }
+
+  Future<void> openPermissionSettings() => _permission.openSettings();
 
   Future<void> scanFolder(String path) async {
     isScanning = true;
+    problem = null;
     rootPath = path;
     notifyListeners();
 
@@ -66,6 +90,12 @@ class LibraryService extends ChangeNotifier {
     found.sort((a, b) => a.title.compareTo(b.title));
     tracks = found;
     isScanning = false;
+    if (found.isEmpty) {
+      problem = await dir.exists()
+          ? LibraryProblem.noAudioFound
+          : LibraryProblem.unreadableFolder;
+      rootPath = null;
+    }
     notifyListeners();
   }
 
