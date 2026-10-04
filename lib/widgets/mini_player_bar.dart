@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/track.dart';
-import '../screens/now_playing_screen.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
 import '../theme/typography.dart';
@@ -23,11 +22,7 @@ class MiniPlayerBar extends StatelessWidget {
         if (track == null) return const SizedBox.shrink();
         final player = context.read<PlayerService>();
 
-        return InkWell(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const NowPlayingScreen()),
-          ),
-          child: Container(
+        return Container(
             decoration: const BoxDecoration(
               color: AppColors.surface,
               border: Border(top: BorderSide(color: AppColors.hairline)),
@@ -77,7 +72,6 @@ class MiniPlayerBar extends StatelessWidget {
                 ),
               ],
             ),
-          ),
         );
       },
     );
