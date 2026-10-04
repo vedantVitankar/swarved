@@ -1,25 +1,41 @@
 import 'package:flutter/material.dart';
 
-/// Token palette for the "personal archive" aesthetic —
-/// warm analog accent on a near-black instrument-panel base.
+/// Token palette: deep maroon and wine, rose as the single accent, and
+/// sunlight gold kept for the things that are Swarnima's own.
 class AppColors {
   AppColors._();
 
-  static const Color base = Color(0xFF0A0A0B);
-  static const Color surface = Color(0xFF141416);
-  static const Color surfaceRaised = Color(0xFF1B1B1E);
-  static const Color hairline = Color(0xFF232326);
+  // Surfaces, darkest to lightest.
+  static const Color base = Color(0xFF1A0A10); // midnight maroon
+  static const Color surface = Color(0xFF2A0F18); // wine night
+  static const Color surfaceRaised = Color(0xFF3A1522); // velvet
+  static const Color hairline = Color(0xFF4A2230);
 
-  static const Color textPrimary = Color(0xFFEDEDED);
-  static const Color textSecondary = Color(0xFF8A8A8E);
-  static const Color textFaint = Color(0xFF4E4E52);
+  // Text.
+  static const Color textPrimary = Color(0xFFFBF0E6); // cream
+  static const Color textSecondary = Color(0xFFCDB0B2);
+  static const Color textFaint = Color(0xFF9A7B80);
 
-  /// Primary accent — warm brass/copper, like an analog dial light.
-  static const Color accent = Color(0xFFC97A3D);
-  static const Color accentDim = Color(0xFF7A4E28);
+  // Deep brand colors, for artwork and selected states.
+  static const Color maroon = Color(0xFF6B1B2E);
+  static const Color wine = Color(0xFF8C2A40);
+  static const Color rosewood =
+      Color(0xFFB8394F); // artwork gradients, name accents
+
+  /// Primary accent: dusty rose.
+  static const Color accent = Color(0xFFE8A3AE);
+  static const Color accentDim = wine;
+  static const Color blush = Color(0xFFF3CFD3);
+  static const Color onAccent =
+      Color(0xFF3A1020); // text on rose chips and buttons
+
+  /// Sunlight gold. Swarnima means sunlight, so gold is saved for notes,
+  /// dedications and the waveform.
+  static const Color gold = Color(0xFFE2B659);
+  static const Color goldLight = Color(0xFFF1D48F); // sun highlight in artwork
 
   /// Reserved strictly for waveform / visualizer elements.
-  static const Color meter = Color(0xFF3D8B8B);
+  static const Color meter = gold;
 
-  static const Color danger = Color(0xFFB1503F);
+  static const Color danger = Color(0xFFE06B5E);
 }

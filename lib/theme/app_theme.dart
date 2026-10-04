@@ -11,16 +11,22 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.base,
       canvasColor: AppColors.base,
       primaryColor: AppColors.accent,
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).apply(
+        bodyColor: AppColors.textPrimary,
+        displayColor: AppColors.textPrimary,
+      ),
       colorScheme: const ColorScheme.dark(
         primary: AppColors.accent,
+        onPrimary: AppColors.onAccent,
         secondary: AppColors.meter,
         surface: AppColors.surface,
+        onSurface: AppColors.textPrimary,
         error: AppColors.danger,
       ),
       dividerColor: AppColors.hairline,
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
+      hoverColor: AppColors.blush.withAlpha(20),
       sliderTheme: SliderThemeData(
         activeTrackColor: AppColors.accent,
         inactiveTrackColor: AppColors.hairline,
