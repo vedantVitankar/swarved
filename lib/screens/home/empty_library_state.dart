@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../content/labels.dart';
+import '../../content/words.dart';
 import '../../models/library_problem.dart';
 import '../../theme/colors.dart';
+import '../../theme/shape.dart';
 import '../../theme/typography.dart';
+import '../../widgets/sun_mark.dart';
 
 class EmptyLibraryState extends StatelessWidget {
   final VoidCallback onChoose;
@@ -15,64 +19,60 @@ class EmptyLibraryState extends StatelessWidget {
     this.problem,
   });
 
-  static String _messageFor(LibraryProblem problem) {
-    switch (problem) {
-      case LibraryProblem.noPermission:
-        return 'Let SwarVed see your songs. They never leave this phone.';
-      case LibraryProblem.unreadableFolder:
-        return "That folder wouldn't open. Let's try another one.";
-      case LibraryProblem.noAudioFound:
-        return 'No songs here yet. Try the folder where your music lives.';
-    }
+  static String _bodyFor(LibraryProblem? problem) {
+    return switch (problem) {
+      null => Words.emptyBody,
+      LibraryProblem.noPermission => Words.problemNoPermission,
+      LibraryProblem.unreadableFolder => Words.problemUnreadableFolder,
+      LibraryProblem.noAudioFound => Words.problemNoAudioFound,
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    final problem = this.problem;
     return SafeArea(
       child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
+        child: SingleChildScrollView(
+          // The extra bottom padding lifts the group a little above centre,
+          // like the preview. Scrolling keeps short desktop windows safe.
+          padding: const EdgeInsets.fromLTRB(32, 32, 32, 88),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.folder_open,
-                  size: 40, color: AppColors.textFaint),
-              const SizedBox(height: 16),
-              Text('No archive yet', style: AppType.display),
+              const SunMark(),
+              const SizedBox(height: 18),
+              Text(Words.emptyTitle,
+                  textAlign: TextAlign.center, style: AppType.display),
               const SizedBox(height: 8),
-              Text(
-                'Point this at a folder of local audio files to build your library.',
-                textAlign: TextAlign.center,
-                style: AppType.bodyMuted,
-              ),
-              if (problem != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  _messageFor(problem),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 240),
+                child: Text(
+                  _bodyFor(problem),
                   textAlign: TextAlign.center,
-                  style: AppType.bodyMuted.copyWith(color: AppColors.accent),
+                  style: AppType.bodyMuted,
                 ),
-              ],
-              const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 18),
               OutlinedButton(
                 onPressed: onChoose,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.accent),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppShape.button),
                   ),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
-                child: const Text('Choose folder',
-                    style: TextStyle(color: AppColors.accent)),
+                child: Text(
+                  Labels.chooseFolder,
+                  style: AppType.bodyMuted.copyWith(color: AppColors.accent),
+                ),
               ),
               if (problem == LibraryProblem.noPermission) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 TextButton(
                   onPressed: onOpenSettings,
-                  child: Text('Open settings', style: AppType.bodyMuted),
+                  child: Text(Labels.openSettings, style: AppType.bodyMuted),
                 ),
               ],
             ],

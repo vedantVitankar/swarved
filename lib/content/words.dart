@@ -23,7 +23,13 @@ class Words {
   // Empty state, before a music folder is chosen.
   static const emptyTitle = 'No archive yet';
   static const emptyBody =
+      'Point SwarVed at the folder where your music lives. It stays on this device.';
+  static const problemNoPermission =
       'Let SwarVed see your songs, $baby. They never leave this device.';
+  static const problemUnreadableFolder =
+      "That folder wouldn't open. Let's try another one.";
+  static const problemNoAudioFound =
+      'No songs here yet. Try the folder where your music lives.';
 
   // Placeholders until the real words arrive.
   static const homeSubline = 'Lorem ipsum dolor sit amet';
@@ -31,4 +37,8 @@ class Words {
   static const noteForYou = 'Lorem ipsum dolor sit amet, consectetur elit.';
   static const dedicationLabel = 'For you, $sweetheart';
   static const dedicationNote = 'Lorem ipsum dolor sit amet, consectetur.';
+
+  static const searchSoon = 'Soon you can look for any song from here.';
+  static const librarySoon = 'All your folders will be gathered here.';
+  static const usSoon = 'This corner is just for the two of us.';
 }
