@@ -8,12 +8,14 @@ class TrackArtwork extends StatelessWidget {
   final List<int>? bytes;
   final double size;
   final double iconSize;
+  final double radius;
 
   const TrackArtwork({
     super.key,
     required this.bytes,
     this.size = 44,
     this.iconSize = 20,
+    this.radius = 0,
   });
 
   @override
@@ -21,9 +23,11 @@ class TrackArtwork extends StatelessWidget {
     return Container(
       width: size,
       height: size,
+      clipBehavior: radius > 0 ? Clip.antiAlias : Clip.none, // new
       decoration: BoxDecoration(
         color: AppColors.surfaceRaised,
         border: Border.all(color: AppColors.hairline),
+        borderRadius: radius > 0 ? BorderRadius.circular(radius) : null, // new
       ),
       child: bytes != null
           ? Image.memory(Uint8List.fromList(bytes!), fit: BoxFit.cover)

@@ -5,6 +5,7 @@ import '../services/player_service.dart';
 import '../theme/colors.dart';
 import '../theme/typography.dart';
 import '../widgets/track_tile.dart';
+import '../widgets/mini_player_bar.dart';
 
 class LibraryScreen extends StatelessWidget {
   final String title;
@@ -28,6 +29,7 @@ class LibraryScreen extends StatelessWidget {
       // Only rebuilds the list when the active track's path actually
       // changes — not on every position tick. This is what stops the
       // folder view's artwork from disappearing during playback.
+      bottomNavigationBar: const MiniPlayerBar(padBottom: true),
       body: Selector<PlayerService, String?>(
         selector: (_, player) => player.current?.filePath,
         builder: (context, activeFilePath, _) {

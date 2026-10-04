@@ -1,15 +1,27 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/track.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
+import '../theme/shape.dart';
 import '../theme/typography.dart';
 import '../utils/duration_format.dart';
+import '../widgets/compact_icon_button.dart';
 import '../widgets/play_pause_button.dart';
 import '../widgets/track_artwork.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
+
+  static const double _sidePadding = 28;
+  static const double _maxContentWidth = 420;
+  static const double _minArtwork = 120;
+
+  /// Rough height of everything under the artwork (title, artist, seek bar,
+  /// controls and gaps). The artwork takes whatever is left; if the window
+  /// is still too short, the page scrolls instead of overflowing.
+  static const double _reservedHeight = 300;
 
   @override
   Widget build(BuildContext context) {
@@ -40,50 +52,73 @@ class NowPlayingScreen extends StatelessWidget {
             ),
           ),
           body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AspectRatio(
-                    aspectRatio: 1,
-                    child: TrackArtwork(
-                      bytes: track.artworkBytes,
-                      size: double.infinity,
-                      iconSize: 64,
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final contentWidth = math.max(
+                  0.0,
+                  math.min(box.maxWidth - 2 * _sidePadding, _maxContentWidth),
+                );
+                final artSize = math.min(
+                  contentWidth,
+                  math.max(_minArtwork, box.maxHeight - _reservedHeight),
+                );
+
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: box.maxHeight),
+                    child: Center(
+                      child: SizedBox(
+                        width: contentWidth,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TrackArtwork(
+                              bytes: track.artworkBytes,
+                              size: artSize,
+                              iconSize: 64,
+                              radius: AppShape.panel,
+                            ),
+                            const SizedBox(height: 28),
+                            Text(track.title,
+                                style: AppType.trackTitle,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis),
+                            const SizedBox(height: 6),
+                            Text(track.artist,
+                                style: AppType.bodyMuted,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                            const SizedBox(height: 24),
+                            const _SeekBar(),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                CompactIconButton(
+                                  icon: Icons.skip_previous,
+                                  iconSize: 32,
+                                  boxSize: 48,
+                                  onPressed: player.previous,
+                                ),
+                                const PlayPauseButton.disc(),
+                                CompactIconButton(
+                                  icon: Icons.skip_next,
+                                  iconSize: 32,
+                                  boxSize: 48,
+                                  onPressed: player.next,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  Text(track.title,
-                      style: AppType.display.copyWith(fontSize: 22),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 6),
-                  Text(track.artist, style: AppType.bodyMuted),
-                  const SizedBox(height: 28),
-
-                  const _SeekBar(),
-                  const SizedBox(height: 20),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        iconSize: 32,
-                        icon: const Icon(Icons.skip_previous),
-                        onPressed: player.previous,
-                      ),
-                      const PlayPauseButton(size: 64),
-                      IconButton(
-                        iconSize: 32,
-                        icon: const Icon(Icons.skip_next),
-                        onPressed: player.next,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         );
@@ -109,10 +144,8 @@ class _SeekBar extends StatelessWidget {
             Slider(
               min: 0,
               max: dur.inMilliseconds.toDouble().clamp(1, double.infinity),
-              value:
-                  pos.inMilliseconds.clamp(0, dur.inMilliseconds).toDouble(),
-              onChanged: (v) =>
-                  player.seek(Duration(milliseconds: v.round())),
+              value: pos.inMilliseconds.clamp(0, dur.inMilliseconds).toDouble(),
+              onChanged: (v) => player.seek(Duration(milliseconds: v.round())),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),

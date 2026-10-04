@@ -67,17 +67,28 @@ class _RootShellState extends State<RootShell> {
             ? Row(
                 children: [
                   SwarNavRail(index: _tab, onChanged: _select),
-                  Expanded(child: tabs),
+                  // Pages and the mini player share one column, so the
+                  // player lines up with the page content, not the rail.
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Expanded(child: tabs),
+                        const MiniPlayerBar(padBottom: true),
+                      ],
+                    ),
+                  ),
                 ],
               )
             : tabs,
-        bottomNavigationBar: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const MiniPlayerBar(),
-            if (!wide) SwarNavBar(index: _tab, onChanged: _select),
-          ],
-        ),
+        bottomNavigationBar: wide
+            ? null
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const MiniPlayerBar(),
+                  SwarNavBar(index: _tab, onChanged: _select),
+                ],
+              ),
       ),
     );
   }
