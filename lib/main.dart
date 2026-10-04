@@ -5,9 +5,12 @@ import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'app.dart';
 import 'services/library_service.dart';
 import 'services/stats_service.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Fonts ship inside the app (assets/google_fonts). Never reach for the network.
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   // just_audio has no built-in Windows/Linux backend — this registers
   // media_kit as the backend for those platforms only. Android/iOS/macOS
