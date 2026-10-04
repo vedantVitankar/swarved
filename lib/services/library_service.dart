@@ -38,7 +38,7 @@ class LibraryService extends ChangeNotifier {
   }
 
   Future<void> pickAndScanFolder() async {
-    final selected = await FilePicker.platform.getDirectoryPath();
+    final selected = await FilePicker.getDirectoryPath();
     if (selected == null) return;
     await scanFolder(selected);
     final prefs = await SharedPreferences.getInstance();
@@ -53,7 +53,8 @@ class LibraryService extends ChangeNotifier {
     final found = <Track>[];
     final dir = Directory(path);
     if (await dir.exists()) {
-      await for (final entity in dir.list(recursive: true, followLinks: false)) {
+      await for (final entity
+          in dir.list(recursive: true, followLinks: false)) {
         if (entity is! File) continue;
         final ext = p.extension(entity.path).toLowerCase();
         if (!_kAudioExtensions.contains(ext)) continue;
@@ -100,7 +101,8 @@ class LibraryService extends ChangeNotifier {
     try {
       return Track(
         filePath: file.path,
-        title: tagFile.title?.isNotEmpty == true ? tagFile.title! : fallbackTitle,
+        title:
+            tagFile.title?.isNotEmpty == true ? tagFile.title! : fallbackTitle,
         artist: tagFile.artist?.isNotEmpty == true
             ? tagFile.artist!
             : 'Unknown artist',
