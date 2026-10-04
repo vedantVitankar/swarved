@@ -18,7 +18,11 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final library = context.watch<LibraryService>();
     final stats = context.watch<StatsService>();
-    final player = context.watch<PlayerService>();
+    // player.playQueue is a method call in a button callback — this
+    // screen never displays player state, so read() instead of watch()
+    // stops it rebuilding (and re-decoding the ContinueCard artwork) on
+    // every position tick during playback.
+    final player = context.read<PlayerService>();
 
     if (library.rootPath == null) {
       return EmptyLibraryState(onChoose: library.pickAndScanFolder);

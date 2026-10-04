@@ -14,7 +14,9 @@ class LibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final player = context.watch<PlayerService>();
+    // playQueue is a method call, not something this screen displays —
+    // read() instead of watch() so this doesn't rebuild on its own.
+    final player = context.read<PlayerService>();
 
     return Scaffold(
       backgroundColor: AppColors.base,
@@ -23,14 +25,22 @@ class LibraryScreen extends StatelessWidget {
         elevation: 0,
         title: Text(title.toUpperCase(), style: AppType.sectionLabel),
       ),
-      body: ListView.builder(
-        itemCount: tracks.length,
-        itemBuilder: (context, index) {
-          final track = tracks[index];
-          return TrackTile(
-            track: track,
-            isActive: player.current?.filePath == track.filePath,
-            onTap: () => player.playQueue(tracks, startIndex: index),
+      // Only rebuilds the list when the active track's path actually
+      // changes — not on every position tick. This is what stops the
+      // folder view's artwork from disappearing during playback.
+      body: Selector<PlayerService, String?>(
+        selector: (_, player) => player.current?.filePath,
+        builder: (context, activeFilePath, _) {
+          return ListView.builder(
+            itemCount: tracks.length,
+            itemBuilder: (context, index) {
+              final track = tracks[index];
+              return TrackTile(
+                track: track,
+                isActive: activeFilePath == track.filePath,
+                onTap: () => player.playQueue(tracks, startIndex: index),
+              );
+            },
           );
         },
       ),
