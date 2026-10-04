@@ -7,6 +7,10 @@ import 'colors.dart';
 ///  - body: humanist sans, for lists and reading
 ///  - readout: the same sans with even-width digits, for durations and counts
 ///  - note: handwriting, only for notes written by hand
+///  - trackTitle: the serif again, for the song name on Now Playing
+///  - goldLabel: small gold sans, for sublines and card labels
+///  - caption: smallest muted sans, for nav labels and fine print
+///  - label: small cream sans, for chips and folder tiles
 ///
 /// Fonts ship in assets/google_fonts and are never fetched from the network,
 /// so only the bundled weights may be requested here:

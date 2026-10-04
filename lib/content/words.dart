@@ -1,4 +1,5 @@
-/// Every word the app says to Swarnima lives in this file.
+/// Every word the app says to Swarnima in its own voice lives in this file.
+/// Plain interface labels (tabs, chips, buttons) live in labels.dart.
 /// Edit freely: the screens only ever read from here.
 class Words {
   Words._();
@@ -11,13 +12,14 @@ class Words {
   static const baby = 'baby';
 
   /// Greeting at the top of Home, by the hour of the day.
+  /// The line breaks after the comma, as in the preview.
   /// Pass a local time (DateTime.now()), not UTC.
   static String greeting(DateTime now) {
     final hour = now.hour;
-    if (hour >= 5 && hour < 12) return 'Good morning, $swarnima';
-    if (hour >= 12 && hour < 17) return 'Hey, $swara';
-    if (hour >= 17 && hour < 22) return 'Good evening, $swara';
-    return 'Still up, $baby?';
+    if (hour >= 5 && hour < 12) return 'Good morning,\n$swarnima';
+    if (hour >= 12 && hour < 17) return 'Hey,\n$swara';
+    if (hour >= 17 && hour < 22) return 'Good evening,\n$swara';
+    return 'Still up,\n$baby?';
   }
 
   // Empty state, before a music folder is chosen.
