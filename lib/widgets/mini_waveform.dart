@@ -33,7 +33,7 @@ class MiniWaveform extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 1),
               height: height * level,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.75),
+                color: color.withValues(alpha: 0.75),
                 borderRadius: BorderRadius.circular(1),
               ),
             ),

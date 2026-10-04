@@ -6,7 +6,6 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/track.dart';
 import '../models/library_problem.dart';
-import '../models/track.dart';
 import 'storage_permission_service.dart';
 
 const _kLibraryPathKey = 'library_root_path';
@@ -131,13 +130,10 @@ class LibraryService extends ChangeNotifier {
     try {
       return Track(
         filePath: file.path,
-        title:
-            tagFile.title?.isNotEmpty == true ? tagFile.title! : fallbackTitle,
-        artist: tagFile.artist?.isNotEmpty == true
-            ? tagFile.artist!
-            : 'Unknown artist',
-        album: tagFile.album?.isNotEmpty == true ? tagFile.album! : folderName,
-        duration: tagFile.duration ?? Duration.zero,
+        title: tagFile.title.isNotEmpty ? tagFile.title : fallbackTitle,
+        artist: tagFile.artist.isNotEmpty ? tagFile.artist : 'Unknown artist',
+        album: tagFile.album.isNotEmpty ? tagFile.album : folderName,
+        duration: tagFile.duration,
         folder: folderName,
         artworkBytes: tagFile.hasCover ? tagFile.coverData : null,
       );
