@@ -20,7 +20,7 @@ class AppType {
 
   static TextStyle display = GoogleFonts.fraunces(
     fontWeight: FontWeight.w400,
-    fontSize: 28,
+    fontSize: 26,
     color: AppColors.textPrimary,
     height: 1.15,
   );

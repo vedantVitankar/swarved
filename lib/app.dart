@@ -5,6 +5,7 @@ import 'services/library_service.dart';
 import 'services/player_service.dart';
 import 'services/stats_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/text_scale_scope.dart';
 
 class SwarVedApp extends StatelessWidget {
   final StatsService statsService;
@@ -28,6 +29,7 @@ class SwarVedApp extends StatelessWidget {
         title: 'SwarVed',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
+        builder: (context, child) => TextScaleScope(child: child!),
         home: const RootShell(),
       ),
     );

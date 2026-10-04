@@ -1,17 +1,44 @@
-# swarved
+# SwarVed
 
-A new Flutter project.
+A private music player built for one person. It plays audio straight from a
+local folder (no account, no server) and carries a few personal things on
+top: notes, dedications and a shared logbook. Windows and Android, one
+Flutter codebase.
 
-## Getting Started
+Wine and rose with sunlight gold. The design plan lives in the theme
+preview HTML; the full idea is in `SwarVed — Project Brief.md`.
 
-This project is a starting point for a Flutter application.
+## Run
 
-A few resources to get you started if this is your first Flutter project:
+    flutter pub get
+    flutter run -d windows     # or pick an Android device
+    flutter analyze
+    flutter test
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Layout
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+    lib/
+      content/    words.dart (her voice), labels.dart (plain UI labels)
+      models/     plain data: Track, ListenEntry, LibraryProblem
+      screens/    home/, us/, library_screen, now_playing_screen
+      services/   library, player, stats, storage permission
+      theme/      colors, typography, shape, responsive, app_theme
+      utils/      small pure helpers
+      widgets/    reusable pieces shared by screens
+    test/         mirrors lib/
+
+## Rules for the code
+
+- One file, one job.
+- Every colour comes from `AppColors`, every text style from `AppType`,
+  every corner from `AppShape`. No raw values in screens.
+- Every word the app says lives in `words.dart` or `labels.dart`.
+- Fonts are bundled in `assets/google_fonts` and never fetched online.
+- Personal content stays on the device.
+
+## App icon
+
+The icon files are in `assets/branding/`. Replace `app_icon.png` and
+`app_icon_foreground.png`, then run:
+
+    dart run flutter_launcher_icons

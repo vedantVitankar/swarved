@@ -25,7 +25,7 @@ class AppTheme {
       ),
       dividerColor: AppColors.hairline,
       splashFactory: NoSplash.splashFactory,
-      highlightColor: Colors.transparent,
+      highlightColor: AppColors.blush.withAlpha(24),
       hoverColor: AppColors.blush.withAlpha(20),
       sliderTheme: SliderThemeData(
         activeTrackColor: AppColors.accent,

@@ -8,7 +8,6 @@ import '../../widgets/note_card.dart';
 import '../../widgets/page_body.dart';
 import '../../widgets/swar_chips.dart';
 import '../library_screen.dart';
-import 'empty_library_state.dart';
 import 'folder_tile_grid.dart';
 
 enum _HomeFilter { all, folders, notes }
@@ -20,7 +19,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   _HomeFilter _filter = _HomeFilter.all;
 
   static const _chipLabels = [
@@ -30,16 +29,26 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // The greeting depends on the hour, so refresh it when the app returns.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) setState(() {});
+  }
+
+  @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryService>();
-
-    if (library.rootPath == null) {
-      return EmptyLibraryState(
-        problem: library.problem,
-        onChoose: library.pickAndScanFolder,
-        onOpenSettings: library.openPermissionSettings,
-      );
-    }
 
     final showFolders = _filter != _HomeFilter.notes;
     final showNote = _filter != _HomeFilter.folders;
