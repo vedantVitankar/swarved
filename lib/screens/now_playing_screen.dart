@@ -1,20 +1,27 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../content/labels.dart';
 import 'package:provider/provider.dart';
+import '../content/labels.dart';
 import '../models/track.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
 import '../theme/shape.dart';
 import '../theme/typography.dart';
-import '../utils/duration_format.dart';
 import '../widgets/compact_icon_button.dart';
 import '../widgets/play_pause_button.dart';
 import '../widgets/playback_mode_buttons.dart';
+import '../widgets/seek_bar.dart';
 import '../widgets/track_artwork.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
+
+  /// Opens the full player. Both mini player layouts go through here.
+  static void open(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NowPlayingScreen()),
+    );
+  }
 
   static const double _sidePadding = 28;
   static const double _maxContentWidth = 420;
@@ -94,7 +101,7 @@ class NowPlayingScreen extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis),
                             const SizedBox(height: 24),
-                            const _SeekBar(),
+                            const SeekBar(),
                             const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -128,43 +135,6 @@ class NowPlayingScreen extends StatelessWidget {
               },
             ),
           ),
-        );
-      },
-    );
-  }
-}
-
-/// Isolated so ONLY the slider + time labels rebuild on every position
-/// tick — the artwork/title above no longer gets pulled into that.
-class _SeekBar extends StatelessWidget {
-  const _SeekBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Selector<PlayerService, (Duration, Duration)>(
-      selector: (_, player) => (player.position, player.duration),
-      builder: (context, data, _) {
-        final (pos, dur) = data;
-        final player = context.read<PlayerService>();
-        return Column(
-          children: [
-            Slider(
-              min: 0,
-              max: dur.inMilliseconds.toDouble().clamp(1, double.infinity),
-              value: pos.inMilliseconds.clamp(0, dur.inMilliseconds).toDouble(),
-              onChanged: (v) => player.seek(Duration(milliseconds: v.round())),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(formatDuration(pos), style: AppType.readout),
-                  Text(formatDuration(dur), style: AppType.readout),
-                ],
-              ),
-            ),
-          ],
         );
       },
     );

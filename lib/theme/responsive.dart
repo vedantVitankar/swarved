@@ -11,6 +11,10 @@ class Responsive {
   /// The widest a page's content gets, so wide windows don't stretch it.
   static const double contentMaxWidth = 720;
 
+  /// The widest the floating player gets on wide windows. It has three
+  /// zones, so it needs more room than a page does.
+  static const double desktopPlayerMaxWidth = 1040;
+
   static ScreenClass of(double width) {
     if (width >= expandedFrom) return ScreenClass.expanded;
     if (width >= mediumFrom) return ScreenClass.medium;
