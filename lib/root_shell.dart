@@ -4,6 +4,7 @@ import 'content/labels.dart';
 import 'content/words.dart';
 import 'screens/home/empty_library_state.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/library/library_screen.dart';
 import 'screens/us/us_screen.dart';
 import 'services/library_service.dart';
 import 'theme/colors.dart';
@@ -50,7 +51,7 @@ class _RootShellState extends State<RootShell> {
       children: const [
         HomeScreen(),
         ComingSoon(title: Labels.navSearch, message: Words.searchSoon),
-        ComingSoon(title: Labels.navLibrary, message: Words.librarySoon),
+        LibraryScreen(),
         UsScreen(),
       ],
     );

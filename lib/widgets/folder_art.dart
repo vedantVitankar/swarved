@@ -6,8 +6,10 @@ import '../theme/colors.dart';
 class FolderArt extends StatelessWidget {
   final String seed;
   final double size;
+  final double radius;
 
-  const FolderArt({super.key, required this.seed, this.size = 46});
+  const FolderArt(
+      {super.key, required this.seed, this.size = 46, this.radius = 0});
 
   static const _palette = [
     AppColors.wine,
@@ -32,7 +34,10 @@ class FolderArt extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      color: _palette[paletteIndex(seed)],
+      decoration: BoxDecoration(
+        color: _palette[paletteIndex(seed)],
+        borderRadius: BorderRadius.circular(radius),
+      ),
     );
   }
 }
