@@ -12,6 +12,7 @@ import 'play_pause_button.dart';
 import 'playback_mode_buttons.dart';
 import 'seek_bar.dart';
 import 'track_artwork.dart';
+import 'volume_control.dart';
 
 /// The wide-window mini player, after Spotify's desktop bar: the song on the
 /// left, the controls with the seek bar in the centre, and the volume on
@@ -38,8 +39,8 @@ class MiniPlayerDesktop extends StatelessWidget {
           const SizedBox(width: _zoneGap),
           const Expanded(flex: 4, child: _ControlsZone()),
           const SizedBox(width: _zoneGap),
-          // Held for the volume control, so the centre zone stays centred.
-          const Expanded(flex: 3, child: SizedBox.shrink()),
+          // Right zone: volume, right-aligned so it mirrors the song zone.
+          const Expanded(flex: 3, child: _VolumeZone()),
         ],
       ),
     );
@@ -141,6 +142,22 @@ class _ControlsZone extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Volume icon and slider, right-aligned so the zone mirrors the song zone.
+/// Align + heightFactor keeps the zone height snug — same pattern as
+/// _ControlsZone above.
+class _VolumeZone extends StatelessWidget {
+  const _VolumeZone();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Align(
+      alignment: Alignment.centerRight,
+      heightFactor: 1,
+      child: VolumeControl(),
     );
   }
 }

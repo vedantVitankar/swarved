@@ -45,4 +45,7 @@ class Labels {
   static const repeatAll = 'Repeat all';
   static const repeatOne = 'Repeat one';
   static const repeatOff = 'Turn repeat off';
+
+  static const mute = 'Mute';
+  static const unmute = 'Unmute';
 }

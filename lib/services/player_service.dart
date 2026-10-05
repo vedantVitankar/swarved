@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/track.dart';
 import '../utils/queue_order.dart';
+import '../utils/volume_level.dart';
 import 'stats_service.dart';
 
 /// just_audio_background (and the MediaItem tag it requires) only works
@@ -11,6 +13,8 @@ import 'stats_service.dart';
 /// Linux. This must match the same check in main.dart.
 bool get _supportsBackgroundPlayback =>
     Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
+
+const _kVolumeKey = 'player_volume_v1';
 
 /// A manual skip/switch only counts toward listening stats once the user
 /// has actually heard at least this much of the track. A natural full
@@ -34,6 +38,11 @@ class PlayerService extends ChangeNotifier {
   List<Track> _queue = [];
   int _currentIndex = -1;
 
+  double _volume = VolumeLevel.defaultLevel;
+
+  /// The level before mute, so unmuting goes back where the listener was.
+  double _premuteVolume = VolumeLevel.defaultLevel;
+
   PlayerService(this.statsService) {
     _player.playerStateStream.listen((_) => notifyListeners());
     _player.positionStream.listen((_) => notifyListeners());
@@ -46,6 +55,8 @@ class PlayerService extends ChangeNotifier {
         _advanceAfterCompletion();
       }
     });
+
+    _loadVolume();
   }
 
   Track? get current => _currentIndex >= 0 && _currentIndex < _queue.length
@@ -56,6 +67,9 @@ class PlayerService extends ChangeNotifier {
   Duration get position => _player.position;
   Duration get bufferedPosition => _player.bufferedPosition;
   Duration get duration => _player.duration ?? Duration.zero;
+
+  /// Current volume in [0.0, 1.0]. Zero means muted via the toggle.
+  double get volume => _volume;
 
   bool get shuffle => _order.shuffle;
   QueueRepeat get repeat => _order.repeat;
@@ -166,6 +180,44 @@ class PlayerService extends ChangeNotifier {
   }
 
   Future<void> seek(Duration position) => _player.seek(position);
+
+  /// Sets the volume and persists it. Dragging the slider to zero is treated
+  /// as an implicit mute — the premute memory is only updated for non-zero
+  /// values, so unmuting after a drag-to-zero still restores a sensible level.
+  Future<void> setVolume(double level) async {
+    final clamped = VolumeLevel.clamp(level);
+    if (clamped > VolumeLevel.min) _premuteVolume = clamped;
+    _volume = clamped;
+    await _player.setVolume(clamped);
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_kVolumeKey, clamped);
+  }
+
+  /// Mutes when audible, unmutes to the last remembered level when already
+  /// muted. The remembered level is also saved so a cold restart unmutes
+  /// to the right place.
+  Future<void> toggleMute() async {
+    final next = VolumeLevel.isMuted(_volume)
+        ? VolumeLevel.unmutedLevel(_premuteVolume)
+        : VolumeLevel.min;
+    await setVolume(next);
+  }
+
+  /// Reads the saved volume from SharedPreferences and applies it.
+  /// Called once from the constructor; the player defaults to 1.0 until
+  /// this resolves, which is quick enough that the user never hears it.
+  Future<void> _loadVolume() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getDouble(_kVolumeKey);
+    if (saved != null) {
+      // Restore muted state too: if saved is 0 the slider shows 0,
+      // but _premuteVolume stays at its default so unmuting works.
+      _volume = VolumeLevel.clamp(saved);
+      await _player.setVolume(_volume);
+      notifyListeners();
+    }
+  }
 
   /// The single place listening time gets recorded. Two distinct modes:
   ///
