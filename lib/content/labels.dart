@@ -39,4 +39,10 @@ class Labels {
   static const heartSong = 'Heart this song';
   static const unheartSong = 'Remove from hearts';
   static const nothingPlaying = 'Nothing playing';
+
+  static const shuffleOn = 'Turn shuffle on';
+  static const shuffleOff = 'Turn shuffle off';
+  static const repeatAll = 'Repeat all';
+  static const repeatOne = 'Repeat one';
+  static const repeatOff = 'Turn repeat off';
 }

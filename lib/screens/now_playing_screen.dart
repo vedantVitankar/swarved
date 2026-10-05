@@ -10,6 +10,7 @@ import '../theme/typography.dart';
 import '../utils/duration_format.dart';
 import '../widgets/compact_icon_button.dart';
 import '../widgets/play_pause_button.dart';
+import '../widgets/playback_mode_buttons.dart';
 import '../widgets/track_artwork.dart';
 
 class NowPlayingScreen extends StatelessWidget {
@@ -98,12 +99,13 @@ class NowPlayingScreen extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
+                                const ShuffleButton(),
                                 CompactIconButton(
                                   icon: Icons.skip_previous,
                                   tooltip: Labels.previousSong,
                                   iconSize: 32,
                                   boxSize: 48,
-                                  onPressed: player.previous,
+                                  onPressed: player.restartOrPrevious,
                                 ),
                                 const PlayPauseButton.disc(),
                                 CompactIconButton(
@@ -113,6 +115,7 @@ class NowPlayingScreen extends StatelessWidget {
                                   boxSize: 48,
                                   onPressed: player.next,
                                 ),
+                                const RepeatButton(),
                               ],
                             ),
                             const SizedBox(height: 16),

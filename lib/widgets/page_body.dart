@@ -7,8 +7,6 @@ class PageBody extends StatelessWidget {
   final Widget child;
   const PageBody({super.key, required this.child});
 
-  static const double maxWidth = 720;
-
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
@@ -20,7 +18,9 @@ class PageBody extends StatelessWidget {
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: maxWidth),
+            constraints: const BoxConstraints(
+              maxWidth: Responsive.contentMaxWidth,
+            ),
             child: SizedBox(width: double.infinity, child: child),
           ),
         ),

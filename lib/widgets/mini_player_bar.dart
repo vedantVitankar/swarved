@@ -41,16 +41,17 @@ class MiniPlayerBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Only rebuilds when the current TRACK changes (not on every position
-    // tick) — this is what stops the artwork/title from flickering while
-    // playing. The progress line handles its own, faster rebuild scope.
-    return Selector<PlayerService, Track?>(
-      selector: (_, player) => player.current,
-      builder: (context, track, _) {
+    // Only rebuilds when the current TRACK changes, or when whether a skip
+    // is possible changes (shuffle and repeat affect that) — not on every
+    // position tick. This is what stops the artwork/title from flickering
+    // while playing. The progress line handles its own, faster rebuild scope.
+    return Selector<PlayerService, (Track?, bool, bool)>(
+      selector: (_, player) =>
+          (player.current, player.canGoPrevious, player.canGoNext),
+      builder: (context, data, _) {
+        final (track, canPrevious, canNext) = data;
         if (track == null) return const SizedBox.shrink();
         final player = context.read<PlayerService>();
-        final canPrevious = player.currentIndex > 0;
-        final canNext = player.currentIndex < player.queue.length - 1;
 
         final showSkipButtons = _showSkipButtons(context);
 
@@ -129,7 +130,7 @@ class MiniPlayerBar extends StatelessWidget {
                                 CompactIconButton(
                                   icon: Icons.skip_previous,
                                   tooltip: Labels.previousSong,
-                                  onPressed: player.previous,
+                                  onPressed: player.restartOrPrevious,
                                 ),
                               const PlayPauseButton.glyph(),
                               if (showSkipButtons)

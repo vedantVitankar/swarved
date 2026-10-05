@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import '../models/track.dart';
+import '../utils/queue_order.dart';
 import 'stats_service.dart';
 
 /// just_audio_background (and the MediaItem tag it requires) only works
@@ -18,9 +19,17 @@ bool get _supportsBackgroundPlayback =>
 /// should still count, even though it's under 30 seconds.
 const _kMinPartialListenThreshold = Duration(seconds: 30);
 
+/// Pressing "previous" restarts the current song if more than this much of
+/// it has played, and only goes back a song when you're near its start.
+const _kRestartThreshold = Duration(seconds: 3);
+
 class PlayerService extends ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
   final StatsService statsService;
+
+  /// Which song follows which. Shuffle and repeat rules live here, so this
+  /// service only has to ask "what's next?".
+  final QueueOrder _order = QueueOrder();
 
   List<Track> _queue = [];
   int _currentIndex = -1;
@@ -39,22 +48,29 @@ class PlayerService extends ChangeNotifier {
     });
   }
 
-  Track? get current =>
-      _currentIndex >= 0 && _currentIndex < _queue.length
-          ? _queue[_currentIndex]
-          : null;
+  Track? get current => _currentIndex >= 0 && _currentIndex < _queue.length
+      ? _queue[_currentIndex]
+      : null;
 
   bool get isPlaying => _player.playing;
   Duration get position => _player.position;
   Duration get bufferedPosition => _player.bufferedPosition;
   Duration get duration => _player.duration ?? Duration.zero;
-  List<Track> get queue => _queue;
-  int get currentIndex => _currentIndex;
+
+  bool get shuffle => _order.shuffle;
+  QueueRepeat get repeat => _order.repeat;
+
+  /// Whether a next / previous song exists right now (it depends on
+  /// shuffle and repeat), for the swipe and the skip buttons.
+  bool get canGoNext => _order.hasNext;
+  bool get canGoPrevious => _order.hasPrevious;
 
   Future<void> playQueue(List<Track> tracks, {int startIndex = 0}) async {
+    if (tracks.isEmpty) return;
     _logCurrentListen(completedNaturally: false);
     _queue = tracks;
-    _currentIndex = startIndex;
+    _order.start(length: tracks.length, startIndex: startIndex);
+    _currentIndex = _order.currentIndex ?? 0;
     await _loadCurrent();
     await _player.play();
   }
@@ -92,22 +108,50 @@ class PlayerService extends ChangeNotifier {
   /// User-initiated skip forward. Logs the OLD track (by actual position
   /// reached, subject to the 30s threshold) before switching.
   Future<void> next() async {
-    if (_currentIndex < _queue.length - 1) {
-      _logCurrentListen(completedNaturally: false);
-      _currentIndex++;
-      await _loadCurrent();
-      await _player.play();
-    }
+    final index = _order.advance();
+    if (index == null) return;
+    _logCurrentListen(completedNaturally: false);
+    await _switchTo(index);
   }
 
-  /// User-initiated skip backward. Same logging rules as next().
+  /// User-initiated skip backward: always the previous song. Used by the
+  /// swipe. Same logging rules as next().
   Future<void> previous() async {
-    if (_currentIndex > 0) {
-      _logCurrentListen(completedNaturally: false);
-      _currentIndex--;
-      await _loadCurrent();
-      await _player.play();
+    final index = _order.back();
+    if (index == null) return;
+    _logCurrentListen(completedNaturally: false);
+    await _switchTo(index);
+  }
+
+  /// What a "previous" button does: restart the song if it has been
+  /// playing for a while, otherwise go back one song.
+  Future<void> restartOrPrevious() async {
+    if (_player.position > _kRestartThreshold || !_order.hasPrevious) {
+      await _player.seek(Duration.zero);
+      return;
     }
+    await previous();
+  }
+
+  void toggleShuffle() {
+    _order.setShuffle(!_order.shuffle);
+    notifyListeners();
+  }
+
+  /// Off, then all, then one, then off again.
+  void cycleRepeat() {
+    _order.repeat = switch (_order.repeat) {
+      QueueRepeat.off => QueueRepeat.all,
+      QueueRepeat.all => QueueRepeat.one,
+      QueueRepeat.one => QueueRepeat.off,
+    };
+    notifyListeners();
+  }
+
+  Future<void> _switchTo(int index) async {
+    _currentIndex = index;
+    await _loadCurrent();
+    await _player.play();
   }
 
   /// Internal-only advance used after a track finishes on its own.
@@ -115,13 +159,10 @@ class PlayerService extends ChangeNotifier {
   /// handler above already logged it, with the correct "full length"
   /// semantics. Logging here too would double-count every completed track.
   Future<void> _advanceAfterCompletion() async {
-    if (_currentIndex < _queue.length - 1) {
-      _currentIndex++;
-      await _loadCurrent();
-      await _player.play();
-    }
-    // If this was the last track in the queue, playback simply stops —
-    // no wraparound, nothing further to log.
+    final index = _order.onSongEnded();
+    // Nothing after the last song (and no repeat): playback simply stops.
+    if (index == null) return;
+    await _switchTo(index);
   }
 
   Future<void> seek(Duration position) => _player.seek(position);
