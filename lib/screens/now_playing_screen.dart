@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../content/labels.dart';
 import 'package:provider/provider.dart';
 import '../models/track.dart';
 import '../services/player_service.dart';
@@ -34,7 +35,7 @@ class NowPlayingScreen extends StatelessWidget {
           return Scaffold(
             backgroundColor: AppColors.base,
             body: Center(
-              child: Text('Nothing playing', style: AppType.bodyMuted),
+              child: Text(Labels.nothingPlaying, style: AppType.bodyMuted),
             ),
           );
         }
@@ -48,6 +49,7 @@ class NowPlayingScreen extends StatelessWidget {
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.keyboard_arrow_down, size: 28),
+              tooltip: Labels.closePlayer,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
@@ -98,6 +100,7 @@ class NowPlayingScreen extends StatelessWidget {
                               children: [
                                 CompactIconButton(
                                   icon: Icons.skip_previous,
+                                  tooltip: Labels.previousSong,
                                   iconSize: 32,
                                   boxSize: 48,
                                   onPressed: player.previous,
@@ -105,6 +108,7 @@ class NowPlayingScreen extends StatelessWidget {
                                 const PlayPauseButton.disc(),
                                 CompactIconButton(
                                   icon: Icons.skip_next,
+                                  tooltip: Labels.nextSong,
                                   iconSize: 32,
                                   boxSize: 48,
                                   onPressed: player.next,

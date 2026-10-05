@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/track.dart';
 import '../theme/colors.dart';
+import '../theme/shape.dart';
 import '../theme/typography.dart';
 import 'track_artwork.dart';
 
+/// One song in a folder: rounded art, title, artist, length.
+/// The song that is playing gets a rose title on a soft velvet row.
 class TrackTile extends StatelessWidget {
   final Track track;
   final bool isActive;
@@ -18,47 +21,52 @@ class TrackTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          border: const Border(
-            bottom: BorderSide(color: AppColors.hairline, width: 1),
-          ),
-          color: isActive ? AppColors.surfaceRaised : Colors.transparent,
-        ),
-        child: Row(
-          children: [
-            TrackArtwork(bytes: track.artworkBytes),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    track.title,
-                    style: AppType.titleMedium.copyWith(
-                      color: isActive
-                          ? AppColors.accent
-                          : AppColors.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Material(
+        color: isActive ? AppColors.surfaceRaised : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppShape.tile),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+            child: Row(
+              children: [
+                TrackArtwork(
+                  bytes: track.artworkBytes,
+                  radius: AppShape.thumbnail,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        track.title,
+                        style: AppType.body.copyWith(
+                          color: isActive
+                              ? AppColors.accent
+                              : AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        track.artist,
+                        style: AppType.caption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    track.artist,
-                    style: AppType.bodyMuted,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 12),
+                Text(track.durationLabel, style: AppType.readout),
+              ],
             ),
-            const SizedBox(width: 12),
-            Text(track.durationLabel, style: AppType.readout),
-          ],
+          ),
         ),
       ),
     );

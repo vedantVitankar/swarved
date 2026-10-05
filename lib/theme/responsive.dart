@@ -8,6 +8,9 @@ class Responsive {
   static const double mediumFrom = 600;
   static const double expandedFrom = 840;
 
+  /// The widest a page's content gets, so wide windows don't stretch it.
+  static const double contentMaxWidth = 720;
+
   static ScreenClass of(double width) {
     if (width >= expandedFrom) return ScreenClass.expanded;
     if (width >= mediumFrom) return ScreenClass.medium;

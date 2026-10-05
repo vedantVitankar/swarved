@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../content/labels.dart';
 import '../theme/colors.dart';
 import 'compact_icon_button.dart';
 
@@ -19,6 +20,7 @@ class HeartButton extends StatelessWidget {
     return CompactIconButton(
       icon: isFilled ? Icons.favorite : Icons.favorite_border,
       iconSize: 22,
+      tooltip: isFilled ? Labels.unheartSong : Labels.heartSong,
       color: AppColors.accent,
       onPressed: onPressed ?? _absorbTap,
     );

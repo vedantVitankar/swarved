@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../content/labels.dart';
 import '../models/track.dart';
 import '../screens/now_playing_screen.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
+import '../theme/responsive.dart';
 import '../theme/shape.dart';
 import '../theme/typography.dart';
 import 'compact_icon_button.dart';
 import 'heart_button.dart';
-import 'page_body.dart';
 import 'play_pause_button.dart';
 import 'swipe_to_skip.dart';
 import 'track_artwork.dart';
-import '../theme/responsive.dart';
 
 /// The velvet card floating above the tab bar. Tap it to open Now Playing;
 /// swipe the song area left or right to skip. Hidden when nothing plays.
@@ -66,7 +66,9 @@ class MiniPlayerBar extends StatelessWidget {
             child: Align(
               heightFactor: 1,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: PageBody.maxWidth),
+                constraints: const BoxConstraints(
+                  maxWidth: Responsive.contentMaxWidth,
+                ),
                 child: Material(
                   color: AppColors.surfaceRaised,
                   borderRadius: BorderRadius.circular(AppShape.panel),
@@ -126,12 +128,14 @@ class MiniPlayerBar extends StatelessWidget {
                               if (showSkipButtons)
                                 CompactIconButton(
                                   icon: Icons.skip_previous,
+                                  tooltip: Labels.previousSong,
                                   onPressed: player.previous,
                                 ),
                               const PlayPauseButton.glyph(),
                               if (showSkipButtons)
                                 CompactIconButton(
                                   icon: Icons.skip_next,
+                                  tooltip: Labels.nextSong,
                                   onPressed: player.next,
                                 ),
                             ],

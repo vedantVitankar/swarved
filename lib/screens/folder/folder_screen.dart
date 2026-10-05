@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../content/labels.dart';
 import '../../models/track.dart';
 import '../../services/player_service.dart';
 import '../../theme/colors.dart';
+import '../../theme/responsive.dart';
 import '../../theme/typography.dart';
 import '../../widgets/mini_player_bar.dart';
 import '../../widgets/track_tile.dart';
@@ -36,27 +38,64 @@ class FolderScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.base,
         elevation: 0,
-        title: Text(title.toUpperCase(), style: AppType.sectionLabel),
+        // The title scrolls under the bar; no colour shift while it does.
+        scrolledUnderElevation: 0,
       ),
       bottomNavigationBar: const MiniPlayerBar(padBottom: true),
-      // Only rebuilds the list when the active track's path actually
-      // changes — not on every position tick. This is what stops the
-      // folder view's artwork from disappearing during playback.
-      body: Selector<PlayerService, String?>(
-        selector: (_, player) => player.current?.filePath,
-        builder: (context, activeFilePath, _) {
-          return ListView.builder(
-            itemCount: tracks.length,
-            itemBuilder: (context, index) {
-              final track = tracks[index];
-              return TrackTile(
-                track: track,
-                isActive: activeFilePath == track.filePath,
-                onTap: () => player.playQueue(tracks, startIndex: index),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: Responsive.contentMaxWidth,
+          ),
+          // Only rebuilds the list when the active track's path actually
+          // changes — not on every position tick. This is what stops the
+          // folder view's artwork from disappearing during playback.
+          child: Selector<PlayerService, String?>(
+            selector: (_, player) => player.current?.filePath,
+            builder: (context, activeFilePath, _) {
+              return ListView.builder(
+                padding: const EdgeInsets.only(bottom: 24),
+                // One extra item at the top for the title.
+                itemCount: tracks.length + 1,
+                itemBuilder: (context, i) {
+                  if (i == 0) {
+                    return _Header(title: title, songCount: tracks.length);
+                  }
+                  final index = i - 1;
+                  final track = tracks[index];
+                  return TrackTile(
+                    track: track,
+                    isActive: activeFilePath == track.filePath,
+                    onTap: () => player.playQueue(tracks, startIndex: index),
+                  );
+                },
               );
             },
-          );
-        },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  final String title;
+  final int songCount;
+
+  const _Header({required this.title, required this.songCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppType.display),
+          const SizedBox(height: 4),
+          Text(Labels.songCount(songCount), style: AppType.caption),
+        ],
       ),
     );
   }

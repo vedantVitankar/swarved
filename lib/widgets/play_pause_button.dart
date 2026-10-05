@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../content/labels.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
 import 'compact_icon_button.dart';
@@ -30,6 +31,7 @@ class PlayPauseButton extends StatelessWidget {
         final isDisc = style == PlayPauseStyle.disc;
         return CompactIconButton(
           icon: isPlaying ? Icons.pause : Icons.play_arrow,
+          tooltip: isPlaying ? Labels.pause : Labels.play,
           boxSize: size,
           iconSize: isDisc ? size * 0.52 : 28,
           color: isDisc ? AppColors.base : AppColors.textPrimary,

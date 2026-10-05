@@ -29,4 +29,14 @@ class Labels {
   static const noPlaysYet = 'No plays logged yet';
   static String minutesToday(int minutes) => '$minutes min today';
   static String mostPlayed(String artist) => 'Most played · $artist';
+
+  // Player controls: tooltips and screen-reader names.
+  static const play = 'Play';
+  static const pause = 'Pause';
+  static const previousSong = 'Previous song';
+  static const nextSong = 'Next song';
+  static const closePlayer = 'Close player';
+  static const heartSong = 'Heart this song';
+  static const unheartSong = 'Remove from hearts';
+  static const nothingPlaying = 'Nothing playing';
 }

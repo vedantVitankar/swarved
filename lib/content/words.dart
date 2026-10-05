@@ -41,6 +41,5 @@ class Words {
   static const dedicationNote = 'Lorem ipsum dolor sit amet, consectetur.';
 
   static const searchSoon = 'Soon you can look for any song from here.';
-  static const librarySoon = 'All your folders will be gathered here.';
   static const usSubline = 'This corner is just for the two of us.';
 }

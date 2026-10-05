@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'colors.dart';
+import 'shape.dart';
+import 'typography.dart';
 
 class AppTheme {
   AppTheme._();
@@ -34,6 +36,16 @@ class AppTheme {
         trackHeight: 2,
         overlayShape: SliderComponentShape.noOverlay,
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+      ),
+      tooltipTheme: TooltipThemeData(
+        waitDuration: const Duration(milliseconds: 500),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceRaised,
+          border: Border.all(color: AppColors.hairline),
+          borderRadius: BorderRadius.circular(AppShape.tile),
+        ),
+        textStyle: AppType.caption.copyWith(color: AppColors.textPrimary),
       ),
       iconTheme: const IconThemeData(color: AppColors.textPrimary, size: 20),
     );
