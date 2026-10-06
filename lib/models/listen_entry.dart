@@ -1,4 +1,6 @@
 class ListenEntry {
+  /// The track's id: a file path for local songs, "yt:<videoId>" for
+  /// YouTube. The name and JSON key stay "trackPath" so saved logs load.
   final String trackPath;
   final String title;
   final String artist;

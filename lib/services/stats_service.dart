@@ -27,7 +27,7 @@ class StatsService extends ChangeNotifier {
     _entries.insert(
       0,
       ListenEntry(
-        trackPath: track.filePath,
+        trackPath: track.id,
         title: track.title,
         artist: track.artist,
         playedAt: DateTime.now(),

@@ -52,8 +52,8 @@ class FolderScreen extends StatelessWidget {
           // changes — not on every position tick. This is what stops the
           // folder view's artwork from disappearing during playback.
           child: Selector<PlayerService, String?>(
-            selector: (_, player) => player.current?.filePath,
-            builder: (context, activeFilePath, _) {
+            selector: (_, player) => player.current?.id,
+            builder: (context, activeId, _) {
               return ListView.builder(
                 padding: const EdgeInsets.only(bottom: 24),
                 // One extra item at the top for the title.
@@ -66,7 +66,7 @@ class FolderScreen extends StatelessWidget {
                   final track = tracks[index];
                   return TrackTile(
                     track: track,
-                    isActive: activeFilePath == track.filePath,
+                    isActive: activeId == track.id,
                     onTap: () => player.playQueue(tracks, startIndex: index),
                   );
                 },

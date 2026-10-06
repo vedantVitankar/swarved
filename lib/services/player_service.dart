@@ -98,7 +98,7 @@ class PlayerService extends ChangeNotifier {
         AudioSource.uri(
           Uri.file(track.filePath),
           tag: MediaItem(
-            id: track.filePath,
+            id: track.id,
             title: track.title,
             artist: track.artist,
             album: track.album,
