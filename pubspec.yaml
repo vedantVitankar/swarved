@@ -9,8 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  http: ^1.6.0
+  flutter_secure_storage: ^11.2.0
+  
   cupertino_icons: ^1.0.6
   google_fonts: ^6.2.1
+  
 
   # Playback
   just_audio: ^0.9.36

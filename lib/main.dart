@@ -6,6 +6,10 @@ import 'app.dart';
 import 'services/library_service.dart';
 import 'services/stats_service.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'services/server_api.dart';
+import 'services/server_config.dart';
+import 'services/secure_token_store.dart';
+import 'services/connection_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,8 +39,24 @@ Future<void> main() async {
   final libraryService = LibraryService();
   await libraryService.restoreLastLibrary();
 
+  const serverConfig = ServerConfig();
+  final tokenStore = SecureTokenStore();
+  final serverApi = ServerApi(
+    config: serverConfig,
+    tokenStore: tokenStore,
+  );
+
+  final connectionService = ConnectionService(
+    api: serverApi,
+    tokenStore: tokenStore,
+  );
+  await connectionService.load();
+
   runApp(SwarVedApp(
     statsService: statsService,
     libraryService: libraryService,
+    serverConfig: serverConfig,
+    serverApi: serverApi,
+    connectionService: connectionService,
   ));
 }

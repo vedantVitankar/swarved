@@ -1,4 +1,4 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:swarved/utils/volume_level.dart';
 
 void main() {
@@ -32,9 +32,11 @@ void main() {
   group('VolumeLevel.tier', () {
     test('0.0 → mute', () => expect(VolumeLevel.tier(0.0), VolumeTier.mute));
     test('0.1 → low', () => expect(VolumeLevel.tier(0.1), VolumeTier.low));
-    test('0.33 → low (boundary)', () => expect(VolumeLevel.tier(1 / 3), VolumeTier.low));
+    test('0.33 → low (boundary)',
+        () => expect(VolumeLevel.tier(1 / 3), VolumeTier.low));
     test('0.34 → mid', () => expect(VolumeLevel.tier(0.34), VolumeTier.mid));
-    test('0.66 → mid (boundary)', () => expect(VolumeLevel.tier(2 / 3), VolumeTier.mid));
+    test('0.66 → mid (boundary)',
+        () => expect(VolumeLevel.tier(2 / 3), VolumeTier.mid));
     test('0.67 → high', () => expect(VolumeLevel.tier(0.67), VolumeTier.high));
     test('1.0 → high', () => expect(VolumeLevel.tier(1.0), VolumeTier.high));
   });

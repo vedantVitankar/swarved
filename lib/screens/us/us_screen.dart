@@ -5,6 +5,7 @@ import '../../content/words.dart';
 import '../../services/stats_service.dart';
 import '../../theme/typography.dart';
 import '../../widgets/page_body.dart';
+import 'connection_card.dart';
 import 'logbook_card.dart';
 
 /// The corner that's just for the two of them. For now: the logbook.
@@ -24,6 +25,8 @@ class UsScreen extends StatelessWidget {
           Text(Words.usSubline, style: AppType.goldLabel),
           const SizedBox(height: 16),
           LogbookCard(stats: stats),
+          const SizedBox(height: 12),
+          const ConnectionCard(),
         ],
       ),
     );

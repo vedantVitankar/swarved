@@ -30,6 +30,22 @@ class Labels {
   static String minutesToday(int minutes) => '$minutes min today';
   static String mostPlayed(String artist) => 'Most played · $artist';
 
+  // Server connection.
+  static const connection = 'Connection';
+  static const tokenHint = 'Server token';
+  static const saveAndTest = 'Save and test';
+  static const testConnection = 'Test connection';
+  static const forgetToken = 'Forget token';
+  static const noTokenSaved = 'No token saved';
+  static const tokenSaved = 'Token saved';
+  static const connectionChecking = 'Checking…';
+  static const connectionOk = 'Connected';
+  static const connectionBadToken = 'The server rejected this token';
+  static const connectionUnreachable =
+      'Server unreachable. Your local music still works.';
+  static const connectionUnexpected =
+      'The server answered, but not as expected';
+
   // Player controls: tooltips and screen-reader names.
   static const play = 'Play';
   static const pause = 'Pause';
