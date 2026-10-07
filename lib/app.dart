@@ -11,6 +11,7 @@ import 'theme/app_theme.dart';
 import 'widgets/text_scale_scope.dart';
 import 'services/connection_service.dart';
 import 'services/stream_endpoint.dart';
+import 'services/queue_prefetcher.dart';
 
 class SwarVedApp extends StatelessWidget {
   final StatsService statsService;
@@ -37,7 +38,11 @@ class SwarVedApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: statsService),
         ChangeNotifierProvider.value(value: libraryService),
         ChangeNotifierProvider(
-          create: (_) => PlayerService(statsService, streamEndpoint),
+          create: (_) => PlayerService(
+            statsService,
+            streamEndpoint,
+            prefetcher: QueuePrefetcher(api: serverApi),
+          ),
         ),
         Provider.value(value: serverConfig),
         Provider.value(value: serverApi),

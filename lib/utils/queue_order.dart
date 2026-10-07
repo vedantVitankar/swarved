@@ -34,6 +34,16 @@ class QueueOrder {
   bool get hasPrevious =>
       _order.isNotEmpty && (_cursor > 0 || repeat == QueueRepeat.all);
 
+  /// The position a skip would go to next, without moving. Null when there
+  /// is no next song, or when it can't be known yet: with shuffle and repeat
+  /// all, the next round is only shuffled once this one ends.
+  int? get upcomingIndex {
+    if (_order.isEmpty) return null;
+    if (_cursor < _order.length - 1) return _order[_cursor + 1];
+    if (repeat == QueueRepeat.all && !_shuffle) return _order[0];
+    return null;
+  }
+
   /// Begins a new queue of [length] songs, playing [startIndex] first.
   void start({required int length, required int startIndex}) {
     if (length <= 0) {

@@ -206,4 +206,50 @@ void main() {
       expect(order.hasNext, isTrue);
     });
   });
+
+  group('upcomingIndex', () {
+    test('is the next position, and does not move', () {
+      final order = _started(length: 3);
+
+      expect(order.upcomingIndex, 1);
+      expect(order.upcomingIndex, 1);
+      expect(order.currentIndex, 0);
+    });
+
+    test('is null on the last song with repeat off', () {
+      final order = _started(length: 3, start: 2);
+
+      expect(order.upcomingIndex, isNull);
+    });
+
+    test('wraps to the first song with repeat all', () {
+      final order = _started(length: 3, start: 2, repeat: QueueRepeat.all);
+
+      expect(order.upcomingIndex, 0);
+    });
+
+    test('with shuffle, is the song advance() then returns', () {
+      final order = _started(length: 5, shuffle: true, seed: 3);
+      final upcoming = order.upcomingIndex;
+
+      expect(order.advance(), upcoming);
+    });
+
+    test('is unknown at the end of a shuffled round with repeat all', () {
+      final order = _started(
+        length: 3,
+        shuffle: true,
+        repeat: QueueRepeat.all,
+      );
+      order
+        ..advance()
+        ..advance();
+
+      expect(order.upcomingIndex, isNull);
+    });
+
+    test('is null for an empty queue', () {
+      expect(QueueOrder().upcomingIndex, isNull);
+    });
+  });
 }

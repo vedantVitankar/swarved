@@ -9,6 +9,7 @@ import '../models/track.dart';
 import '../utils/queue_order.dart';
 import '../utils/volume_level.dart';
 import 'stats_service.dart';
+import 'queue_prefetcher.dart';
 import 'stream_endpoint.dart';
 
 /// just_audio_background (and the MediaItem tag it requires) only works
@@ -59,6 +60,10 @@ class PlayerService extends ChangeNotifier {
   final StatsService statsService;
   final StreamEndpoint _streams;
 
+  /// Asks the server to download the next song while this one plays.
+  /// Optional, so nothing else about the player depends on it.
+  final QueuePrefetcher? _prefetcher;
+
   /// Which song follows which. Shuffle and repeat rules live here, so this
   /// service only has to ask "what's next?".
   final QueueOrder _order = QueueOrder();
@@ -89,7 +94,11 @@ class PlayerService extends ChangeNotifier {
   /// The level before mute, so unmuting goes back where the listener was.
   double _premuteVolume = VolumeLevel.defaultLevel;
 
-  PlayerService(this.statsService, this._streams) {
+  PlayerService(
+    this.statsService,
+    this._streams, {
+    QueuePrefetcher? prefetcher,
+  }) : _prefetcher = prefetcher {
     _player.playerStateStream
         .listen((_) => notifyListeners(), onError: _onPlaybackError);
     _player.playbackEventStream.listen((_) {}, onError: _onPlaybackError);
@@ -158,6 +167,7 @@ class PlayerService extends ChangeNotifier {
   /// dropped connection left it.
   Future<void> _loadAndPlay({Duration? resumeAt}) async {
     final serial = ++_loadSerial;
+    _prefetcher?.cancel(); // a new song: the old "next" no longer applies
     final track = current;
     _problem = null;
     _resumeAt = null;
@@ -184,6 +194,7 @@ class PlayerService extends ChangeNotifier {
       return;
     }
 
+    _schedulePrefetch();
     if (resumeAt != null) await _player.seek(resumeAt);
     await _player.play();
   }
@@ -314,6 +325,7 @@ class PlayerService extends ChangeNotifier {
   void toggleShuffle() {
     _order.setShuffle(!_order.shuffle);
     notifyListeners();
+    _schedulePrefetch(); // the next song may have changed
   }
 
   /// Off, then all, then one, then off again.
@@ -324,6 +336,25 @@ class PlayerService extends ChangeNotifier {
       QueueRepeat.one => QueueRepeat.off,
     };
     notifyListeners();
+    _schedulePrefetch();
+  }
+
+  /// Lines up the server's download of the song after this one. Only while
+  /// this one is really loaded, so a failed or loading song asks for nothing.
+  void _schedulePrefetch() {
+    if (_loading || _problem != null || current == null) return;
+    _prefetcher?.schedule(_upcomingTrack());
+  }
+
+  /// The song a skip would go to, or null when there is none, it can't be
+  /// known yet, or the listener is looping the current one.
+  Track? _upcomingTrack() {
+    if (_order.repeat == QueueRepeat.one) return null;
+    final index = _order.upcomingIndex;
+    if (index == null || index == _currentIndex || index >= _queue.length) {
+      return null;
+    }
+    return _queue[index];
   }
 
   Future<void> _switchTo(int index) async {
@@ -433,6 +464,7 @@ class PlayerService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _prefetcher?.dispose();
     // App closing mid-track is the same as a manual skip — same rules.
     _logCurrentListen(completedNaturally: false);
     _player.dispose();
