@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/playback_problem.dart';
 import '../models/track.dart';
 import '../utils/queue_order.dart';
 import '../utils/volume_level.dart';
@@ -24,9 +26,30 @@ const _kVolumeKey = 'player_volume_v1';
 /// should still count, even though it's under 30 seconds.
 const _kMinPartialListenThreshold = Duration(seconds: 30);
 
+/// How long the player gets to open a stream the server has already vouched
+/// for, before the song is given up on.
+const _kLoadTimeout = Duration(seconds: 20);
+
 /// Pressing "previous" restarts the current song if more than this much of
 /// it has played, and only goes back a song when you're near its start.
 const _kRestartThreshold = Duration(seconds: 3);
+
+/// How one attempt to load a song went.
+class _LoadResult {
+  const _LoadResult.ok()
+      : ok = true,
+        problem = null;
+
+  /// Not loaded, but nothing to tell the listener: a newer song took over.
+  const _LoadResult.skipped()
+      : ok = false,
+        problem = null;
+
+  const _LoadResult.failed(PlaybackProblem this.problem) : ok = false;
+
+  final bool ok;
+  final PlaybackProblem? problem;
+}
 
 class PlayerService extends ChangeNotifier {
   /// Request headers go straight to the platform's own player instead of
@@ -48,13 +71,28 @@ class PlayerService extends ChangeNotifier {
   /// a song the player isn't playing.
   String? _loadedId;
 
+  /// True from tapping a YouTube song until it is loaded. Local songs load
+  /// too fast to be worth showing, so they never set it.
+  bool _loading = false;
+
+  /// Bumped by every load. A load that finishes under an older number was
+  /// replaced by a newer song, and must not touch the state.
+  int _loadSerial = 0;
+
+  PlaybackProblem? _problem;
+
+  /// Where a song was when its connection dropped, so retry can resume there.
+  Duration? _resumeAt;
+
   double _volume = VolumeLevel.defaultLevel;
 
   /// The level before mute, so unmuting goes back where the listener was.
   double _premuteVolume = VolumeLevel.defaultLevel;
 
   PlayerService(this.statsService, this._streams) {
-    _player.playerStateStream.listen((_) => notifyListeners());
+    _player.playerStateStream
+        .listen((_) => notifyListeners(), onError: _onPlaybackError);
+    _player.playbackEventStream.listen((_) {}, onError: _onPlaybackError);
     _player.positionStream.listen((_) => notifyListeners());
 
     _player.processingStateStream.listen((state) {
@@ -74,6 +112,23 @@ class PlayerService extends ChangeNotifier {
       : null;
 
   bool get isPlaying => _player.playing;
+
+  /// Why the current song isn't playing, or null when nothing is wrong.
+  PlaybackProblem? get problem => _problem;
+
+  /// True while a YouTube song is being fetched, or the player is waiting
+  /// for more of it to arrive. Never true for local songs.
+  bool get isLoading {
+    if (_problem != null) return false; // the message takes over
+    if (_loading) return true;
+    final track = current;
+    if (track == null || track.isLocal) return false;
+    return switch (_player.processingState) {
+      ProcessingState.loading || ProcessingState.buffering => true,
+      _ => false,
+    };
+  }
+
   Duration get position => _player.position;
   Duration get bufferedPosition => _player.bufferedPosition;
   Duration get duration => _player.duration ?? Duration.zero;
@@ -95,26 +150,61 @@ class PlayerService extends ChangeNotifier {
     _queue = tracks;
     _order.start(length: tracks.length, startIndex: startIndex);
     _currentIndex = _order.currentIndex ?? 0;
-    if (await _loadCurrent()) await _player.play();
+    await _loadAndPlay();
   }
 
-  /// Loads the current song into the player. Returns false when it could
-  /// not be loaded, so the caller doesn't start playback.
-  Future<bool> _loadCurrent() async {
+  /// Loads the current song and starts it, keeping [isLoading] and
+  /// [problem] up to date on the way. [resumeAt] picks a song up where a
+  /// dropped connection left it.
+  Future<void> _loadAndPlay({Duration? resumeAt}) async {
+    final serial = ++_loadSerial;
     final track = current;
-    if (track == null) return false;
+    _problem = null;
+    _resumeAt = null;
+    _loading = track != null && !track.isLocal;
+    notifyListeners();
+
+    var result = const _LoadResult.skipped();
+    try {
+      result = await _loadCurrent();
+    } finally {
+      if (serial == _loadSerial) {
+        _loading = false;
+        _problem = result.problem;
+        notifyListeners();
+      }
+    }
+
+    if (serial != _loadSerial) return; // a newer song took over
+
+    if (!result.ok) {
+      // The song that was playing before must not carry on under a message
+      // saying this one can't play.
+      if (result.problem != null) await _player.stop();
+      return;
+    }
+
+    if (resumeAt != null) await _player.seek(resumeAt);
+    await _player.play();
+  }
+
+  /// Loads the current song into the player.
+  Future<_LoadResult> _loadCurrent() async {
+    final track = current;
+    if (track == null) return const _LoadResult.skipped();
 
     _loadedId = null;
-    final loaded =
+    final result =
         track.isLocal ? await _loadLocal(track) : await _loadRemote(track);
 
     // Another song may have been chosen while this one was loading.
-    if (!loaded || !identical(track, current)) return false;
-    _loadedId = track.id;
-    return true;
+    if (!identical(track, current)) return const _LoadResult.skipped();
+
+    if (result.ok) _loadedId = track.id;
+    return result;
   }
 
-  Future<bool> _loadLocal(Track track) async {
+  Future<_LoadResult> _loadLocal(Track track) async {
     if (_supportsBackgroundPlayback) {
       await _player.setAudioSource(
         AudioSource.uri(Uri.file(track.filePath), tag: _mediaItem(track)),
@@ -122,32 +212,40 @@ class PlayerService extends ChangeNotifier {
     } else {
       await _player.setFilePath(track.filePath);
     }
-    return true;
+    return const _LoadResult.ok();
   }
 
-  /// Streams a YouTube song from the SwarVed server. The player sends the
-  /// token itself, so the audio never has to touch the app's own code.
-  Future<bool> _loadRemote(Track track) async {
-    final stream = await _streams.requestFor(track);
-    if (stream == null) {
-      debugPrint('No stream address for ${track.id} (is a token saved?)');
-      return false;
+  /// Streams a YouTube song from the SwarVed server. The server is asked
+  /// first, so a problem can be named. After that the player sends the token
+  /// itself, so the audio never has to touch the app's own code.
+  Future<_LoadResult> _loadRemote(Track track) async {
+    final outcome = await _streams.prepare(track);
+    final StreamRequest stream;
+    switch (outcome) {
+      case StreamBlocked(:final problem):
+        return _LoadResult.failed(problem);
+      case StreamReady(:final request):
+        stream = request;
     }
 
     try {
-      await _player.setAudioSource(
-        AudioSource.uri(
-          stream.uri,
-          headers: stream.headers,
-          tag: _supportsBackgroundPlayback ? _mediaItem(track) : null,
-        ),
-      );
-      return true;
+      await _player
+          .setAudioSource(
+            AudioSource.uri(
+              stream.uri,
+              headers: stream.headers,
+              tag: _supportsBackgroundPlayback ? _mediaItem(track) : null,
+            ),
+          )
+          .timeout(_kLoadTimeout);
+      return const _LoadResult.ok();
     } on PlayerInterruptedException {
-      return false; // a newer song was chosen while this one was loading
+      return const _LoadResult.skipped(); // a newer song replaced this one
+    } on TimeoutException {
+      return const _LoadResult.failed(PlaybackProblem.timeout);
     } catch (e) {
       debugPrint('Could not stream ${track.id}: $e');
-      return false;
+      return const _LoadResult.failed(PlaybackProblem.unexpected);
     }
   }
 
@@ -163,12 +261,26 @@ class PlayerService extends ChangeNotifier {
     );
   }
 
+  /// Play/pause. When the current song has a problem, this is also the way
+  /// to try it again, so no mini player needs a button of its own for that.
   Future<void> togglePlayPause() async {
+    if (_loading) return; // already working on it
+    if (_problem != null) {
+      await retry();
+      return;
+    }
     if (_player.playing) {
       await _player.pause();
     } else {
       await _player.play();
     }
+  }
+
+  /// Tries the current song again, from where it stopped if its connection
+  /// dropped part-way through.
+  Future<void> retry() async {
+    if (current == null || _loading) return;
+    await _loadAndPlay(resumeAt: _resumeAt);
   }
 
   /// User-initiated skip forward. Logs the OLD track (by actual position
@@ -216,7 +328,7 @@ class PlayerService extends ChangeNotifier {
 
   Future<void> _switchTo(int index) async {
     _currentIndex = index;
-    if (await _loadCurrent()) await _player.play();
+    await _loadAndPlay();
   }
 
   /// Internal-only advance used after a track finishes on its own.
@@ -302,6 +414,21 @@ class PlayerService extends ChangeNotifier {
     if (!completedNaturally && listened < _kMinPartialListenThreshold) return;
 
     statsService.logListen(track, listened);
+  }
+
+  /// The player reports a failure while a song is playing (the connection
+  /// dropped, the server restarted). A failure while LOADING is reported by
+  /// the load itself, so it is ignored here.
+  void _onPlaybackError(Object error, [StackTrace? stackTrace]) {
+    final track = current;
+    if (_loading || track == null || _loadedId != track.id) return;
+
+    debugPrint('Playback error on ${track.id}: $error');
+    _resumeAt = _player.position;
+    _problem = track.isLocal
+        ? PlaybackProblem.unexpected
+        : PlaybackProblem.connectionLost;
+    notifyListeners();
   }
 
   @override

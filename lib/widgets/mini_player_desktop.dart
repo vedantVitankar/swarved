@@ -12,6 +12,7 @@ import 'play_pause_button.dart';
 import 'playback_mode_buttons.dart';
 import 'seek_bar.dart';
 import 'track_artwork.dart';
+import 'track_subtitle.dart';
 import 'volume_control.dart';
 
 /// The wide-window mini player, after Spotify's desktop bar: the song on the
@@ -82,10 +83,10 @@ class _SongZone extends StatelessWidget {
                             style: AppType.body,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
-                        Text(track.artist,
-                            style: AppType.caption,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
+                        TrackSubtitle(
+                          track: track,
+                          style: AppType.caption,
+                        ),
                       ],
                     ),
                   ),

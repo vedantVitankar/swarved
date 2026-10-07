@@ -8,8 +8,8 @@ import 'compact_icon_button.dart';
 enum PlayPauseStyle { glyph, disc }
 
 /// Used by both MiniPlayerBar and NowPlayingScreen. Selector-scoped to
-/// isPlaying only, so it does NOT rebuild on every position tick — only
-/// when play/pause actually toggles.
+/// isPlaying and isLoading only, so it does NOT rebuild on every position
+/// tick — only when play/pause toggles or a song starts or stops loading.
 class PlayPauseButton extends StatelessWidget {
   final PlayPauseStyle style;
   final double size;
@@ -24,9 +24,10 @@ class PlayPauseButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<PlayerService, bool>(
-      selector: (_, player) => player.isPlaying,
-      builder: (context, isPlaying, _) {
+    return Selector<PlayerService, (bool, bool)>(
+      selector: (_, player) => (player.isPlaying, player.isLoading),
+      builder: (context, state, _) {
+        final (isPlaying, isLoading) = state;
         final player = context.read<PlayerService>();
         final isDisc = style == PlayPauseStyle.disc;
         return CompactIconButton(
@@ -36,6 +37,7 @@ class PlayPauseButton extends StatelessWidget {
           iconSize: isDisc ? size * 0.52 : 28,
           color: isDisc ? AppColors.base : AppColors.textPrimary,
           background: isDisc ? AppColors.textPrimary : null,
+          busy: isLoading,
           onPressed: player.togglePlayPause,
         );
       },

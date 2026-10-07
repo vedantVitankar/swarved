@@ -13,6 +13,7 @@ import 'heart_button.dart';
 import 'play_pause_button.dart';
 import 'swipe_to_skip.dart';
 import 'track_artwork.dart';
+import 'track_subtitle.dart';
 
 /// The phone-sized mini player: artwork and title on the left (swipe them
 /// to skip), heart and play/pause on the right, a thin progress line along
@@ -82,10 +83,10 @@ class MiniPlayerCompact extends StatelessWidget {
                                   style: AppType.body,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis),
-                              Text(track.artist,
-                                  style: AppType.caption,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis),
+                              TrackSubtitle(
+                                track: track,
+                                style: AppType.caption,
+                              ),
                             ],
                           ),
                         ),

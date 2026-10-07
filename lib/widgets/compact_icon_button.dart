@@ -14,6 +14,9 @@ class CompactIconButton extends StatelessWidget {
   final double iconSize;
   final double boxSize;
 
+  /// Shows a small spinner in place of the icon while something loads.
+  final bool busy;
+
   const CompactIconButton({
     super.key,
     required this.icon,
@@ -23,6 +26,7 @@ class CompactIconButton extends StatelessWidget {
     this.background,
     this.iconSize = 24,
     this.boxSize = 40,
+    this.busy = false,
   });
 
   @override
@@ -36,7 +40,17 @@ class CompactIconButton extends StatelessWidget {
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onPressed,
-          child: Center(child: Icon(icon, size: iconSize, color: color)),
+          child: Center(
+            child: busy
+                ? SizedBox.square(
+                    dimension: iconSize * 0.8,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: color,
+                    ),
+                  )
+                : Icon(icon, size: iconSize, color: color),
+          ),
         ),
       ),
     );

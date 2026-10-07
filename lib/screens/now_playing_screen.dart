@@ -12,6 +12,7 @@ import '../widgets/play_pause_button.dart';
 import '../widgets/playback_mode_buttons.dart';
 import '../widgets/seek_bar.dart';
 import '../widgets/track_artwork.dart';
+import '../widgets/track_subtitle.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
@@ -95,11 +96,11 @@ class NowPlayingScreen extends StatelessWidget {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis),
                             const SizedBox(height: 6),
-                            Text(track.artist,
-                                style: AppType.bodyMuted,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis),
+                            TrackSubtitle(
+                              track: track,
+                              style: AppType.bodyMuted,
+                              textAlign: TextAlign.center,
+                            ),
                             const SizedBox(height: 24),
                             const SeekBar(),
                             const SizedBox(height: 16),
