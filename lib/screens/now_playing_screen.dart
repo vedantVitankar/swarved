@@ -85,6 +85,8 @@ class NowPlayingScreen extends StatelessWidget {
                           children: [
                             TrackArtwork(
                               bytes: track.artworkBytes,
+                              url: track.artworkUrl,
+                              sharpPixels: 544,
                               size: artSize,
                               iconSize: 64,
                               radius: AppShape.panel,

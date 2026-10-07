@@ -69,6 +69,7 @@ class _SongZone extends StatelessWidget {
                 children: [
                   TrackArtwork(
                     bytes: track.artworkBytes,
+                    url: track.artworkUrl,
                     size: 56,
                     iconSize: 22,
                     radius: AppShape.thumbnail,

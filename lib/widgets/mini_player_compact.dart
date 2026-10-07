@@ -69,6 +69,7 @@ class MiniPlayerCompact extends StatelessWidget {
                       children: [
                         TrackArtwork(
                           bytes: track.artworkBytes,
+                          url: track.artworkUrl,
                           size: _button,
                           iconSize: 18,
                           radius: AppShape.thumbnail,
