@@ -10,7 +10,9 @@ import 'track_artwork.dart';
 class TrackTile extends StatelessWidget {
   final Track track;
   final bool isActive;
-  final VoidCallback onTap;
+
+  /// Null shows the row without making it tappable.
+  final VoidCallback? onTap;
 
   const TrackTile({
     super.key,
@@ -35,6 +37,7 @@ class TrackTile extends StatelessWidget {
               children: [
                 TrackArtwork(
                   bytes: track.artworkBytes,
+                  url: track.artworkUrl,
                   radius: AppShape.thumbnail,
                 ),
                 const SizedBox(width: 12),

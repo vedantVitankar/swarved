@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'content/labels.dart';
-import 'content/words.dart';
 import 'screens/home/empty_library_state.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/library/library_screen.dart';
+import 'screens/search/search_screen.dart';
 import 'screens/us/us_screen.dart';
 import 'services/library_service.dart';
 import 'theme/colors.dart';
 import 'theme/responsive.dart';
-import 'widgets/coming_soon.dart';
 import 'widgets/mini_player_bar.dart';
 import 'widgets/swar_nav_bar.dart';
 import 'widgets/swar_nav_rail.dart';
@@ -50,7 +48,7 @@ class _RootShellState extends State<RootShell> {
       index: _tab,
       children: const [
         HomeScreen(),
-        ComingSoon(title: Labels.navSearch, message: Words.searchSoon),
+        SearchScreen(),
         LibraryScreen(),
         UsScreen(),
       ],

@@ -40,6 +40,28 @@ class Words {
   static const dedicationLabel = 'For you, $sweetheart';
   static const dedicationNote = 'Lorem ipsum dolor sit amet, consectetur.';
 
-  static const searchSoon = 'Soon you can look for any song from here.';
+  // Search.
+  static const searchTitle = 'What shall we hear?';
+  static const searchSubline = 'Your own songs first, then the whole wide world.';
+  static const searchIdle =
+      'A song, an artist, anything at all. SwarVed looks here first, then out in the world.';
+  static const searchLocalHeader = 'Already yours';
+  static const searchYoutubeHeader = 'Out in the world';
+  static const searching = 'Looking for it…';
+  static String searchNothingFor(String query) =>
+      'Nothing found for “$query”. Try another spelling, or the artist’s name.';
+  static const searchAllOwned =
+      'Everything we found is already in your library.';
+  static const searchNoToken =
+      'Add your server token in Us to search beyond this device.';
+  static const searchBadToken =
+      'The server didn’t accept your token. You can check it in Us.';
+  static const searchUnreachable =
+      'Couldn’t reach the server just now. Your own songs are still right here.';
+  static const searchUnexpected = 'Something went sideways with that search.';
+
+  /// Shown under the YouTube results until playback arrives (Phase 5).
+  static const youtubePlaySoon = 'Soon you can play these from here, too.';
+
   static const usSubline = 'This corner is just for the two of us.';
 }

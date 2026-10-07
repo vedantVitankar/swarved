@@ -30,6 +30,11 @@ class Labels {
   static String minutesToday(int minutes) => '$minutes min today';
   static String mostPlayed(String artist) => 'Most played · $artist';
 
+  // Search.
+  static const searchHint = 'Songs, artists, anything';
+  static const clearSearch = 'Clear search';
+  static const tryAgain = 'Try again';
+
   // Server connection.
   static const connection = 'Connection';
   static const tokenHint = 'Server token';

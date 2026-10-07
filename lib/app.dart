@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'root_shell.dart';
 import 'services/library_service.dart';
 import 'services/player_service.dart';
+import 'services/search_service.dart';
 import 'services/stats_service.dart';
 import 'services/server_api.dart';
 import 'services/server_config.dart';
@@ -36,6 +37,7 @@ class SwarVedApp extends StatelessWidget {
         Provider.value(value: serverConfig),
         Provider.value(value: serverApi),
         ChangeNotifierProvider.value(value: connectionService),
+        ChangeNotifierProvider(create: (_) => SearchService(api: serverApi)),
       ],
       child: MaterialApp(
         title: 'SwarVed',
