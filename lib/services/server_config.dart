@@ -1,3 +1,5 @@
+import '../models/prefetch_mode.dart';
+
 class ServerConfig {
   const ServerConfig();
 
@@ -17,6 +19,13 @@ class ServerConfig {
   Uri searchUri(String query, {int limit = 10}) {
     return Uri.parse('$baseUrl/api/search').replace(
       queryParameters: {'q': query, 'limit': '$limit'},
+    );
+  }
+
+  /// Where the server is asked to get songs ready ahead of time.
+  Uri prefetchUri(List<String> videoIds, PrefetchMode mode) {
+    return Uri.parse('$baseUrl/api/prefetch').replace(
+      queryParameters: {'ids': videoIds.join(','), 'mode': mode.name},
     );
   }
 }

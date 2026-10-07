@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../models/prefetch_mode.dart';
 import '../models/youtube_result.dart';
 import 'secure_token_store.dart';
 import 'server_config.dart';
@@ -44,12 +45,18 @@ class ServerApi {
   /// lets its answer arrive, instead of calling a healthy server unreachable.
   static const _searchTimeout = Duration(seconds: 10);
 
+  /// The server only queues the work and answers straight away.
+  static const _prefetchTimeout = Duration(seconds: 5);
+
+  /// The most songs the server accepts in one prefetch request.
+  static const maxPrefetchIds = 5;
+
   final ServerConfig _config;
   final TokenStore _tokenStore;
   final http.Client _client;
 
   Future<ServerResult<void>> healthCheck() {
-    return _getJson<void>(
+    return _requestJson<void>(
       _config.healthUri,
       timeout: _healthTimeout,
       parse: (body) {
@@ -69,7 +76,7 @@ class ServerApi {
     int limit = 10,
     Future<void>? abortTrigger,
   }) {
-    return _getJson<List<YoutubeResult>>(
+    return _requestJson<List<YoutubeResult>>(
       _config.searchUri(query, limit: limit),
       timeout: _searchTimeout,
       abortTrigger: abortTrigger,
@@ -77,13 +84,45 @@ class ServerApi {
     );
   }
 
-  /// One authenticated GET that answers with JSON. Every failure becomes a
-  /// [ServerResult], so callers never have to catch anything.
+  /// Asks the server to get songs ready before they are played. Returns the
+  /// ids the server actually queued: songs it already has, or is already
+  /// working on, are left out.
+  ///
+  /// Repeated ids are sent once, and only the first [maxPrefetchIds] are
+  /// sent. With nothing to ask for, no request is made.
+  Future<ServerResult<List<String>>> prefetch(
+    List<String> videoIds, {
+    required PrefetchMode mode,
+  }) {
+    final ids = videoIds.toSet().take(maxPrefetchIds).toList();
+    if (ids.isEmpty) {
+      return Future.value(const ServerOk<List<String>>([]));
+    }
+
+    return _requestJson<List<String>>(
+      _config.prefetchUri(ids, mode),
+      method: 'POST',
+      timeout: _prefetchTimeout,
+      parse: (body) {
+        if (body is! Map<String, dynamic> || body['queued'] is! List) {
+          throw const FormatException('unexpected prefetch response');
+        }
+        return [
+          for (final id in body['queued'] as List)
+            if (id is String) id,
+        ];
+      },
+    );
+  }
+
+  /// One authenticated request that answers with JSON. Every failure becomes
+  /// a [ServerResult], so callers never have to catch anything.
   ///
   /// [parse] turns the decoded body into the value. It throws a
   /// [FormatException] when the body is not what the server promised.
-  Future<ServerResult<T>> _getJson<T>(
+  Future<ServerResult<T>> _requestJson<T>(
     Uri uri, {
+    String method = 'GET',
     required Duration timeout,
     required T Function(Object? body) parse,
     Future<void>? abortTrigger,
@@ -102,7 +141,7 @@ class ServerApi {
 
     try {
       final request = http.AbortableRequest(
-        'GET',
+        method,
         uri,
         abortTrigger: abortTrigger,
       )..headers['X-Token'] = token;
