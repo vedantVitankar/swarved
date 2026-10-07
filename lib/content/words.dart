@@ -42,7 +42,8 @@ class Words {
 
   // Search.
   static const searchTitle = 'What shall we hear?';
-  static const searchSubline = 'Your own songs first, then the whole wide world.';
+  static const searchSubline =
+      'Your own songs first, then the whole wide world.';
   static const searchIdle =
       'A song, an artist, anything at all. SwarVed looks here first, then out in the world.';
   static const searchLocalHeader = 'Already yours';
@@ -59,9 +60,6 @@ class Words {
   static const searchUnreachable =
       'Couldn’t reach the server just now. Your own songs are still right here.';
   static const searchUnexpected = 'Something went sideways with that search.';
-
-  /// Shown under the YouTube results until playback arrives (Phase 5).
-  static const youtubePlaySoon = 'Soon you can play these from here, too.';
 
   static const usSubline = 'This corner is just for the two of us.';
 }

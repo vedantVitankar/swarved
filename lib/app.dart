@@ -10,6 +10,7 @@ import 'services/server_config.dart';
 import 'theme/app_theme.dart';
 import 'widgets/text_scale_scope.dart';
 import 'services/connection_service.dart';
+import 'services/stream_endpoint.dart';
 
 class SwarVedApp extends StatelessWidget {
   final StatsService statsService;
@@ -17,6 +18,7 @@ class SwarVedApp extends StatelessWidget {
   final ServerConfig serverConfig;
   final ServerApi serverApi;
   final ConnectionService connectionService;
+  final StreamEndpoint streamEndpoint;
 
   const SwarVedApp({
     super.key,
@@ -25,6 +27,7 @@ class SwarVedApp extends StatelessWidget {
     required this.serverConfig,
     required this.serverApi,
     required this.connectionService,
+    required this.streamEndpoint,
   });
 
   @override
@@ -33,7 +36,9 @@ class SwarVedApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider.value(value: statsService),
         ChangeNotifierProvider.value(value: libraryService),
-        ChangeNotifierProvider(create: (_) => PlayerService(statsService)),
+        ChangeNotifierProvider(
+          create: (_) => PlayerService(statsService, streamEndpoint),
+        ),
         Provider.value(value: serverConfig),
         Provider.value(value: serverApi),
         ChangeNotifierProvider.value(value: connectionService),

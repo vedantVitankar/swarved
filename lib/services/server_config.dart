@@ -5,6 +5,13 @@ class ServerConfig {
 
   Uri get healthUri => Uri.parse('$baseUrl/health');
 
+  /// Where the audio of one YouTube song is streamed from.
+  Uri playUri(String videoId) {
+    return Uri.parse('$baseUrl/api/play').replace(
+      queryParameters: {'id': videoId},
+    );
+  }
+
   /// Where a search for [query] goes. The query is encoded for the URL here,
   /// so spaces and non-English letters travel safely.
   Uri searchUri(String query, {int limit = 10}) {

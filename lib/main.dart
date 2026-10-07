@@ -10,6 +10,7 @@ import 'services/server_api.dart';
 import 'services/server_config.dart';
 import 'services/secure_token_store.dart';
 import 'services/connection_service.dart';
+import 'services/stream_endpoint.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +47,11 @@ Future<void> main() async {
     tokenStore: tokenStore,
   );
 
+  final streamEndpoint = StreamEndpoint(
+    config: serverConfig,
+    tokenStore: tokenStore,
+  );
+
   final connectionService = ConnectionService(
     api: serverApi,
     tokenStore: tokenStore,
@@ -57,6 +63,7 @@ Future<void> main() async {
     libraryService: libraryService,
     serverConfig: serverConfig,
     serverApi: serverApi,
+    streamEndpoint: streamEndpoint,
     connectionService: connectionService,
   ));
 }

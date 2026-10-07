@@ -7,6 +7,7 @@ import '../models/track.dart';
 import '../utils/queue_order.dart';
 import '../utils/volume_level.dart';
 import 'stats_service.dart';
+import 'stream_endpoint.dart';
 
 /// just_audio_background (and the MediaItem tag it requires) only works
 /// on Android, iOS, and macOS — audio_service doesn't support Windows or
@@ -28,8 +29,12 @@ const _kMinPartialListenThreshold = Duration(seconds: 30);
 const _kRestartThreshold = Duration(seconds: 3);
 
 class PlayerService extends ChangeNotifier {
-  final AudioPlayer _player = AudioPlayer();
+  /// Request headers go straight to the platform's own player instead of
+  /// through just_audio's local cleartext proxy. YouTube songs need the
+  /// X-Token header, and the app only ever talks HTTPS.
+  final AudioPlayer _player = AudioPlayer(useProxyForRequestHeaders: false);
   final StatsService statsService;
+  final StreamEndpoint _streams;
 
   /// Which song follows which. Shuffle and repeat rules live here, so this
   /// service only has to ask "what's next?".
@@ -38,12 +43,17 @@ class PlayerService extends ChangeNotifier {
   List<Track> _queue = [];
   int _currentIndex = -1;
 
+  /// The id of the song the player actually holds. Null while a song is
+  /// still loading or failed to load, so listening time is never credited to
+  /// a song the player isn't playing.
+  String? _loadedId;
+
   double _volume = VolumeLevel.defaultLevel;
 
   /// The level before mute, so unmuting goes back where the listener was.
   double _premuteVolume = VolumeLevel.defaultLevel;
 
-  PlayerService(this.statsService) {
+  PlayerService(this.statsService, this._streams) {
     _player.playerStateStream.listen((_) => notifyListeners());
     _player.positionStream.listen((_) => notifyListeners());
 
@@ -85,30 +95,72 @@ class PlayerService extends ChangeNotifier {
     _queue = tracks;
     _order.start(length: tracks.length, startIndex: startIndex);
     _currentIndex = _order.currentIndex ?? 0;
-    await _loadCurrent();
-    await _player.play();
+    if (await _loadCurrent()) await _player.play();
   }
 
-  Future<void> _loadCurrent() async {
+  /// Loads the current song into the player. Returns false when it could
+  /// not be loaded, so the caller doesn't start playback.
+  Future<bool> _loadCurrent() async {
     final track = current;
-    if (track == null) return;
+    if (track == null) return false;
 
+    _loadedId = null;
+    final loaded =
+        track.isLocal ? await _loadLocal(track) : await _loadRemote(track);
+
+    // Another song may have been chosen while this one was loading.
+    if (!loaded || !identical(track, current)) return false;
+    _loadedId = track.id;
+    return true;
+  }
+
+  Future<bool> _loadLocal(Track track) async {
     if (_supportsBackgroundPlayback) {
       await _player.setAudioSource(
-        AudioSource.uri(
-          Uri.file(track.filePath),
-          tag: MediaItem(
-            id: track.id,
-            title: track.title,
-            artist: track.artist,
-            album: track.album,
-            duration: track.duration == Duration.zero ? null : track.duration,
-          ),
-        ),
+        AudioSource.uri(Uri.file(track.filePath), tag: _mediaItem(track)),
       );
     } else {
       await _player.setFilePath(track.filePath);
     }
+    return true;
+  }
+
+  /// Streams a YouTube song from the SwarVed server. The player sends the
+  /// token itself, so the audio never has to touch the app's own code.
+  Future<bool> _loadRemote(Track track) async {
+    final stream = await _streams.requestFor(track);
+    if (stream == null) {
+      debugPrint('No stream address for ${track.id} (is a token saved?)');
+      return false;
+    }
+
+    try {
+      await _player.setAudioSource(
+        AudioSource.uri(
+          stream.uri,
+          headers: stream.headers,
+          tag: _supportsBackgroundPlayback ? _mediaItem(track) : null,
+        ),
+      );
+      return true;
+    } on PlayerInterruptedException {
+      return false; // a newer song was chosen while this one was loading
+    } catch (e) {
+      debugPrint('Could not stream ${track.id}: $e');
+      return false;
+    }
+  }
+
+  MediaItem _mediaItem(Track track) {
+    final art = track.artworkUrl;
+    return MediaItem(
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      album: track.album.isEmpty ? null : track.album,
+      duration: track.duration == Duration.zero ? null : track.duration,
+      artUri: art == null ? null : Uri.tryParse(art),
+    );
   }
 
   Future<void> togglePlayPause() async {
@@ -164,8 +216,7 @@ class PlayerService extends ChangeNotifier {
 
   Future<void> _switchTo(int index) async {
     _currentIndex = index;
-    await _loadCurrent();
-    await _player.play();
+    if (await _loadCurrent()) await _player.play();
   }
 
   /// Internal-only advance used after a track finishes on its own.
@@ -231,7 +282,7 @@ class PlayerService extends ChangeNotifier {
   ///   number), and only counts if that's 30 seconds or more.
   void _logCurrentListen({required bool completedNaturally}) {
     final track = current;
-    if (track == null) return;
+    if (track == null || _loadedId != track.id) return;
 
     final Duration listened;
     if (completedNaturally) {

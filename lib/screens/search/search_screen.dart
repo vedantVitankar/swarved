@@ -39,9 +39,10 @@ class _SearchScreenState extends State<SearchScreen> {
     search.onQueryChanged('');
   }
 
-  void _playLocal(List<Track> matches, int index) {
+  /// Plays [tracks] starting at [index], and tucks the keyboard away.
+  void _play(List<Track> tracks, int index) {
     FocusScope.of(context).unfocus();
-    context.read<PlayerService>().playQueue(matches, startIndex: index);
+    context.read<PlayerService>().playQueue(tracks, startIndex: index);
   }
 
   @override
@@ -52,6 +53,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     final localMatches = searchLocal(library, search.query);
     final youtube = withoutLocalDuplicates(search.results, library);
+    final youtubeTracks = [for (final r in youtube) r.toTrack()];
 
     return SafeArea(
       child: Align(
@@ -87,7 +89,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               LocalResultsSection(
                                 matches: localMatches,
                                 activeId: activeId,
-                                onPlay: (i) => _playLocal(localMatches, i),
+                                onPlay: (i) => _play(localMatches, i),
                               ),
                               YoutubeResultsSection(
                                 status: search.status,
@@ -98,6 +100,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 hasToken: hasToken,
                                 activeId: activeId,
                                 onRetry: search.searchNow,
+                                onPlay: (i) => _play(youtubeTracks, i),
                               ),
                             ],
                           );

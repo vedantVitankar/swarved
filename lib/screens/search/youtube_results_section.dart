@@ -10,7 +10,6 @@ import 'search_section_header.dart';
 
 /// The YouTube half of the results, and every state it can be in:
 /// looking, found, nothing found, no token, unreachable, unexpected.
-/// For now the rows are shown but not playable; playback comes in Phase 5.
 class YoutubeResultsSection extends StatelessWidget {
   final YoutubeSearchStatus status;
 
@@ -28,6 +27,9 @@ class YoutubeResultsSection extends StatelessWidget {
   final String? activeId;
   final VoidCallback onRetry;
 
+  /// Called with the index of the tapped result.
+  final ValueChanged<int> onPlay;
+
   const YoutubeResultsSection({
     super.key,
     required this.status,
@@ -37,6 +39,7 @@ class YoutubeResultsSection extends StatelessWidget {
     required this.hasToken,
     required this.activeId,
     required this.onRetry,
+    required this.onPlay,
   });
 
   @override
@@ -44,10 +47,7 @@ class YoutubeResultsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SearchSectionHeader(
-          title: Words.searchYoutubeHeader,
-          caption: results.isEmpty ? null : Words.youtubePlaySoon,
-        ),
+        const SearchSectionHeader(title: Words.searchYoutubeHeader),
         if (status == YoutubeSearchStatus.loading) const _LoadingLine(),
         ..._body(),
       ],
@@ -57,7 +57,7 @@ class YoutubeResultsSection extends StatelessWidget {
   List<Widget> _body() {
     if (results.isNotEmpty) {
       return [
-        for (final result in results) _tile(result),
+        for (var i = 0; i < results.length; i++) _tile(results[i], i),
       ];
     }
 
@@ -68,9 +68,8 @@ class YoutubeResultsSection extends StatelessWidget {
         ],
       YoutubeSearchStatus.loaded => [
           SearchMessage(
-            text: allOwned
-                ? Words.searchAllOwned
-                : Words.searchNothingFor(query),
+            text:
+                allOwned ? Words.searchAllOwned : Words.searchNothingFor(query),
           ),
         ],
       YoutubeSearchStatus.unauthorized => [
@@ -95,12 +94,12 @@ class YoutubeResultsSection extends StatelessWidget {
     };
   }
 
-  Widget _tile(YoutubeResult result) {
+  Widget _tile(YoutubeResult result, int index) {
     final track = result.toTrack();
     return TrackTile(
       track: track,
       isActive: activeId == track.id,
-      onTap: null,
+      onTap: () => onPlay(index),
     );
   }
 }
