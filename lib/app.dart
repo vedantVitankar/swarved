@@ -15,6 +15,7 @@ import 'services/queue_prefetcher.dart';
 import 'services/save_controller.dart';
 import 'services/saved_songs_index.dart';
 import 'services/song_saver.dart';
+import 'services/content_service.dart';
 
 class SwarVedApp extends StatelessWidget {
   final StatsService statsService;
@@ -25,6 +26,7 @@ class SwarVedApp extends StatelessWidget {
   final StreamEndpoint streamEndpoint;
   final SavedSongsIndex savedSongsIndex;
   final SongSaver songSaver;
+  final ContentService contentService;
 
   const SwarVedApp({
     super.key,
@@ -36,6 +38,7 @@ class SwarVedApp extends StatelessWidget {
     required this.streamEndpoint,
     required this.savedSongsIndex,
     required this.songSaver,
+    required this.contentService,
   });
 
   @override
@@ -51,6 +54,7 @@ class SwarVedApp extends StatelessWidget {
             prefetcher: QueuePrefetcher(api: serverApi),
           ),
         ),
+        ChangeNotifierProvider.value(value: contentService),
         Provider.value(value: serverConfig),
         Provider.value(value: serverApi),
         ChangeNotifierProvider.value(value: connectionService),

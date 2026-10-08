@@ -13,6 +13,7 @@ import 'services/connection_service.dart';
 import 'services/stream_endpoint.dart';
 import 'services/saved_songs_index.dart';
 import 'services/song_saver.dart';
+import 'services/content_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,6 +69,9 @@ Future<void> main() async {
     index: savedSongsIndex,
   );
 
+  final contentService = ContentService();
+  await contentService.load();
+
   runApp(SwarVedApp(
     statsService: statsService,
     libraryService: libraryService,
@@ -77,5 +81,6 @@ Future<void> main() async {
     connectionService: connectionService,
     savedSongsIndex: savedSongsIndex,
     songSaver: songSaver,
+    contentService: contentService,
   ));
 }

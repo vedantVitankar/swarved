@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../content/labels.dart';
-import '../content/words.dart';
 import '../models/track.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
@@ -11,12 +10,12 @@ import '../theme/swar_glyphs.dart';
 import '../theme/typography.dart';
 import '../widgets/compact_icon_button.dart';
 import '../widgets/heart_button.dart';
-import '../widgets/note_card.dart';
 import '../widgets/play_pause_button.dart';
 import '../widgets/playback_mode_buttons.dart';
 import '../widgets/seek_bar.dart';
 import '../widgets/swar_icon.dart';
 import '../widgets/track_artwork.dart';
+import '../widgets/track_note_card.dart';
 import '../widgets/track_subtitle.dart';
 
 class NowPlayingScreen extends StatelessWidget {
@@ -167,13 +166,8 @@ class NowPlayingScreen extends StatelessWidget {
                                 const RepeatButton(),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            // Placeholder words, as in the preview, until
-                            // each song carries its own note.
-                            const NoteCard(
-                              label: Words.dedicationLabel,
-                              note: Words.dedicationNote,
-                            ),
+                            // His handwritten note for this song, if any.
+                            TrackNoteCard(track: track),
                             const SizedBox(height: 16),
                           ],
                         ),
