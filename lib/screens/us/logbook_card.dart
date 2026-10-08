@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../content/labels.dart';
+import '../../content/words.dart';
 import '../../services/stats_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/shape.dart';
@@ -33,7 +34,7 @@ class LogbookCard extends StatelessWidget {
           Text(
             topArtist != null
                 ? Labels.mostPlayed(topArtist)
-                : Labels.noPlaysYet,
+                : Words.noPlaysYet,
             style: AppType.bodyMuted,
           ),
           const SizedBox(height: 12),

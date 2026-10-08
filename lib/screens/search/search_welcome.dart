@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../content/words.dart';
+import '../../models/note_slot.dart';
 import '../../theme/typography.dart';
+import '../../widgets/slot_text.dart';
 import '../../widgets/sun_mark.dart';
 
 /// What the Search tab shows before anything is typed: the same quiet
@@ -32,10 +34,22 @@ class SearchWelcome extends StatelessWidget {
             const SizedBox(height: 10),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 260),
-              child: Text(
-                Words.searchIdle,
-                textAlign: TextAlign.center,
-                style: AppType.bodyMuted,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    Words.searchIdle,
+                    textAlign: TextAlign.center,
+                    style: AppType.bodyMuted,
+                  ),
+                  // His handwritten line, only when he has written one.
+                  SlotText(
+                    slot: NoteSlot.searchNote,
+                    style: AppType.note,
+                    textAlign: TextAlign.center,
+                    topGap: 14,
+                  ),
+                ],
               ),
             ),
           ],

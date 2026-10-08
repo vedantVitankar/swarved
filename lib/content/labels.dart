@@ -27,7 +27,6 @@ class Labels {
 
   // Logbook.
   static const logbook = 'Logbook';
-  static const noPlaysYet = 'No plays logged yet';
   static String minutesToday(int minutes) => '$minutes min today';
   static String mostPlayed(String artist) => 'Most played · $artist';
 

@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'note_line.dart';
+import 'note_slot.dart';
 import 'song_note.dart';
 import 'song_of_the_day.dart';
 import 'track.dart';
@@ -12,7 +14,20 @@ class ContentPack {
   /// The song he picked for today, or null when he hasn't picked one.
   final SongOfTheDay? songOfTheDay;
 
-  const ContentPack({this.notes = const [], this.songOfTheDay});
+  /// His notes for the places around the app. A slot with no notes is
+  /// simply absent.
+  final Map<NoteSlot, List<NoteLine>> slots;
+
+  /// A note for a folder, keyed by the folder name as [normalizeForMatch]
+  /// sees it, so "Slow dances" and "slow  dances!" are the same folder.
+  final Map<String, NoteLine> folderNotes;
+
+  const ContentPack({
+    this.notes = const [],
+    this.songOfTheDay,
+    this.slots = const {},
+    this.folderNotes = const {},
+  });
 
   static const empty = ContentPack();
 
@@ -35,8 +50,45 @@ class ContentPack {
     return ContentPack(
       notes: List.unmodifiable(notes),
       songOfTheDay: SongOfTheDay.tryParse(decoded['songOfTheDay']),
+      slots: _parseSlots(decoded['slots']),
+      folderNotes: _parseFolderNotes(decoded['folderNotes']),
     );
   }
+
+  static Map<NoteSlot, List<NoteLine>> _parseSlots(Object? raw) {
+    if (raw is! Map) return const {};
+    final slots = <NoteSlot, List<NoteLine>>{};
+    for (final slot in NoteSlot.values) {
+      final entries = raw[slot.name];
+      if (entries is! List) continue;
+      final lines = [
+        for (final entry in entries) NoteLine.tryParse(entry),
+      ].whereType<NoteLine>().toList();
+      if (lines.isNotEmpty) slots[slot] = List.unmodifiable(lines);
+    }
+    return Map.unmodifiable(slots);
+  }
+
+  static Map<String, NoteLine> _parseFolderNotes(Object? raw) {
+    if (raw is! List) return const {};
+    final notes = <String, NoteLine>{};
+    for (final entry in raw) {
+      if (entry is! Map) continue;
+      final folder = entry['folder'];
+      final line = NoteLine.tryParse(entry);
+      if (folder is! String || line == null) continue;
+      final key = normalizeForMatch(folder);
+      if (key.isNotEmpty) notes.putIfAbsent(key, () => line);
+    }
+    return Map.unmodifiable(notes);
+  }
+
+  /// His notes for [slot], possibly none.
+  List<NoteLine> linesFor(NoteSlot slot) => slots[slot] ?? const [];
+
+  /// The note for the folder called [folder], or null.
+  NoteLine? folderNoteFor(String folder) =>
+      folderNotes[normalizeForMatch(folder)];
 
   /// The first note that belongs to [track], or null.
   SongNote? noteFor(Track track) {

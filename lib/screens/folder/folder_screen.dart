@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../content/labels.dart';
+import '../../content/words.dart';
+import '../../models/note_line.dart';
 import '../../models/track.dart';
+import '../../services/content_service.dart';
 import '../../services/player_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/responsive.dart';
 import '../../theme/swar_glyphs.dart';
 import '../../theme/typography.dart';
 import '../../widgets/mini_player_bar.dart';
+import '../../widgets/note_card.dart';
 import '../../widgets/swar_icon.dart';
 import '../../widgets/track_tile.dart';
 
@@ -98,6 +102,9 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final note = context.select<ContentService, NoteLine?>(
+        (content) => content.folderNoteFor(title));
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Column(
@@ -106,6 +113,14 @@ class _Header extends StatelessWidget {
           Text(title, style: AppType.display),
           const SizedBox(height: 4),
           Text(Labels.songCount(songCount), style: AppType.caption),
+          // His note about this folder, if he wrote one.
+          if (note != null) ...[
+            const SizedBox(height: 12),
+            NoteCard(
+              label: note.label ?? Words.folderNoteLabel,
+              note: note.note,
+            ),
+          ],
         ],
       ),
     );

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../content/labels.dart';
 import '../../content/words.dart';
+import '../../models/note_slot.dart';
 import '../../services/library_service.dart';
 import '../../theme/typography.dart';
-import '../../widgets/note_card.dart';
 import '../../widgets/page_body.dart';
+import '../../widgets/slot_note_card.dart';
+import '../../widgets/slot_text.dart';
 import '../../widgets/swar_chips.dart';
 import '../folder/folder_screen.dart';
 import 'folder_tile_grid.dart';
@@ -60,7 +62,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           Text(Words.greeting(DateTime.now()), style: AppType.display),
           const SizedBox(height: 4),
-          Text(Words.homeSubline, style: AppType.goldLabel),
+          SlotText(
+            slot: NoteSlot.homeLine,
+            fallback: Words.homeSubline,
+            style: AppType.goldLabel,
+          ),
           const SizedBox(height: 12),
           SwarChips(
             labels: _chipLabels,
@@ -82,9 +88,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             // Brings its own gap above, and nothing when there is no pick.
             const HomeSongOfTheDay(),
             const SizedBox(height: 14),
-            const NoteCard(
-              label: Words.noteForYouLabel,
-              note: Words.noteForYou,
+            const SlotNoteCard(
+              slot: NoteSlot.homeNote,
+              defaultLabel: Words.noteForYouLabel,
+              fallbackNote: Words.noteForYou,
             ),
           ],
         ],

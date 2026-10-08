@@ -33,12 +33,19 @@ class Words {
   static const problemNoAudioFound =
       'No songs here yet. Try the folder where your music lives.';
 
-  // Placeholders until the real words arrive.
-  static const homeSubline = 'Lorem ipsum dolor sit amet';
+  // Used whenever he hasn't written a note of his own for these places.
+  // His notes, from content.json, take over from these.
+  static const homeSubline = 'Thinking of you, as always';
   static const noteForYouLabel = 'A note for you, $precious';
-  static const noteForYou = 'Lorem ipsum dolor sit amet, consectetur elit.';
+  static const noteForYou = 'I’ll always keep choosing you.';
   static const dedicationLabel = 'For you, $sweetheart';
-  static const dedicationNote = 'Lorem ipsum dolor sit amet, consectetur.';
+
+  // The gold labels above his notes in each place.
+  static const usNoteLabel = 'Just us, $baby';
+  static const libraryNoteLabel = 'On your shelf, $precious';
+  static const folderNoteLabel = 'About this one, $precious';
+
+  static const noPlaysYet = 'Nothing yet. Play me something, $baby.';
 
   /// The small gold line on the song of the day, unless he writes his own.
   static const songOfTheDayLabel = 'Song of the day, $sweetheart';

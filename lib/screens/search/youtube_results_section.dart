@@ -6,6 +6,7 @@ import '../../models/youtube_search_status.dart';
 import '../../theme/colors.dart';
 import '../../widgets/track_tile.dart';
 import 'search_message.dart';
+import 'searching_message.dart';
 import 'search_section_header.dart';
 import '../../widgets/save_button.dart';
 
@@ -64,8 +65,8 @@ class YoutubeResultsSection extends StatelessWidget {
 
     return switch (status) {
       YoutubeSearchStatus.idle => const [],
-      YoutubeSearchStatus.loading => const [
-          SearchMessage(text: Words.searching),
+      YoutubeSearchStatus.loading => [
+          SearchingMessage(query: query),
         ],
       YoutubeSearchStatus.loaded => [
           SearchMessage(

@@ -15,5 +15,59 @@
             "id": "yt:85E9Q5Wx210",
             "note": "A note on a YouTube song matches by id."
         }
+    ],
+    "slots": {
+        "homeLine": [
+            "Thinking of you, as always",
+            "Made for you, my precious",
+            "Every day with you starts a little more magical",
+            "Play something. I'm right here."
+        ],
+        "homeNote": [
+            "I'll always keep choosing you.",
+            "You're my home, a place where I can always come to.",
+            "This lifetime of Ved belongs to you. Ved is yours.",
+            {
+                "label": "Your weekly reminder, Precious",
+                "note": "This is your weekly reminder of how much I love you."
+            },
+            "Thank you for being the Swarnima you are.",
+            "I wish to be so close to you that even our atoms get confused about who they belong to."
+        ],
+        "usNote": [
+            "I leave a little space for you, wherever I am.",
+            "When I check my phone, I expect you to be there.",
+            "One day the distance will be zero. Until then, there's this.",
+            "In every life, I'd find you."
+        ],
+        "searchNote": [
+            "If a song makes you think of me, play it twice.",
+            "Look for the one that sounds like us.",
+            "Whatever you find, I hope it makes you smile."
+        ],
+        "libraryNote": [
+            "Every folder here is a mood, and all of them are you.",
+            "Some of these I found because of you. Some, for you.",
+            "I'd make a folder for every day I've loved you."
+        ],
+        "playingNote": [
+            "Whatever's playing, I'm thinking of you.",
+            "Close your eyes for this one, baby.",
+            "This one's better with you next to me.",
+            "If you're listening, you're thinking of me too."
+        ],
+        "loading": [
+            "Looking for it, baby…",
+            "One moment, my precious…",
+            "Fetching something good for you…",
+            "Hold on, swara…"
+        ]
+    },
+    "folderNotes": [
+        {
+            "folder": "Slow dances",
+            "label": "About this one, Precious",
+            "note": "For the nights I wish you were right here."
+        }
     ]
 }
