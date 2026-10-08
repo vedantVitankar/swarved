@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../content/labels.dart';
+import '../content/words.dart';
 import '../models/track.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
@@ -9,6 +10,8 @@ import '../theme/shape.dart';
 import '../theme/swar_glyphs.dart';
 import '../theme/typography.dart';
 import '../widgets/compact_icon_button.dart';
+import '../widgets/heart_button.dart';
+import '../widgets/note_card.dart';
 import '../widgets/play_pause_button.dart';
 import '../widgets/playback_mode_buttons.dart';
 import '../widgets/seek_bar.dart';
@@ -30,10 +33,18 @@ class NowPlayingScreen extends StatelessWidget {
   static const double _maxContentWidth = 420;
   static const double _minArtwork = 120;
 
-  /// Rough height of everything under the artwork (title, artist, seek bar,
-  /// controls and gaps). The artwork takes whatever is left; if the window
-  /// is still too short, the page scrolls instead of overflowing.
-  static const double _reservedHeight = 300;
+  /// Rough height of everything under the artwork (title, seek bar,
+  /// controls, the note card and the gaps). The artwork takes whatever is
+  /// left; if the window is still too short, the page scrolls instead of
+  /// overflowing.
+  static const double _reservedHeight = 380;
+
+  /// "Playing from Slow dances" for a folder song, or the search for a
+  /// YouTube song, which has no folder.
+  static String _playingFrom(Track track) =>
+      track.isLocal && track.folder.isNotEmpty
+          ? Labels.playingFrom(track.folder)
+          : Labels.playingFromSearch;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +69,8 @@ class NowPlayingScreen extends StatelessWidget {
           appBar: AppBar(
             backgroundColor: AppColors.base,
             elevation: 0,
+            scrolledUnderElevation: 0,
+            centerTitle: true,
             leading: IconButton(
               icon: const SwarIcon(
                 glyph: SwarGlyph.down,
@@ -66,6 +79,12 @@ class NowPlayingScreen extends StatelessWidget {
               ),
               tooltip: Labels.closePlayer,
               onPressed: () => Navigator.of(context).pop(),
+            ),
+            title: Text(
+              _playingFrom(track),
+              style: AppType.caption,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           body: SafeArea(
@@ -97,21 +116,35 @@ class NowPlayingScreen extends StatelessWidget {
                               iconSize: 64,
                               radius: AppShape.panel,
                             ),
-                            const SizedBox(height: 28),
-                            Text(track.title,
-                                style: AppType.trackTitle,
-                                textAlign: TextAlign.center,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis),
-                            const SizedBox(height: 6),
-                            TrackSubtitle(
-                              track: track,
-                              style: AppType.bodyMuted,
-                              textAlign: TextAlign.center,
+                            const SizedBox(height: 20),
+                            // Title and artist on the left, the heart on the
+                            // right, as in the preview.
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(track.title,
+                                          style: AppType.trackTitle,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis),
+                                      const SizedBox(height: 2),
+                                      TrackSubtitle(
+                                        track: track,
+                                        style: AppType.bodyMuted,
+                                        textAlign: TextAlign.start,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const HeartButton(iconSize: 26),
+                              ],
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 18),
                             const SeekBar(),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 8),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
@@ -119,20 +152,27 @@ class NowPlayingScreen extends StatelessWidget {
                                 CompactIconButton(
                                   icon: SwarGlyph.previous,
                                   tooltip: Labels.previousSong,
-                                  iconSize: 32,
-                                  boxSize: 48,
+                                  iconSize: 26,
+                                  boxSize: 44,
                                   onPressed: player.restartOrPrevious,
                                 ),
                                 const PlayPauseButton.disc(),
                                 CompactIconButton(
                                   icon: SwarGlyph.next,
                                   tooltip: Labels.nextSong,
-                                  iconSize: 32,
-                                  boxSize: 48,
+                                  iconSize: 26,
+                                  boxSize: 44,
                                   onPressed: player.next,
                                 ),
                                 const RepeatButton(),
                               ],
+                            ),
+                            const SizedBox(height: 20),
+                            // Placeholder words, as in the preview, until
+                            // each song carries its own note.
+                            const NoteCard(
+                              label: Words.dedicationLabel,
+                              note: Words.dedicationNote,
                             ),
                             const SizedBox(height: 16),
                           ],

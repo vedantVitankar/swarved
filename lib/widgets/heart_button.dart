@@ -9,8 +9,14 @@ import 'compact_icon_button.dart';
 class HeartButton extends StatelessWidget {
   final bool isFilled;
   final VoidCallback? onPressed;
+  final double iconSize;
 
-  const HeartButton({super.key, this.isFilled = false, this.onPressed});
+  const HeartButton({
+    super.key,
+    this.isFilled = false,
+    this.onPressed,
+    this.iconSize = 22,
+  });
 
   // A button with no handler would let the tap fall through to the card
   // behind it (and open Now Playing), so the dummy always has one.
@@ -20,7 +26,7 @@ class HeartButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return CompactIconButton(
       icon: isFilled ? SwarGlyph.heartFilled : SwarGlyph.heart,
-      iconSize: 22,
+      iconSize: iconSize,
       tooltip: isFilled ? Labels.unheartSong : Labels.heartSong,
       color: AppColors.accent,
       onPressed: onPressed ?? _absorbTap,

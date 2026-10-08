@@ -21,6 +21,7 @@ class Labels {
   static const openSettings = 'Open settings';
 
   static String playingFrom(String folder) => 'Playing from $folder';
+  static const playingFromSearch = 'Playing from your search';
 
   static String songCount(int count) => count == 1 ? '1 song' : '$count songs';
 
