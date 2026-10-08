@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../content/labels.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
+import '../theme/swar_glyphs.dart';
 import '../utils/queue_order.dart';
 import 'compact_icon_button.dart';
 
@@ -16,7 +17,7 @@ class ShuffleButton extends StatelessWidget {
       selector: (_, player) => player.shuffle,
       builder: (context, isOn, _) {
         return CompactIconButton(
-          icon: isOn ? Icons.shuffle_on : Icons.shuffle,
+          icon: SwarGlyph.shuffle,
           color: isOn ? AppColors.accent : AppColors.textSecondary,
           tooltip: isOn ? Labels.shuffleOff : Labels.shuffleOn,
           onPressed: context.read<PlayerService>().toggleShuffle,
@@ -37,9 +38,9 @@ class RepeatButton extends StatelessWidget {
       builder: (context, mode, _) {
         // The tooltip names what the NEXT tap will do.
         final (icon, tooltip) = switch (mode) {
-          QueueRepeat.off => (Icons.repeat, Labels.repeatAll),
-          QueueRepeat.all => (Icons.repeat_on, Labels.repeatOne),
-          QueueRepeat.one => (Icons.repeat_one_on, Labels.repeatOff),
+          QueueRepeat.off => (SwarGlyph.repeat, Labels.repeatAll),
+          QueueRepeat.all => (SwarGlyph.repeat, Labels.repeatOne),
+          QueueRepeat.one => (SwarGlyph.repeatOne, Labels.repeatOff),
         };
         return CompactIconButton(
           icon: icon,

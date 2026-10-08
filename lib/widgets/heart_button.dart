@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../content/labels.dart';
 import '../theme/colors.dart';
+import '../theme/swar_glyphs.dart';
 import 'compact_icon_button.dart';
 
 /// A dummy for now: it looks and reacts like a heart but keeps no state.
@@ -18,7 +19,7 @@ class HeartButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CompactIconButton(
-      icon: isFilled ? Icons.favorite : Icons.favorite_border,
+      icon: isFilled ? SwarGlyph.heartFilled : SwarGlyph.heart,
       iconSize: 22,
       tooltip: isFilled ? Labels.unheartSong : Labels.heartSong,
       color: AppColors.accent,

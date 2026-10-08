@@ -4,6 +4,7 @@ import '../content/labels.dart';
 import '../models/track.dart';
 import '../screens/now_playing_screen.dart';
 import '../services/player_service.dart';
+import '../theme/swar_glyphs.dart';
 import '../theme/colors.dart';
 import '../theme/responsive.dart';
 import '../theme/shape.dart';
@@ -98,14 +99,14 @@ class MiniPlayerCompact extends StatelessWidget {
                 const HeartButton(),
                 if (showSkipButtons)
                   CompactIconButton(
-                    icon: Icons.skip_previous,
+                    icon: SwarGlyph.previous,
                     tooltip: Labels.previousSong,
                     onPressed: player.restartOrPrevious,
                   ),
                 const PlayPauseButton.glyph(),
                 if (showSkipButtons)
                   CompactIconButton(
-                    icon: Icons.skip_next,
+                    icon: SwarGlyph.next,
                     tooltip: Labels.nextSong,
                     onPressed: player.next,
                   ),

@@ -4,6 +4,7 @@ import '../content/labels.dart';
 import '../models/track.dart';
 import '../screens/now_playing_screen.dart';
 import '../services/player_service.dart';
+import '../theme/swar_glyphs.dart';
 import '../theme/shape.dart';
 import '../theme/typography.dart';
 import 'compact_icon_button.dart';
@@ -126,13 +127,13 @@ class _ControlsZone extends StatelessWidget {
               children: [
                 const ShuffleButton(),
                 CompactIconButton(
-                  icon: Icons.skip_previous,
+                  icon: SwarGlyph.previous,
                   tooltip: Labels.previousSong,
                   onPressed: player.restartOrPrevious,
                 ),
                 const PlayPauseButton.disc(size: 40),
                 CompactIconButton(
-                  icon: Icons.skip_next,
+                  icon: SwarGlyph.next,
                   tooltip: Labels.nextSong,
                   onPressed: player.next,
                 ),

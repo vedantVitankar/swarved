@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../content/labels.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
+import '../theme/swar_glyphs.dart';
 import 'compact_icon_button.dart';
 
 enum PlayPauseStyle { glyph, disc }
@@ -31,7 +32,7 @@ class PlayPauseButton extends StatelessWidget {
         final player = context.read<PlayerService>();
         final isDisc = style == PlayPauseStyle.disc;
         return CompactIconButton(
-          icon: isPlaying ? Icons.pause : Icons.play_arrow,
+          icon: isPlaying ? SwarGlyph.pause : SwarGlyph.play,
           tooltip: isPlaying ? Labels.pause : Labels.play,
           boxSize: size,
           iconSize: isDisc ? size * 0.52 : 28,

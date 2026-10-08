@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../content/labels.dart';
 import '../../theme/colors.dart';
+import '../../theme/swar_glyphs.dart';
 import '../../theme/shape.dart';
 import '../../theme/typography.dart';
 import '../../widgets/compact_icon_button.dart';
+import '../../widgets/swar_icon.dart';
 
 /// The one search bar. A clear button appears once something is typed.
 /// The screen owns [controller], so the text survives switching tabs.
@@ -43,8 +45,8 @@ class SearchField extends StatelessWidget {
         hintText: Labels.searchHint,
         hintStyle: AppType.bodyMuted,
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
-        prefixIcon: const Icon(
-          Icons.search,
+        prefixIcon: const SwarIcon(
+          glyph: SwarGlyph.search,
           size: 20,
           color: AppColors.textFaint,
         ),
@@ -55,7 +57,7 @@ class SearchField extends StatelessWidget {
           builder: (context, value, _) {
             if (value.text.isEmpty) return const SizedBox.shrink();
             return CompactIconButton(
-              icon: Icons.close,
+              icon: SwarGlyph.close,
               iconSize: 18,
               boxSize: 36,
               color: AppColors.textSecondary,

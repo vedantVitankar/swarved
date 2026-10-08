@@ -35,6 +35,7 @@ preview HTML; the full idea is in `SwarVed — Project Brief.md`.
 - Every word the app says lives in `words.dart` or `labels.dart`.
 - Fonts are bundled in `assets/google_fonts` and never fetched online.
 - Personal content stays on the device.
+- Every icon is a `SwarGlyph` drawn by `SwarIcon`. No `Icons.*` in the app.
 
 ## App icon
 

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../content/labels.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
+import '../theme/swar_glyphs.dart';
+import 'swar_icon.dart';
 import '../utils/volume_level.dart';
 
 /// Speaker icon whose glyph follows the volume tier, plus a compact slider.
@@ -33,8 +35,8 @@ class VolumeControl extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   child: Padding(
                     padding: const EdgeInsets.all(6),
-                    child: Icon(
-                      _iconFor(VolumeLevel.tier(vol)),
+                    child: SwarIcon(
+                      glyph: _glyphFor(VolumeLevel.tier(vol)),
                       size: 20,
                       color: isMuted
                           ? AppColors.textFaint
@@ -61,10 +63,10 @@ class VolumeControl extends StatelessWidget {
     );
   }
 
-  static IconData _iconFor(VolumeTier tier) => switch (tier) {
-        VolumeTier.mute => Icons.volume_off,
-        VolumeTier.low => Icons.volume_down,
-        VolumeTier.mid => Icons.volume_down,
-        VolumeTier.high => Icons.volume_up,
+  static SwarGlyph _glyphFor(VolumeTier tier) => switch (tier) {
+        VolumeTier.mute => SwarGlyph.volumeOff,
+        VolumeTier.low => SwarGlyph.volumeLow,
+        VolumeTier.mid => SwarGlyph.volumeLow,
+        VolumeTier.high => SwarGlyph.volumeHigh,
       };
 }

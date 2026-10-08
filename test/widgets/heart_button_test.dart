@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:swarved/theme/swar_glyphs.dart';
 import 'package:swarved/widgets/heart_button.dart';
+import 'package:swarved/widgets/swar_icon.dart';
 
 /// A tappable surface with the heart on it, like the mini player card.
 Widget _surface({required VoidCallback onSurfaceTap, required Widget heart}) {
@@ -15,6 +17,9 @@ Widget _surface({required VoidCallback onSurfaceTap, required Widget heart}) {
     ),
   );
 }
+
+Finder _glyph(SwarGlyph glyph) =>
+    find.byWidgetPredicate((w) => w is SwarIcon && w.glyph == glyph);
 
 void main() {
   group('HeartButton', () {
@@ -58,13 +63,13 @@ void main() {
         (tester) async {
       await tester.pumpWidget(
           _surface(onSurfaceTap: () {}, heart: const HeartButton()));
-      expect(find.byIcon(Icons.favorite_border), findsOneWidget);
-      expect(find.byIcon(Icons.favorite), findsNothing);
+      expect(_glyph(SwarGlyph.heart), findsOneWidget);
+      expect(_glyph(SwarGlyph.heartFilled), findsNothing);
 
       await tester.pumpWidget(_surface(
           onSurfaceTap: () {}, heart: const HeartButton(isFilled: true)));
-      expect(find.byIcon(Icons.favorite), findsOneWidget);
-      expect(find.byIcon(Icons.favorite_border), findsNothing);
+      expect(_glyph(SwarGlyph.heartFilled), findsOneWidget);
+      expect(_glyph(SwarGlyph.heart), findsNothing);
     });
   });
 }

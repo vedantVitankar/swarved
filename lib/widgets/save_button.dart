@@ -6,6 +6,7 @@ import '../models/youtube_result.dart';
 import '../services/save_controller.dart';
 import '../services/song_saver.dart';
 import '../theme/colors.dart';
+import '../theme/swar_glyphs.dart';
 import 'compact_icon_button.dart';
 
 /// The button at the end of a YouTube result row: save, saving with progress,
@@ -41,7 +42,7 @@ class SaveButton extends StatelessWidget {
             );
           case SaveStage.saved:
             return const CompactIconButton(
-              icon: Icons.check_circle_outline,
+              icon: SwarGlyph.saved,
               onPressed: null,
               tooltip: SaveWords.saved,
               color: AppColors.accent,
@@ -49,7 +50,7 @@ class SaveButton extends StatelessWidget {
             );
           case SaveStage.failed:
             return CompactIconButton(
-              icon: Icons.refresh,
+              icon: SwarGlyph.refresh,
               onPressed: () => _save(context),
               tooltip: SaveWords.retry,
               color: AppColors.danger,
@@ -57,7 +58,7 @@ class SaveButton extends StatelessWidget {
             );
           case SaveStage.idle:
             return CompactIconButton(
-              icon: Icons.download_outlined,
+              icon: SwarGlyph.download,
               onPressed: () => _save(context),
               tooltip: SaveWords.save,
               color: AppColors.textSecondary,

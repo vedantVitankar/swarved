@@ -5,8 +5,10 @@ import '../../models/track.dart';
 import '../../services/player_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/responsive.dart';
+import '../../theme/swar_glyphs.dart';
 import '../../theme/typography.dart';
 import '../../widgets/mini_player_bar.dart';
+import '../../widgets/swar_icon.dart';
 import '../../widgets/track_tile.dart';
 
 /// One folder's songs. Opened from a Home tile or a Library row.
@@ -38,6 +40,15 @@ class FolderScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: AppColors.base,
         elevation: 0,
+        leading: IconButton(
+          icon: const SwarIcon(
+            glyph: SwarGlyph.back,
+            size: 24,
+            color: AppColors.textPrimary,
+          ),
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
         // The title scrolls under the bar; no colour shift while it does.
         scrolledUnderElevation: 0,
       ),

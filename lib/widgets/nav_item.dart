@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/typography.dart';
 import 'nav_destinations.dart';
+import 'swar_icon.dart';
 
 /// Icon over label. Cream when selected, faint otherwise.
 class NavItem extends StatelessWidget {
@@ -26,7 +27,7 @@ class NavItem extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(destination.icon, size: 22, color: color),
+            SwarIcon(glyph: destination.icon, size: 22, color: color),
             const SizedBox(height: 2),
             Text(destination.label,
                 style: AppType.caption.copyWith(color: color)),

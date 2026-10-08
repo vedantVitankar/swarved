@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../theme/swar_glyphs.dart';
 import '../utils/artwork_url.dart';
+import 'swar_icon.dart';
 
 /// The one place album-art rendering (with its empty-state icon) lives.
 /// Used by TrackTile, MiniPlayerBar, and NowPlayingScreen.
@@ -28,8 +30,11 @@ class TrackArtwork extends StatelessWidget {
     this.radius = 0,
   });
 
-  Widget get _placeholder =>
-      Icon(Icons.album_outlined, color: AppColors.textFaint, size: iconSize);
+  Widget get _placeholder => SwarIcon(
+        glyph: SwarGlyph.disc,
+        size: iconSize,
+        color: AppColors.textFaint,
+      );
 
   Widget _network(String original) {
     final wanted = sharpPixels;

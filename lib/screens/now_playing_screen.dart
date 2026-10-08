@@ -6,11 +6,13 @@ import '../models/track.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
 import '../theme/shape.dart';
+import '../theme/swar_glyphs.dart';
 import '../theme/typography.dart';
 import '../widgets/compact_icon_button.dart';
 import '../widgets/play_pause_button.dart';
 import '../widgets/playback_mode_buttons.dart';
 import '../widgets/seek_bar.dart';
+import '../widgets/swar_icon.dart';
 import '../widgets/track_artwork.dart';
 import '../widgets/track_subtitle.dart';
 
@@ -57,7 +59,11 @@ class NowPlayingScreen extends StatelessWidget {
             backgroundColor: AppColors.base,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.keyboard_arrow_down, size: 28),
+              icon: const SwarIcon(
+                glyph: SwarGlyph.down,
+                size: 28,
+                color: AppColors.textPrimary,
+              ),
               tooltip: Labels.closePlayer,
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -111,7 +117,7 @@ class NowPlayingScreen extends StatelessWidget {
                               children: [
                                 const ShuffleButton(),
                                 CompactIconButton(
-                                  icon: Icons.skip_previous,
+                                  icon: SwarGlyph.previous,
                                   tooltip: Labels.previousSong,
                                   iconSize: 32,
                                   boxSize: 48,
@@ -119,7 +125,7 @@ class NowPlayingScreen extends StatelessWidget {
                                 ),
                                 const PlayPauseButton.disc(),
                                 CompactIconButton(
-                                  icon: Icons.skip_next,
+                                  icon: SwarGlyph.next,
                                   tooltip: Labels.nextSong,
                                   iconSize: 32,
                                   boxSize: 48,

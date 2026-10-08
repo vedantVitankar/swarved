@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../theme/swar_glyphs.dart';
+import 'swar_icon.dart';
 
 /// A round icon button with an exact size (40 by default), shared by the
 /// mini player's controls, the heart and the cream play disc.
 /// Press and hover show the theme's soft blush. The [tooltip] names the
 /// button on hover (Windows) and to screen readers.
 class CompactIconButton extends StatelessWidget {
-  final IconData icon;
+  final SwarGlyph icon;
   final VoidCallback? onPressed;
   final String? tooltip;
   final Color color;
@@ -49,7 +51,7 @@ class CompactIconButton extends StatelessWidget {
                       color: color,
                     ),
                   )
-                : Icon(icon, size: iconSize, color: color),
+                : SwarIcon(glyph: icon, size: iconSize, color: color),
           ),
         ),
       ),

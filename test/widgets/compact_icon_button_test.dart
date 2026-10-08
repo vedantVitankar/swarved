@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:swarved/theme/swar_glyphs.dart';
 import 'package:swarved/widgets/compact_icon_button.dart';
 
 Widget _host(Widget child) =>
@@ -9,7 +10,7 @@ void main() {
   group('CompactIconButton', () {
     testWidgets('is a 40 by 40 target by default', (tester) async {
       await tester.pumpWidget(_host(
-        CompactIconButton(icon: Icons.add, onPressed: () {}),
+        CompactIconButton(icon: SwarGlyph.close, onPressed: () {}),
       ));
 
       expect(
@@ -19,7 +20,7 @@ void main() {
     testWidgets('calls onPressed when tapped', (tester) async {
       var pressed = 0;
       await tester.pumpWidget(_host(
-        CompactIconButton(icon: Icons.add, onPressed: () => pressed++),
+        CompactIconButton(icon: SwarGlyph.close, onPressed: () => pressed++),
       ));
 
       await tester.tap(find.byType(CompactIconButton));
@@ -29,7 +30,8 @@ void main() {
     testWidgets('names itself with a tooltip when one is given',
         (tester) async {
       await tester.pumpWidget(_host(
-        CompactIconButton(icon: Icons.add, tooltip: 'Add', onPressed: () {}),
+        CompactIconButton(
+            icon: SwarGlyph.close, tooltip: 'Add', onPressed: () {}),
       ));
 
       expect(find.byTooltip('Add'), findsOneWidget);
@@ -37,7 +39,7 @@ void main() {
 
     testWidgets('adds no tooltip when none is given', (tester) async {
       await tester.pumpWidget(_host(
-        CompactIconButton(icon: Icons.add, onPressed: () {}),
+        CompactIconButton(icon: SwarGlyph.close, onPressed: () {}),
       ));
 
       expect(find.byType(Tooltip), findsNothing);
@@ -45,7 +47,8 @@ void main() {
 
     testWidgets('a tooltip does not change the size', (tester) async {
       await tester.pumpWidget(_host(
-        CompactIconButton(icon: Icons.add, tooltip: 'Add', onPressed: () {}),
+        CompactIconButton(
+            icon: SwarGlyph.close, tooltip: 'Add', onPressed: () {}),
       ));
 
       expect(
