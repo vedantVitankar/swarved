@@ -60,4 +60,24 @@ void main() {
       expect(songMatches(note, _local('तम')), isFalse);
     });
   });
+
+  group('titleMatches', () {
+    test('matches on title alone when no artist is given', () {
+      expect(titleMatches(_local('Tum Hi Ho!'), title: 'tum hi ho'), isTrue);
+      expect(titleMatches(_local('Kesariya'), title: 'Tum Hi Ho'), isFalse);
+    });
+
+    test('an empty title never matches', () {
+      expect(titleMatches(_local('Kesariya'), title: ''), isFalse);
+      expect(titleMatches(_local('Kesariya'), title: '  !! '), isFalse);
+    });
+
+    test('a given artist must match too', () {
+      final track = _local('Kesariya');
+      expect(
+          titleMatches(track, title: 'Kesariya', artist: 'arijit singh'),
+          isTrue);
+      expect(titleMatches(track, title: 'Kesariya', artist: 'Cover'), isFalse);
+    });
+  });
 }

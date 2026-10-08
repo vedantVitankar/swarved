@@ -9,6 +9,7 @@ import '../../widgets/page_body.dart';
 import '../../widgets/swar_chips.dart';
 import '../folder/folder_screen.dart';
 import 'folder_tile_grid.dart';
+import 'home_song_of_the_day.dart';
 
 enum _HomeFilter { all, folders, notes }
 
@@ -78,6 +79,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ],
           if (showNote) ...[
+            // Brings its own gap above, and nothing when there is no pick.
+            const HomeSongOfTheDay(),
             const SizedBox(height: 14),
             const NoteCard(
               label: Words.noteForYouLabel,

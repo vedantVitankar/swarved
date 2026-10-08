@@ -37,5 +37,16 @@ void main() {
       await service.load();
       expect(service.pack.notes, isEmpty);
     });
+
+    test('exposes the song of the day, and none before it loads', () async {
+      final service = ContentService(
+        loader: () async => '{"songOfTheDay":{"title":"Kesariya"}}',
+      );
+      expect(service.songOfTheDay, isNull);
+
+      await service.load();
+
+      expect(service.songOfTheDay?.title, 'Kesariya');
+    });
   });
 }

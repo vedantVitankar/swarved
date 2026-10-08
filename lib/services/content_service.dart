@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/content_pack.dart';
 import '../models/song_note.dart';
+import '../models/song_of_the_day.dart';
 import '../models/track.dart';
 
 typedef ContentLoader = Future<String> Function();
@@ -32,4 +33,7 @@ class ContentService extends ChangeNotifier {
   }
 
   SongNote? noteFor(Track track) => _pack.noteFor(track);
+
+  /// The song he picked for today, or null.
+  SongOfTheDay? get songOfTheDay => _pack.songOfTheDay;
 }

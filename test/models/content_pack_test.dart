@@ -59,4 +59,30 @@ void main() {
       expect(pack.noteFor(_track('Other')), isNull);
     });
   });
+
+  group('ContentPack song of the day', () {
+    test('is read next to the notes', () {
+      final pack = ContentPack.parse('''
+        {"songOfTheDay": {"title": "Kesariya", "note": "Today."},
+         "notes": [{"title": "Kesariya", "note": "Ours."}]}''');
+
+      expect(pack.songOfTheDay?.title, 'Kesariya');
+      expect(pack.songOfTheDay?.note, 'Today.');
+      expect(pack.notes, hasLength(1));
+    });
+
+    test('is null when the file has none', () {
+      expect(ContentPack.parse('{}').songOfTheDay, isNull);
+      expect(ContentPack.empty.songOfTheDay, isNull);
+    });
+
+    test('a bad one is ignored and the notes still load', () {
+      final pack = ContentPack.parse('''
+        {"songOfTheDay": {"note": "No song named"},
+         "notes": [{"title": "Kesariya", "note": "Ours."}]}''');
+
+      expect(pack.songOfTheDay, isNull);
+      expect(pack.notes, hasLength(1));
+    });
+  });
 }

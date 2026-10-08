@@ -40,6 +40,9 @@ class Words {
   static const dedicationLabel = 'For you, $sweetheart';
   static const dedicationNote = 'Lorem ipsum dolor sit amet, consectetur.';
 
+  /// The small gold line on the song of the day, unless he writes his own.
+  static const songOfTheDayLabel = 'Song of the day, $sweetheart';
+
   // Search.
   static const searchTitle = 'What shall we hear?';
   static const searchSubline =
