@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/content_pack.dart';
+import '../models/memory.dart';
 import '../models/note_line.dart';
 import '../models/note_slot.dart';
 import '../models/song_note.dart';
@@ -36,6 +37,9 @@ class ContentService extends ChangeNotifier {
   }
 
   SongNote? noteFor(Track track) => _pack.noteFor(track);
+
+  /// The moments on memory lane, oldest first. Empty when he wrote none.
+  List<Memory> get memories => _pack.memories;
 
   /// The song he picked for today, or null.
   SongOfTheDay? get songOfTheDay => _pack.songOfTheDay;

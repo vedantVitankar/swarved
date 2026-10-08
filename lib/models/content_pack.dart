@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'memory.dart';
 import 'note_line.dart';
 import 'note_slot.dart';
 import 'song_note.dart';
@@ -22,11 +23,15 @@ class ContentPack {
   /// sees it, so "Slow dances" and "slow  dances!" are the same folder.
   final Map<String, NoteLine> folderNotes;
 
+  /// Moments for memory lane, oldest first.
+  final List<Memory> memories;
+
   const ContentPack({
     this.notes = const [],
     this.songOfTheDay,
     this.slots = const {},
     this.folderNotes = const {},
+    this.memories = const [],
   });
 
   static const empty = ContentPack();
@@ -52,7 +57,15 @@ class ContentPack {
       songOfTheDay: SongOfTheDay.tryParse(decoded['songOfTheDay']),
       slots: _parseSlots(decoded['slots']),
       folderNotes: _parseFolderNotes(decoded['folderNotes']),
+      memories: _parseMemories(decoded['memories']),
     );
+  }
+
+  static List<Memory> _parseMemories(Object? raw) {
+    if (raw is! List) return const [];
+    return Memory.inOrder([
+      for (final entry in raw) Memory.tryParse(entry),
+    ].whereType<Memory>());
   }
 
   static Map<NoteSlot, List<NoteLine>> _parseSlots(Object? raw) {

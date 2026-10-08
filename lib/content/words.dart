@@ -71,5 +71,10 @@ class Words {
       'Couldn’t reach the server just now. Your own songs are still right here.';
   static const searchUnexpected = 'Something went sideways with that search.';
 
+  // Memory lane.
+  static const memoryLaneTitle = 'Memory lane';
+  static const memoryLaneBlurb = 'Where we have been, in the order it happened.';
+  static String memoryCount(int n) => n == 1 ? '1 memory' : '$n memories';
+
   static const usSubline = 'This corner is just for the two of us.';
 }

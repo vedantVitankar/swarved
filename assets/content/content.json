@@ -69,5 +69,12 @@
             "label": "About this one, Precious",
             "note": "For the nights I wish you were right here."
         }
+    ],
+    "memories": [
+        {
+            "date": "2025-02-14",
+            "caption": "Lorem ipsum dolor sit amet, consectetur. Put your first memory here.",
+            "image": "assets/memories/hi.jpg"
+        }
     ]
 }
