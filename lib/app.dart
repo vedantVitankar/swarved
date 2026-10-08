@@ -12,6 +12,9 @@ import 'widgets/text_scale_scope.dart';
 import 'services/connection_service.dart';
 import 'services/stream_endpoint.dart';
 import 'services/queue_prefetcher.dart';
+import 'services/save_controller.dart';
+import 'services/saved_songs_index.dart';
+import 'services/song_saver.dart';
 
 class SwarVedApp extends StatelessWidget {
   final StatsService statsService;
@@ -20,6 +23,8 @@ class SwarVedApp extends StatelessWidget {
   final ServerApi serverApi;
   final ConnectionService connectionService;
   final StreamEndpoint streamEndpoint;
+  final SavedSongsIndex savedSongsIndex;
+  final SongSaver songSaver;
 
   const SwarVedApp({
     super.key,
@@ -29,6 +34,8 @@ class SwarVedApp extends StatelessWidget {
     required this.serverApi,
     required this.connectionService,
     required this.streamEndpoint,
+    required this.savedSongsIndex,
+    required this.songSaver,
   });
 
   @override
@@ -48,6 +55,14 @@ class SwarVedApp extends StatelessWidget {
         Provider.value(value: serverApi),
         ChangeNotifierProvider.value(value: connectionService),
         ChangeNotifierProvider(create: (_) => SearchService(api: serverApi)),
+        ChangeNotifierProvider(
+          create: (_) => SaveController(
+            save: songSaver.save,
+            index: savedSongsIndex,
+            folderPath: () => libraryService.rootPath,
+            onSaved: libraryService.addSavedFile,
+          ),
+        ),
       ],
       child: MaterialApp(
         title: 'SwarVed',

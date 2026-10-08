@@ -11,6 +11,8 @@ import 'services/server_config.dart';
 import 'services/secure_token_store.dart';
 import 'services/connection_service.dart';
 import 'services/stream_endpoint.dart';
+import 'services/saved_songs_index.dart';
+import 'services/song_saver.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +60,14 @@ Future<void> main() async {
   );
   await connectionService.load();
 
+  final savedSongsIndex = SavedSongsIndex();
+  await savedSongsIndex.load();
+  final songSaver = SongSaver(
+    config: serverConfig,
+    tokenStore: tokenStore,
+    index: savedSongsIndex,
+  );
+
   runApp(SwarVedApp(
     statsService: statsService,
     libraryService: libraryService,
@@ -65,5 +75,7 @@ Future<void> main() async {
     serverApi: serverApi,
     streamEndpoint: streamEndpoint,
     connectionService: connectionService,
+    savedSongsIndex: savedSongsIndex,
+    songSaver: songSaver,
   ));
 }

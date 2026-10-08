@@ -14,15 +14,20 @@ class TrackTile extends StatelessWidget {
   /// Null shows the row without making it tappable.
   final VoidCallback? onTap;
 
+  /// Something at the end of the row, such as a save button.
+  final Widget? trailing;
+
   const TrackTile({
     super.key,
     required this.track,
     required this.onTap,
     this.isActive = false,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
+    final trailing = this.trailing;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Material(
@@ -67,6 +72,10 @@ class TrackTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(track.durationLabel, style: AppType.readout),
+                if (trailing != null) ...[
+                  const SizedBox(width: 4),
+                  trailing,
+                ],
               ],
             ),
           ),

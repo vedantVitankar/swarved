@@ -7,6 +7,7 @@ import '../../theme/colors.dart';
 import '../../widgets/track_tile.dart';
 import 'search_message.dart';
 import 'search_section_header.dart';
+import '../../widgets/save_button.dart';
 
 /// The YouTube half of the results, and every state it can be in:
 /// looking, found, nothing found, no token, unreachable, unexpected.
@@ -100,6 +101,7 @@ class YoutubeResultsSection extends StatelessWidget {
       track: track,
       isActive: activeId == track.id,
       onTap: () => onPlay(index),
+      trailing: SaveButton(song: result),
     );
   }
 }
