@@ -76,5 +76,16 @@ class Words {
   static const memoryLaneBlurb = 'Where we have been, in the order it happened.';
   static String memoryCount(int n) => n == 1 ? '1 memory' : '$n memories';
 
+  // The recap.
+  static const recapTitle = 'Our year in songs, $swarnima';
+  static const recapBlurb = 'Something I saved up for you.';
+  static const recapClosing = "I'd choose every one of these days again.";
+  static const recapTopSong = 'The song you kept choosing';
+  static const recapTopArtist = 'The voice you kept coming back to';
+  static const recapTotal = 'Time with the music';
+  static const recapBusiestDay = 'Your fullest day';
+  static const recapLateNight = 'Your late-night song';
+  static String recapPlays(int n) => n == 1 ? 'played once' : 'played $n times';
+
   static const usSubline = 'This corner is just for the two of us.';
 }

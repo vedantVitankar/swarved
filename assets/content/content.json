@@ -76,5 +76,9 @@
             "caption": "Lorem ipsum dolor sit amet, consectetur. Put your first memory here.",
             "image": "assets/memories/hi.jpg"
         }
-    ]
+    ],
+    "recap": {
+        "afterDays": 30,
+        "line": "I'd choose every one of these days again."
+    }
 }

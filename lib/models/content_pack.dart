@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'memory.dart';
 import 'note_line.dart';
+import 'recap_settings.dart';
 import 'note_slot.dart';
 import 'song_note.dart';
 import 'song_of_the_day.dart';
@@ -26,12 +27,16 @@ class ContentPack {
   /// Moments for memory lane, oldest first.
   final List<Memory> memories;
 
+  /// When the recap appears and what he says at the end of it.
+  final RecapSettings recap;
+
   const ContentPack({
     this.notes = const [],
     this.songOfTheDay,
     this.slots = const {},
     this.folderNotes = const {},
     this.memories = const [],
+    this.recap = const RecapSettings(),
   });
 
   static const empty = ContentPack();
@@ -58,6 +63,7 @@ class ContentPack {
       slots: _parseSlots(decoded['slots']),
       folderNotes: _parseFolderNotes(decoded['folderNotes']),
       memories: _parseMemories(decoded['memories']),
+      recap: RecapSettings.parse(decoded['recap']),
     );
   }
 

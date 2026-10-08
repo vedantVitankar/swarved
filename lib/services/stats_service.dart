@@ -5,7 +5,8 @@ import '../models/listen_entry.dart';
 import '../models/track.dart';
 
 const _kLogKey = 'listen_log_v1';
-const _kMaxEntries = 500;
+// Enough for a year of listening, so the recap has something to read.
+const _kMaxEntries = 3000;
 
 class StatsService extends ChangeNotifier {
   List<ListenEntry> _entries = [];

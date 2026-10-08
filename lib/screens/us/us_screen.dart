@@ -9,6 +9,7 @@ import '../../widgets/page_body.dart';
 import '../../widgets/slot_note_card.dart';
 import 'connection_card.dart';
 import 'memory_lane_card.dart';
+import 'recap_card.dart';
 import 'logbook_card.dart';
 
 /// The corner that's just for the two of them. For now: the logbook.
@@ -35,6 +36,8 @@ class UsScreen extends StatelessWidget {
           LogbookCard(stats: stats),
           // Brings its own gap, and nothing when there are no memories.
           const MemoryLaneCard(),
+          // Hidden until enough time has passed.
+          const RecapCard(),
           const SizedBox(height: 12),
           const ConnectionCard(),
         ],

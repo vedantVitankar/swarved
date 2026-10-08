@@ -4,6 +4,7 @@ import '../models/content_pack.dart';
 import '../models/memory.dart';
 import '../models/note_line.dart';
 import '../models/note_slot.dart';
+import '../models/recap_settings.dart';
 import '../models/song_note.dart';
 import '../models/song_of_the_day.dart';
 import '../models/track.dart';
@@ -37,6 +38,9 @@ class ContentService extends ChangeNotifier {
   }
 
   SongNote? noteFor(Track track) => _pack.noteFor(track);
+
+  /// When the recap appears and his closing line.
+  RecapSettings get recapSettings => _pack.recap;
 
   /// The moments on memory lane, oldest first. Empty when he wrote none.
   List<Memory> get memories => _pack.memories;
