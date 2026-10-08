@@ -46,9 +46,7 @@ List<YoutubeResult> withoutLocalDuplicates(
     (artistsByTitle[title] ??= []).add(_squash(track.artist));
   }
 
-  return results
-      .where((result) => !_isOwned(result, artistsByTitle))
-      .toList();
+  return results.where((result) => !_isOwned(result, artistsByTitle)).toList();
 }
 
 bool _isOwned(YoutubeResult result, Map<String, List<String>> artistsByTitle) {
@@ -60,7 +58,6 @@ bool _isOwned(YoutubeResult result, Map<String, List<String>> artistsByTitle) {
 
   return owners.any(
     (owner) =>
-        owner.isNotEmpty &&
-        (owner.contains(artist) || artist.contains(owner)),
+        owner.isNotEmpty && (owner.contains(artist) || artist.contains(owner)),
   );
 }

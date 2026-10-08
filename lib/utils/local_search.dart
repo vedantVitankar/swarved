@@ -28,8 +28,8 @@ List<Track> searchLocal(
       titleMatches.add(track);
       continue;
     }
-    final text = '$title ${track.artist} ${track.album} ${track.folder}'
-        .toLowerCase();
+    final text =
+        '$title ${track.artist} ${track.album} ${track.folder}'.toLowerCase();
     if (words.every((word) => text.contains(word))) {
       otherMatches.add(track);
     }

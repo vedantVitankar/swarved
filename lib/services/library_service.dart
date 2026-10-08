@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/track.dart';
 import '../models/library_problem.dart';
+import '../utils/saved_file_rules.dart';
 import 'storage_permission_service.dart';
 
 const _kLibraryPathKey = 'library_root_path';
@@ -96,6 +97,27 @@ class LibraryService extends ChangeNotifier {
       rootPath = null;
     }
     notifyListeners();
+  }
+
+  /// Adds one freshly saved song to the library without rescanning the whole
+  /// folder. Returns false when it doesn't belong in the list: the library
+  /// isn't open, the file is outside the library folder, it isn't an MP3, or
+  /// it is listed already. The file is saved either way.
+  Future<bool> addSavedFile(String path) async {
+    final shouldList = shouldListSavedFile(
+      libraryRoot: rootPath,
+      filePath: path,
+      listedPaths: tracks.map((t) => t.filePath),
+    );
+    if (!shouldList) return false;
+
+    final file = File(path);
+    if (!await file.exists()) return false;
+
+    final track = _readTrack(file);
+    tracks = [...tracks, track]..sort((a, b) => a.title.compareTo(b.title));
+    notifyListeners();
+    return true;
   }
 
   Track _readTrack(File file) {

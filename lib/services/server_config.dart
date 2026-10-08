@@ -22,6 +22,24 @@ class ServerConfig {
     );
   }
 
+  /// Where the server hands over one song as a finished, tagged MP3. Empty
+  /// details are left out, so the server never receives a blank one.
+  Uri exportUri(
+    String videoId, {
+    String? title,
+    String? artist,
+    String? cover,
+  }) {
+    return Uri.parse('$baseUrl/api/export').replace(
+      queryParameters: {
+        'id': videoId,
+        if (title != null && title.isNotEmpty) 'title': title,
+        if (artist != null && artist.isNotEmpty) 'artist': artist,
+        if (cover != null && cover.isNotEmpty) 'cover': cover,
+      },
+    );
+  }
+
   /// Where the server is asked to get songs ready ahead of time.
   Uri prefetchUri(List<String> videoIds, PrefetchMode mode) {
     return Uri.parse('$baseUrl/api/prefetch').replace(
