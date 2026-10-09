@@ -3,24 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../content/labels.dart';
 import '../../content/words.dart';
+import '../../models/note_line.dart';
 import '../../models/welcome_settings.dart';
 import '../../services/content_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/shape.dart';
+import '../../theme/swar_glyphs.dart';
 import '../../theme/typography.dart';
 import '../../utils/welcome_timeline.dart';
+import '../../widgets/swar_icon.dart';
 import '../../widgets/swar_outlined_button.dart';
 import 'reveal_text.dart';
+import 'welcome_dots.dart';
+import 'welcome_pages.dart';
 import 'welcome_sky.dart';
 import 'welcome_sun.dart';
 
-/// The first thing she sees: the sun rises, her name appears, then a line in
-/// his handwriting and his signature, and a single way in.
+/// The first thing she sees, in four steps: the sun rises and his line
+/// appears, then why he made it, then a few notes to swipe through, then a
+/// short tour of the app. "Come in" on the last step swells the sun and
+/// fades the screen away to the app behind it, then calls [onDone].
 ///
-/// A tap while it is still playing skips ahead to the end. "Come in" swells
-/// the sun and fades the screen away to what is behind it, then calls
-/// [onDone]. With reduced motion everything is simply there, and it only
-/// fades out.
+/// A tap while the first step is still playing skips ahead to its end.
+/// "Skip" leaves from any step but the last. With reduced motion everything
+/// is simply there, and it only fades out.
 class WelcomeScreen extends StatefulWidget {
   /// Called once the screen has faded away completely.
   final VoidCallback onDone;
@@ -49,10 +55,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   bool _started = false;
   bool _reduceMotion = false;
   bool _leaving = false;
+  int _step = 0;
 
+  static const int _steps = 4;
   static const double _titleSize = 46;
   static const double _lineSize = 28;
   static const double _signatureSize = 24;
+
+  bool get _isLast => _step == _steps - 1;
 
   @override
   void initState() {
@@ -89,6 +99,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     if (_intro.isAnimating) _intro.value = 1;
   }
 
+  void _next() {
+    if (_leaving) return;
+    if (_isLast) {
+      _enter();
+    } else {
+      setState(() => _step++);
+    }
+  }
+
+  void _back() {
+    if (_leaving || _step == 0) return;
+    setState(() => _step--);
+  }
+
   void _enter() {
     if (_leaving) return;
     setState(() => _leaving = true);
@@ -101,8 +125,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     final settings = context.select<ContentService, WelcomeSettings>(
       (content) => content.welcomeSettings,
     );
-    final line = settings.line ?? Words.welcomeLine;
-    final signature = settings.signature ?? Words.welcomeSignature;
 
     return AnimatedBuilder(
       animation: _exit,
@@ -127,73 +149,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 reduceMotion: _reduceMotion,
               ),
               SafeArea(
-                child: Center(
-                  child: SingleChildScrollView(
-                    // The sun's glow reaches past the top of its own box.
-                    clipBehavior: Clip.none,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 24,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 340),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          WelcomeSun(
-                            intro: _intro,
-                            ambient: _ambient,
-                            exit: _exit,
-                            reduceMotion: _reduceMotion,
-                          ),
-                          _leavingWithTheWords(
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Never wraps: with big system text, or while
-                                // the letters are still wide apart, it
-                                // shrinks to fit instead.
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: RevealText(
-                                    text: Words.swarnima,
-                                    style: AppType.display.copyWith(
-                                      fontSize: _titleSize,
-                                    ),
-                                    progress: _intro,
-                                    span: WelcomeTimeline.title,
-                                    letters: true,
-                                    extraSpacing: 9,
-                                  ),
-                                ),
-                                const SizedBox(height: 18),
-                                RevealText(
-                                  text: line,
-                                  style: AppType.note.copyWith(
-                                    fontSize: _lineSize,
-                                  ),
-                                  progress: _intro,
-                                  span: WelcomeTimeline.line,
-                                ),
-                                const SizedBox(height: 8),
-                                RevealText(
-                                  text: signature,
-                                  style: AppType.note.copyWith(
-                                    fontSize: _signatureSize,
-                                  ),
-                                  progress: _intro,
-                                  span: WelcomeTimeline.signature,
-                                  letters: true,
-                                ),
-                                const SizedBox(height: 36),
-                                _enterButton(),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                child: Column(
+                  children: [
+                    _topBar(),
+                    Expanded(child: _stage(settings)),
+                    _controls(),
+                  ],
                 ),
               ),
             ],
@@ -203,7 +164,243 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  /// The words and the button fade up and away as she comes in.
+  /// The step on show, with a short crossfade when it changes. Every page
+  /// starts at the same height, so nothing jumps while two are on screen.
+  Widget _stage(WelcomeSettings settings) {
+    return LayoutBuilder(
+      builder: (context, box) {
+        // A little lower on tall screens, so the first step sits like the
+        // single welcome did, and never so low that a short one scrolls.
+        final top = math.max(8.0, math.min(90.0, (box.maxHeight - 460) * 0.28));
+        return SingleChildScrollView(
+          // The sun's glow reaches past the top of its own box.
+          clipBehavior: Clip.none,
+          padding: EdgeInsets.fromLTRB(32, top, 32, 16),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 340),
+              child: AnimatedSwitcher(
+                duration: _reduceMotion
+                    ? Duration.zero
+                    : const Duration(milliseconds: 420),
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.topCenter,
+                  children: [...previous, if (current != null) current],
+                ),
+                child: KeyedSubtree(
+                  key: ValueKey<int>(_step),
+                  child: _page(settings),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// The sun, then the words of the current step. The sun stays put when
+  /// she comes in; only the words leave.
+  Widget _page(WelcomeSettings settings) {
+    final Widget words = switch (_step) {
+      0 => _firstWords(settings),
+      1 => WelcomeStoryPage(
+          paragraphs:
+              settings.story.isEmpty ? Words.welcomeStory : settings.story,
+          signature: settings.signature ?? Words.welcomeSignature,
+          instant: _reduceMotion,
+        ),
+      2 => WelcomeNotesPage(
+          notes: settings.notes.isEmpty
+              ? [for (final note in Words.welcomeNotes) NoteLine(note: note)]
+              : settings.notes,
+          instant: _reduceMotion,
+        ),
+      _ => WelcomeTourPage(instant: _reduceMotion),
+    };
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        WelcomeSun(
+          intro: _intro,
+          ambient: _ambient,
+          exit: _exit,
+          reduceMotion: _reduceMotion,
+          compact: _step > 0,
+        ),
+        _leavingWithTheWords(words),
+      ],
+    );
+  }
+
+  /// Her name and his line, appearing letter by letter and word by word.
+  Widget _firstWords(WelcomeSettings settings) {
+    final line = settings.line ?? Words.welcomeLine;
+    final signature = settings.signature ?? Words.welcomeSignature;
+
+    // Its own layer, so the sun's repainting never repaints the words.
+    return RepaintBoundary(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Never wraps: with big system text, or while the letters are
+          // still wide apart, it shrinks to fit instead.
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: RevealText(
+              text: Words.swarnima,
+              style: AppType.display.copyWith(fontSize: _titleSize),
+              progress: _intro,
+              span: WelcomeTimeline.title,
+              letters: true,
+              extraSpacing: 9,
+            ),
+          ),
+          const SizedBox(height: 18),
+          RevealText(
+            text: line,
+            style: AppType.note.copyWith(fontSize: _lineSize),
+            progress: _intro,
+            span: WelcomeTimeline.line,
+          ),
+          const SizedBox(height: 8),
+          RevealText(
+            text: signature,
+            style: AppType.note.copyWith(fontSize: _signatureSize),
+            progress: _intro,
+            span: WelcomeTimeline.signature,
+            letters: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Back on the left, Skip on the right. They arrive with the button.
+  Widget _topBar() {
+    return _leavingWithTheWords(
+      _whenArrived(
+        SizedBox(
+          height: 52,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                if (_step == 0)
+                  const SizedBox(width: 48)
+                else
+                  IconButton(
+                    tooltip: Labels.welcomeBack,
+                    onPressed: _back,
+                    icon: const SwarIcon(
+                      glyph: SwarGlyph.back,
+                      size: 24,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                const Spacer(),
+                if (!_isLast)
+                  TextButton(
+                    onPressed: _enter,
+                    child: Text(Labels.welcomeSkip, style: AppType.caption),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The dots and the one button: Next, and on the last step Come in.
+  Widget _controls() {
+    return _leavingWithTheWords(
+      _whenArrived(
+        Padding(
+          padding: const EdgeInsets.fromLTRB(32, 8, 32, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              WelcomeDots(count: _steps, index: _step),
+              const SizedBox(height: 20),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(child: _glow()),
+                  SwarOutlinedButton(
+                    label: _isLast ? Labels.welcomeEnter : Labels.welcomeNext,
+                    onPressed: _next,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 36,
+                      vertical: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A soft rose halo that slowly swells and fades, like breathing. The halo
+  /// itself is drawn once and kept; only its opacity changes each frame, so
+  /// the blur is never redone.
+  Widget _glow() {
+    return AnimatedBuilder(
+      animation: _ambient,
+      builder: (context, halo) {
+        final pulse = _reduceMotion
+            ? 0.5
+            : (math.sin(_ambient.value * 2 * math.pi) + 1) / 2;
+        return Opacity(opacity: 0.4 + 0.6 * pulse, child: halo);
+      },
+      child: RepaintBoundary(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppShape.button),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accent.withAlpha(alphaFor(0.2)),
+                blurRadius: 22,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The controls arrive last. Until they are nearly there they let taps
+  /// through, so an early tap skips ahead instead of doing nothing.
+  Widget _whenArrived(Widget child) {
+    return AnimatedBuilder(
+      animation: _intro,
+      builder: (context, _) {
+        final arrive = Curves.easeOut.transform(
+          WelcomeTimeline.button.at(_intro.value),
+        );
+        return IgnorePointer(
+          ignoring: arrive < 0.6 || _leaving,
+          child: Opacity(
+            opacity: arrive,
+            child: Transform.translate(
+              offset: Offset(0, (1 - arrive) * 12),
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// The words and the buttons fade up and away as she comes in.
   Widget _leavingWithTheWords(Widget words) {
     return AnimatedBuilder(
       animation: _exit,
@@ -220,58 +417,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         );
       },
       child: words,
-    );
-  }
-
-  /// The button arrives last. Until it is nearly there it lets taps through,
-  /// so an early tap skips ahead instead of doing nothing.
-  Widget _enterButton() {
-    return AnimatedBuilder(
-      animation: _intro,
-      builder: (context, child) {
-        final arrive = Curves.easeOut.transform(
-          WelcomeTimeline.button.at(_intro.value),
-        );
-        return IgnorePointer(
-          ignoring: arrive < 0.6 || _leaving,
-          child: Opacity(
-            opacity: arrive,
-            child: Transform.translate(
-              offset: Offset(0, (1 - arrive) * 12),
-              child: child,
-            ),
-          ),
-        );
-      },
-      child: AnimatedBuilder(
-        animation: _ambient,
-        builder: (context, child) {
-          // A soft rose halo that slowly swells and fades, like breathing.
-          final pulse = _reduceMotion
-              ? 0.5
-              : (math.sin(_ambient.value * 2 * math.pi) + 1) / 2;
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppShape.button),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accent.withAlpha(
-                    alphaFor(0.08 + 0.14 * pulse),
-                  ),
-                  blurRadius: 16 + 10 * pulse,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: child,
-          );
-        },
-        child: SwarOutlinedButton(
-          label: Labels.welcomeEnter,
-          onPressed: _enter,
-          padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
-        ),
-      ),
     );
   }
 }

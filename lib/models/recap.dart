@@ -132,9 +132,8 @@ class Recap {
     required int afterDays,
   }) {
     if (entries.isEmpty) return false;
-    final firstPlay = entries
-        .map((e) => e.playedAt)
-        .reduce((a, b) => a.isBefore(b) ? a : b);
+    final firstPlay =
+        entries.map((e) => e.playedAt).reduce((a, b) => a.isBefore(b) ? a : b);
     return dayNumber(now) - dayNumber(firstPlay) >= afterDays;
   }
 }

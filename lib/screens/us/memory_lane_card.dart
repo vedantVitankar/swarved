@@ -13,8 +13,7 @@ class MemoryLaneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final count =
-        context.select<ContentService, int>((c) => c.memories.length);
+    final count = context.select<ContentService, int>((c) => c.memories.length);
     if (count == 0) return const SizedBox.shrink();
 
     return Padding(

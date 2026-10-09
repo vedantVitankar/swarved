@@ -74,8 +74,7 @@ void main() {
 
     test('a given artist must match too', () {
       final track = _local('Kesariya');
-      expect(
-          titleMatches(track, title: 'Kesariya', artist: 'arijit singh'),
+      expect(titleMatches(track, title: 'Kesariya', artist: 'arijit singh'),
           isTrue);
       expect(titleMatches(track, title: 'Kesariya', artist: 'Cover'), isFalse);
     });

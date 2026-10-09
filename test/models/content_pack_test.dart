@@ -160,8 +160,8 @@ void main() {
 
   group('ContentPack welcome', () {
     test('is read from the file', () {
-      final pack = ContentPack.parse(
-          '{"welcome": {"line": "Hi.", "signature": "Ved"}}');
+      final pack =
+          ContentPack.parse('{"welcome": {"line": "Hi.", "signature": "Ved"}}');
 
       expect(pack.welcome.line, 'Hi.');
       expect(pack.welcome.signature, 'Ved');

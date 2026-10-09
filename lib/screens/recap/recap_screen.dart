@@ -27,9 +27,9 @@ class RecapScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final entries = context.watch<StatsService>().entries;
     final recap = Recap.from(entries);
-    final line = context.select<ContentService, String?>(
-            (c) => c.recapSettings.line) ??
-        Words.recapClosing;
+    final line =
+        context.select<ContentService, String?>((c) => c.recapSettings.line) ??
+            Words.recapClosing;
 
     final stats = <_Stat>[
       if (recap != null) ...[

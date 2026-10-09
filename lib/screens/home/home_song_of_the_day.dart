@@ -16,8 +16,8 @@ class HomeSongOfTheDay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pick = context
-        .select<ContentService, SongOfTheDay?>((c) => c.songOfTheDay);
+    final pick =
+        context.select<ContentService, SongOfTheDay?>((c) => c.songOfTheDay);
     if (pick == null) return const SizedBox.shrink();
 
     final library =

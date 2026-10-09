@@ -206,8 +206,7 @@ void main() {
       expect(setup.savedInto, '/music');
     });
 
-    test('closing the picker leaves the song idle and saves nothing',
-        () async {
+    test('closing the picker leaves the song idle and saves nothing', () async {
       final setup = _Setup(folder: null, onChoose: (_) async => null);
 
       final outcome = await setup.controller.save(_song());

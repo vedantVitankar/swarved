@@ -1,7 +1,21 @@
 {
     "welcome": {
         "line": "I made this for you, every corner of it. Take your time.",
-        "signature": "— Ved"
+        "signature": "— Ved",
+        "story": [
+            "We both love music. It's the one thing we always share, even from far away.",
+            "So I wanted you to have a place for it, where every song can carry a little of me.",
+            "Anything I couldn't say out loud, I put in here for you to find."
+        ],
+        "notes": [
+            "I'll always keep choosing you.",
+            "You're my home, a place where I can always come to.",
+            {
+                "label": "For you, Precious",
+                "note": "Thank you for being the Swarnima you are."
+            },
+            "I wish to be so close to you that even our atoms get confused about who they belong to."
+        ]
     },
     "songOfTheDay": {
         "title": "Asal - How Bad",

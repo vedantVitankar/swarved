@@ -17,8 +17,8 @@ class RecapCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final entries = context.watch<StatsService>().entries;
-    final afterDays = context.select<ContentService, int>(
-        (c) => c.recapSettings.afterDays);
+    final afterDays =
+        context.select<ContentService, int>((c) => c.recapSettings.afterDays);
 
     if (!Recap.isReady(entries, DateTime.now(), afterDays: afterDays)) {
       return const SizedBox.shrink();

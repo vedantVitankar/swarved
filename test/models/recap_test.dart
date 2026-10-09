@@ -150,7 +150,8 @@ void main() {
     });
 
     test('a content file carries them, and defaults without them', () {
-      expect(ContentPack.parse('{"recap": {"afterDays": 7}}').recap.afterDays, 7);
+      expect(
+          ContentPack.parse('{"recap": {"afterDays": 7}}').recap.afterDays, 7);
       expect(ContentPack.parse('{}').recap.afterDays, 30);
     });
   });
@@ -160,7 +161,8 @@ void main() {
       expect(listenedLabel(const Duration(seconds: 30)), 'less than a minute');
       expect(listenedLabel(const Duration(minutes: 42)), '42 min');
       expect(listenedLabel(const Duration(hours: 5)), '5 h');
-      expect(listenedLabel(const Duration(hours: 5, minutes: 30)), '5 h 30 min');
+      expect(
+          listenedLabel(const Duration(hours: 5, minutes: 30)), '5 h 30 min');
     });
   });
 }

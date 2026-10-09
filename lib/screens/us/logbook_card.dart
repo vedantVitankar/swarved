@@ -32,9 +32,7 @@ class LogbookCard extends StatelessWidget {
               style: AppType.titleMedium),
           const SizedBox(height: 4),
           Text(
-            topArtist != null
-                ? Labels.mostPlayed(topArtist)
-                : Words.noPlaysYet,
+            topArtist != null ? Labels.mostPlayed(topArtist) : Words.noPlaysYet,
             style: AppType.bodyMuted,
           ),
           const SizedBox(height: 12),

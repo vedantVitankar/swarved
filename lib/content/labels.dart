@@ -24,6 +24,10 @@ class Labels {
 
   // The welcome screen.
   static const welcomeEnter = 'Come in';
+  static const welcomeNext = 'Next';
+  static const welcomeBack = 'Back';
+  static const welcomeSkip = 'Skip';
+  static String welcomeStep(int step, int count) => 'Step $step of $count';
 
   static String playingFrom(String folder) => 'Playing from $folder';
   static const playingFromSearch = 'Playing from your search';

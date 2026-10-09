@@ -106,8 +106,7 @@ void main() {
       expect(service.noteLineFor(_other), first);
     });
 
-    test('noteLineFor is null with no own note and no playing notes',
-        () async {
+    test('noteLineFor is null with no own note and no playing notes', () async {
       final service = ContentService(loader: () async => '{}');
       await service.load();
       expect(service.noteLineFor(_other), isNull);

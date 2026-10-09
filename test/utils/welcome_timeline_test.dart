@@ -55,8 +55,7 @@ void main() {
     });
 
     test('the words come in order, and the button arrives last', () {
-      expect(WelcomeTimeline.title.start,
-          lessThan(WelcomeTimeline.line.start));
+      expect(WelcomeTimeline.title.start, lessThan(WelcomeTimeline.line.start));
       expect(WelcomeTimeline.line.start,
           lessThan(WelcomeTimeline.signature.start));
       expect(WelcomeTimeline.signature.start,

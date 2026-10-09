@@ -51,8 +51,8 @@ class SongOfTheDay {
     if (title.isEmpty) return null;
 
     final id = text('id');
-    final hasValidId = id.length > _youtubePrefix.length &&
-        id.startsWith(_youtubePrefix);
+    final hasValidId =
+        id.length > _youtubePrefix.length && id.startsWith(_youtubePrefix);
     if (id.isNotEmpty && !hasValidId) return null;
 
     final seconds = map['durationSeconds'];
