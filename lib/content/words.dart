@@ -22,16 +22,29 @@ class Words {
     return 'Still up,\n$baby?';
   }
 
-  // Empty state, before a music folder is chosen.
+  // The welcome screen, unless he writes his own under "welcome" in
+  // content.json. The name above the line is always hers.
+  static const welcomeLine =
+      'I made this for you, every corner of it. Take your time.';
+  static const welcomeSignature = '— Ved';
+
+  // The Library tab, before a music folder is chosen. The app works without
+  // one: search and playing from YouTube need nothing on this device.
   static const emptyTitle = 'No archive yet';
   static const emptyBody =
-      'Point SwarVed at the folder where your music lives. It stays on this device.';
+      'Got songs of your own? Point SwarVed at the folder where they live. They stay on this device.';
   static const problemNoPermission =
       'Let SwarVed see your songs, $baby. They never leave this device.';
   static const problemUnreadableFolder =
       "That folder wouldn't open. Let's try another one.";
-  static const problemNoAudioFound =
-      'No songs here yet. Try the folder where your music lives.';
+
+  /// A folder is chosen, but nothing is in it yet.
+  static const libraryFolderEmpty =
+      'Nothing in this folder yet. Songs you save will land here.';
+
+  /// Home, while there are no folders to show.
+  static const homeNoFolders =
+      'Songs you save, and any folder you add in Library, will gather here.';
 
   // Used whenever he hasn't written a note of his own for these places.
   // His notes, from content.json, take over from these.

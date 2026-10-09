@@ -75,14 +75,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           if (showFolders) ...[
             const SizedBox(height: 12),
-            FolderTileGrid(
-              byFolder: library.byFolder,
-              onOpenFolder: (folder, tracks) => FolderScreen.open(
-                context,
-                title: folder,
-                tracks: tracks,
+            if (library.byFolder.isEmpty)
+              Text(Words.homeNoFolders, style: AppType.bodyMuted)
+            else
+              FolderTileGrid(
+                byFolder: library.byFolder,
+                onOpenFolder: (folder, tracks) => FolderScreen.open(
+                  context,
+                  title: folder,
+                  tracks: tracks,
+                ),
               ),
-            ),
           ],
           if (showNote) ...[
             // Brings its own gap above, and nothing when there is no pick.

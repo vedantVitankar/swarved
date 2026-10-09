@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'root_shell.dart';
+import 'screens/welcome/welcome_gate.dart';
 import 'services/library_service.dart';
 import 'services/player_service.dart';
 import 'services/search_service.dart';
@@ -64,6 +65,7 @@ class SwarVedApp extends StatelessWidget {
             save: songSaver.save,
             index: savedSongsIndex,
             folderPath: () => libraryService.rootPath,
+            chooseFolder: libraryService.chooseFolder,
             onSaved: libraryService.addSavedFile,
           ),
         ),
@@ -73,7 +75,7 @@ class SwarVedApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark,
         builder: (context, child) => TextScaleScope(child: child!),
-        home: const RootShell(),
+        home: const WelcomeGate(child: RootShell()),
       ),
     );
   }

@@ -16,12 +16,23 @@ YoutubeResult _song() =>
 /// A controller wired to a pretend saver. Like the real saver, the pretend
 /// one records a finished song in the index.
 class _Setup {
-  _Setup({this.folder = '/music'}) {
+  /// [onChoose] stands in for the folder picker. Without it the controller
+  /// has no way to ask for a folder.
+  _Setup({
+    this.folder = '/music',
+    Future<String?> Function(_Setup setup)? onChoose,
+  }) {
     index = SavedSongsIndex(fileExists: (_) => true);
     controller = SaveController(
       save: _save,
       index: index,
       folderPath: () => folder,
+      chooseFolder: onChoose == null
+          ? null
+          : () {
+              asked++;
+              return onChoose(this);
+            },
       onSaved: (path) async {
         listed.add(path);
         if (listFails) throw StateError('cannot list');
@@ -35,6 +46,8 @@ class _Setup {
   late final SaveController controller;
   final listed = <String>[];
   int calls = 0;
+  int asked = 0;
+  String? savedInto;
   void Function(int received, int? total)? progress;
 
   /// When set, the save waits for this before finishing.
@@ -47,6 +60,7 @@ class _Setup {
     void Function(int received, int? total)? onProgress,
   }) async {
     calls++;
+    savedInto = folderPath;
     progress = onProgress;
     final pending = gate;
     final outcome = pending == null ? result : await pending.future;
@@ -163,5 +177,99 @@ void main() {
     await setup.controller.save(_song());
 
     expect(setup.listed, ['/music/a.mp3']);
+  });
+
+  group('asking for a folder', () {
+    test('with no folder it asks, then saves into the one chosen', () async {
+      final setup = _Setup(
+        folder: null,
+        onChoose: (self) async {
+          self.folder = '/picked';
+          return '/picked';
+        },
+      );
+
+      final outcome = await setup.controller.save(_song());
+
+      expect(outcome, isA<SaveDone>());
+      expect(setup.asked, 1);
+      expect(setup.savedInto, '/picked');
+      expect(setup.controller.viewOf(_id), (SaveStage.saved, null));
+    });
+
+    test('it does not ask when there is already a folder', () async {
+      final setup = _Setup(onChoose: (_) async => '/other');
+
+      await setup.controller.save(_song());
+
+      expect(setup.asked, 0);
+      expect(setup.savedInto, '/music');
+    });
+
+    test('closing the picker leaves the song idle and saves nothing',
+        () async {
+      final setup = _Setup(folder: null, onChoose: (_) async => null);
+
+      final outcome = await setup.controller.save(_song());
+
+      expect(
+        outcome,
+        isA<SaveFailed>()
+            .having((o) => o.problem, 'problem', SaveProblem.noFolder),
+      );
+      expect(setup.calls, 0);
+      expect(setup.controller.viewOf(_id), (SaveStage.idle, null));
+      expect(setup.controller.problemOf(_id), isNull);
+    });
+
+    test('a picker that breaks counts as closed', () async {
+      final setup = _Setup(
+        folder: null,
+        onChoose: (_) async => throw StateError('no picker'),
+      );
+
+      final outcome = await setup.controller.save(_song());
+
+      expect(
+        outcome,
+        isA<SaveFailed>()
+            .having((o) => o.problem, 'problem', SaveProblem.noFolder),
+      );
+      expect(setup.calls, 0);
+    });
+
+    test('a second tap while the picker is open does nothing', () async {
+      final picker = Completer<String?>();
+      final setup = _Setup(folder: null, onChoose: (_) => picker.future);
+
+      final first = setup.controller.save(_song());
+      final second = await setup.controller.save(_song());
+
+      expect(second, isNull);
+      expect(setup.asked, 1);
+
+      picker.complete(null);
+      await first;
+    });
+
+    test('after a closed picker, trying again asks again', () async {
+      final setup = _Setup(folder: null, onChoose: (_) async => null);
+
+      await setup.controller.save(_song());
+      await setup.controller.save(_song());
+
+      expect(setup.asked, 2);
+    });
+
+    test('needsFolder is true only when there is no folder and a way to ask',
+        () {
+      final noFolder = _Setup(folder: null, onChoose: (_) async => null);
+      final hasFolder = _Setup(onChoose: (_) async => null);
+      final cannotAsk = _Setup(folder: null);
+
+      expect(noFolder.controller.needsFolder, isTrue);
+      expect(hasFolder.controller.needsFolder, isFalse);
+      expect(cannotAsk.controller.needsFolder, isFalse);
+    });
   });
 }

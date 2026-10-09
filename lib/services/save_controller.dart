@@ -21,6 +21,10 @@ typedef SaveCall = Future<SaveOutcome> Function(
   void Function(int received, int? total)? onProgress,
 });
 
+/// Asks the listener for a music folder. Answers with its path, or null when
+/// none was chosen.
+typedef FolderChooser = Future<String?> Function();
+
 /// Keeps track of every save in progress or failed, for the buttons on the
 /// search results. Which songs are already saved comes from the index.
 class SaveController extends ChangeNotifier {
@@ -29,10 +33,12 @@ class SaveController extends ChangeNotifier {
     required SavedSongsIndex index,
     required String? Function() folderPath,
     required Future<void> Function(String path) onSaved,
+    FolderChooser? chooseFolder,
   })  : _save = save,
         _index = index,
         _folderPath = folderPath,
-        _onSaved = onSaved {
+        _onSaved = onSaved,
+        _chooseFolder = chooseFolder {
     _index.addListener(_notify);
   }
 
@@ -40,6 +46,13 @@ class SaveController extends ChangeNotifier {
   final SavedSongsIndex _index;
   final String? Function() _folderPath;
   final Future<void> Function(String path) _onSaved;
+
+  /// How the very first save finds a folder. Without one, a save with no
+  /// folder just fails.
+  final FolderChooser? _chooseFolder;
+
+  /// True while the folder picker is open, so a second tap can't open another.
+  bool _choosing = false;
 
   /// Songs being saved right now, with their progress in whole percent.
   final Map<String, int?> _saving = {};
@@ -64,13 +77,24 @@ class SaveController extends ChangeNotifier {
 
   SaveProblem? problemOf(String videoId) => _failed[videoId];
 
-  /// Saves [song] into the library folder. Returns null when the song is
-  /// already being saved, so a second tap does nothing. Never throws.
+  /// True when a save would have to ask for a folder first.
+  bool get needsFolder => _chooseFolder != null && _folderPath() == null;
+
+  /// Saves [song] into the library folder, asking for the folder first when
+  /// there is none. Returns null when the song is already being saved or the
+  /// folder picker is already open, so a second tap does nothing. Closing
+  /// the picker without a folder fails with [SaveProblem.noFolder] and leaves
+  /// the song as it was, ready to try again. Never throws.
   Future<SaveOutcome?> save(YoutubeResult song) async {
     final id = song.id;
     if (_saving.containsKey(id)) return null;
 
-    final folder = _folderPath();
+    var folder = _folderPath();
+    if (folder == null && _chooseFolder != null) {
+      if (_choosing) return null;
+      folder = await _askForFolder();
+      if (folder == null) return const SaveFailed(SaveProblem.noFolder);
+    }
     if (folder == null) {
       _failed[id] = SaveProblem.folderMissing;
       _notify();
@@ -96,6 +120,17 @@ class SaveController extends ChangeNotifier {
     }
     _notify();
     return outcome;
+  }
+
+  Future<String?> _askForFolder() async {
+    _choosing = true;
+    try {
+      return await _chooseFolder!();
+    } catch (_) {
+      return null;
+    } finally {
+      _choosing = false;
+    }
   }
 
   Future<SaveOutcome> _run(YoutubeResult song, String folder) async {

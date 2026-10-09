@@ -66,6 +66,14 @@ class LibraryService extends ChangeNotifier {
     }
   }
 
+  /// Asks for a folder like [pickAndScanFolder], and answers with the folder
+  /// that is open afterwards, or null when there is none: the picker was
+  /// closed, permission was refused, or the folder couldn't be read.
+  Future<String?> chooseFolder() async {
+    await pickAndScanFolder();
+    return rootPath;
+  }
+
   Future<void> openPermissionSettings() => _permission.openSettings();
 
   Future<void> scanFolder(String path) async {
@@ -76,24 +84,31 @@ class LibraryService extends ChangeNotifier {
 
     final found = <Track>[];
     final dir = Directory(path);
-    if (await dir.exists()) {
-      await for (final entity
-          in dir.list(recursive: true, followLinks: false)) {
-        if (entity is! File) continue;
-        final ext = p.extension(entity.path).toLowerCase();
-        if (!_kAudioExtensions.contains(ext)) continue;
+    var opened = false;
+    try {
+      if (await dir.exists()) {
+        await for (final entity
+            in dir.list(recursive: true, followLinks: false)) {
+          if (entity is! File) continue;
+          final ext = p.extension(entity.path).toLowerCase();
+          if (!_kAudioExtensions.contains(ext)) continue;
 
-        found.add(_readTrack(entity));
+          found.add(_readTrack(entity));
+        }
+        opened = true;
       }
+    } on FileSystemException {
+      // No access to part of the folder. What was found so far still counts,
+      // but a folder that gave nothing at all counts as unreadable.
+      opened = found.isNotEmpty;
     }
 
     found.sort((a, b) => a.title.compareTo(b.title));
     tracks = found;
     isScanning = false;
-    if (found.isEmpty) {
-      problem = await dir.exists()
-          ? LibraryProblem.noAudioFound
-          : LibraryProblem.unreadableFolder;
+    // An empty folder is a fine library: it is where saved songs go.
+    if (!opened) {
+      problem = LibraryProblem.unreadableFolder;
       rootPath = null;
     }
     notifyListeners();

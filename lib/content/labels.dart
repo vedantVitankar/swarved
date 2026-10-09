@@ -18,7 +18,12 @@ class Labels {
   // Screen titles and buttons.
   static const libraryTitle = 'Your library';
   static const chooseFolder = 'Choose folder';
+  static const changeFolder = 'Change folder';
+  static const notNow = 'Not now';
   static const openSettings = 'Open settings';
+
+  // The welcome screen.
+  static const welcomeEnter = 'Come in';
 
   static String playingFrom(String folder) => 'Playing from $folder';
   static const playingFromSearch = 'Playing from your search';

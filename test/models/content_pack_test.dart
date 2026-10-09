@@ -157,4 +157,21 @@ void main() {
       expect(pack.folderNoteFor('Mornings')?.note, 'First.');
     });
   });
+
+  group('ContentPack welcome', () {
+    test('is read from the file', () {
+      final pack = ContentPack.parse(
+          '{"welcome": {"line": "Hi.", "signature": "Ved"}}');
+
+      expect(pack.welcome.line, 'Hi.');
+      expect(pack.welcome.signature, 'Ved');
+    });
+
+    test('is all defaults when the file has none', () {
+      final pack = ContentPack.parse('{}');
+
+      expect(pack.welcome.line, isNull);
+      expect(pack.welcome.signature, isNull);
+    });
+  });
 }

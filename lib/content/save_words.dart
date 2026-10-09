@@ -13,6 +13,11 @@ class SaveWords {
   static const done = 'Saved to your library.';
   static const alreadySaved = 'Already saved.';
 
+  // The question before the folder picker, the first time she saves a song.
+  static const folderPromptTitle = 'Where should it live?';
+  static const folderPromptBody =
+      'Pick a folder on this device for the songs you save. They stay here, just yours.';
+
   static String forProblem(SaveProblem problem) => switch (problem) {
         SaveProblem.noToken => 'Add your token in Us first.',
         SaveProblem.unauthorized => 'Token not accepted. Check Us.',
@@ -25,6 +30,7 @@ class SaveWords {
         SaveProblem.connectionLost => 'Connection dropped. Try again.',
         SaveProblem.folderMissing =>
           'Music folder not found. Choose it in Library.',
+        SaveProblem.noFolder => 'Pick a music folder to save songs into.',
         SaveProblem.cannotWrite => 'Can’t write to your music folder.',
         SaveProblem.diskFull => 'Not enough space on this device.',
         SaveProblem.unexpected => 'Something went sideways. Try again.',

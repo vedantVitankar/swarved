@@ -8,6 +8,7 @@ import '../models/recap_settings.dart';
 import '../models/song_note.dart';
 import '../models/song_of_the_day.dart';
 import '../models/track.dart';
+import '../models/welcome_settings.dart';
 import '../utils/daily_pick.dart';
 
 typedef ContentLoader = Future<String> Function();
@@ -41,6 +42,9 @@ class ContentService extends ChangeNotifier {
 
   /// When the recap appears and his closing line.
   RecapSettings get recapSettings => _pack.recap;
+
+  /// The line and signature on the welcome screen.
+  WelcomeSettings get welcomeSettings => _pack.welcome;
 
   /// The moments on memory lane, oldest first. Empty when he wrote none.
   List<Memory> get memories => _pack.memories;

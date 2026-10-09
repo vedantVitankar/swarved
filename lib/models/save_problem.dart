@@ -27,6 +27,9 @@ enum SaveProblem {
   /// The folder to save into is gone.
   folderMissing,
 
+  /// There is no folder yet, and none was chosen when asked.
+  noFolder,
+
   /// The phone or computer refuses writes to the folder.
   cannotWrite,
 

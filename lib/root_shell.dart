@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'screens/home/empty_library_state.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/library/library_screen.dart';
 import 'screens/search/search_screen.dart';
 import 'screens/us/us_screen.dart';
-import 'services/library_service.dart';
 import 'theme/colors.dart';
 import 'theme/responsive.dart';
 import 'widgets/mini_player_bar.dart';
@@ -27,20 +24,6 @@ class _RootShellState extends State<RootShell> {
 
   @override
   Widget build(BuildContext context) {
-    final library = context.watch<LibraryService>();
-
-    // Before a folder is chosen: just the empty state, no tabs, no player.
-    if (library.rootPath == null) {
-      return Scaffold(
-        backgroundColor: AppColors.base,
-        body: EmptyLibraryState(
-          problem: library.problem,
-          onChoose: library.pickAndScanFolder,
-          onOpenSettings: library.openPermissionSettings,
-        ),
-      );
-    }
-
     final wide =
         Responsive.of(MediaQuery.sizeOf(context).width) == ScreenClass.expanded;
 

@@ -8,6 +8,7 @@ import '../services/song_saver.dart';
 import '../theme/colors.dart';
 import '../theme/swar_glyphs.dart';
 import 'compact_icon_button.dart';
+import 'save_folder_dialog.dart';
 
 /// The button at the end of a YouTube result row: save, saving with progress,
 /// saved, or try again. Only rebuilds when this song's own state changes.
@@ -74,7 +75,15 @@ class SaveButton extends StatelessWidget {
   /// song moves from the YouTube results into the library results.
   Future<void> _save(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
-    final outcome = await context.read<SaveController>().save(song);
+    final controller = context.read<SaveController>();
+
+    // The first save has nowhere to go yet: say why, then let her pick.
+    if (controller.needsFolder) {
+      final go = await showSaveFolderDialog(context);
+      if (go != true) return;
+    }
+
+    final outcome = await controller.save(song);
     if (outcome == null) return;
 
     final message = switch (outcome) {
