@@ -5,6 +5,8 @@ import '../../content/words.dart';
 import '../../models/note_slot.dart';
 import '../../services/library_service.dart';
 import '../../theme/typography.dart';
+import '../../tutorial/tutorial_controller.dart';
+import '../../tutorial/tutorial_reveal.dart';
 import '../../widgets/page_body.dart';
 import '../../widgets/slot_note_card.dart';
 import '../../widgets/slot_text.dart';
@@ -56,45 +58,73 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final showFolders = _filter != _HomeFilter.notes;
     final showNote = _filter != _HomeFilter.folders;
 
+    // During the first-time intro Home starts blank and fills in. With no
+    // intro, tutorial is null or off and everything simply shows.
+    final tutorial = TutorialScope.maybeOf(context);
+    final greetingShown = tutorial == null || tutorial.greetingVisible;
+
     return PageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(Words.greeting(DateTime.now()), style: AppType.display),
+          // Laid out from the start so the intro can find its place, but
+          // not drawn until the typed greeting has glided into it.
+          Opacity(
+            opacity: greetingShown ? 1 : 0,
+            child: Text(
+              Words.greeting(DateTime.now()),
+              key: tutorial?.greetingKey,
+              style: AppType.display,
+            ),
+          ),
           const SizedBox(height: 4),
-          SlotText(
-            slot: NoteSlot.homeLine,
-            fallback: Words.homeSubline,
-            style: AppType.goldLabel,
+          TutorialReveal(
+            order: 0,
+            child: SlotText(
+              slot: NoteSlot.homeLine,
+              fallback: Words.homeSubline,
+              style: AppType.goldLabel,
+            ),
           ),
           const SizedBox(height: 12),
-          SwarChips(
-            labels: _chipLabels,
-            selected: _filter.index,
-            onSelected: (i) => setState(() => _filter = _HomeFilter.values[i]),
+          TutorialReveal(
+            order: 1,
+            child: SwarChips(
+              labels: _chipLabels,
+              selected: _filter.index,
+              onSelected: (i) =>
+                  setState(() => _filter = _HomeFilter.values[i]),
+            ),
           ),
           if (showFolders) ...[
             const SizedBox(height: 12),
-            if (library.byFolder.isEmpty)
-              Text(Words.homeNoFolders, style: AppType.bodyMuted)
-            else
-              FolderTileGrid(
-                byFolder: library.byFolder,
-                onOpenFolder: (folder, tracks) => FolderScreen.open(
-                  context,
-                  title: folder,
-                  tracks: tracks,
-                ),
-              ),
+            TutorialReveal(
+              order: 2,
+              child: library.byFolder.isEmpty
+                  ? Text(Words.homeNoFolders, style: AppType.bodyMuted)
+                  : FolderTileGrid(
+                      byFolder: library.byFolder,
+                      onOpenFolder: (folder, tracks) => FolderScreen.open(
+                        context,
+                        title: folder,
+                        tracks: tracks,
+                      ),
+                    ),
+            ),
           ],
           if (showNote) ...[
             // Brings its own gap above, and nothing when there is no pick.
-            const HomeSongOfTheDay(),
+            const TutorialReveal(order: 3, child: HomeSongOfTheDay()),
             const SizedBox(height: 14),
-            const SlotNoteCard(
-              slot: NoteSlot.homeNote,
-              defaultLabel: Words.noteForYouLabel,
-              fallbackNote: Words.noteForYou,
+            // Left out of the intro: it fades in once the intro is over
+            // and Home is on screen.
+            const TutorialReveal(
+              note: true,
+              child: SlotNoteCard(
+                slot: NoteSlot.homeNote,
+                defaultLabel: Words.noteForYouLabel,
+                fallbackNote: Words.noteForYou,
+              ),
             ),
           ],
         ],

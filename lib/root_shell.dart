@@ -5,6 +5,8 @@ import 'screens/search/search_screen.dart';
 import 'screens/us/us_screen.dart';
 import 'theme/colors.dart';
 import 'theme/responsive.dart';
+import 'tutorial/tutorial_controller.dart';
+import 'tutorial/tutorial_reveal.dart';
 import 'widgets/mini_player_bar.dart';
 import 'widgets/swar_nav_bar.dart';
 import 'widgets/swar_nav_rail.dart';
@@ -20,7 +22,11 @@ class _RootShellState extends State<RootShell> {
   static const _homeTab = 0;
   int _tab = _homeTab;
 
-  void _select(int index) => setState(() => _tab = index);
+  void _select(int index) {
+    // A home note held back by the intro appears the next time Home does.
+    TutorialScope.read(context)?.setHomeVisible(index == _homeTab);
+    setState(() => _tab = index);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,14 +54,20 @@ class _RootShellState extends State<RootShell> {
         body: wide
             ? Row(
                 children: [
-                  SwarNavRail(index: _tab, onChanged: _select),
+                  TutorialReveal(
+                    order: 4,
+                    child: SwarNavRail(index: _tab, onChanged: _select),
+                  ),
                   // Pages and the mini player share one column, so the
                   // player lines up with the page content, not the rail.
                   Expanded(
                     child: Column(
                       children: [
                         Expanded(child: tabs),
-                        const MiniPlayerBar(padBottom: true),
+                        const TutorialReveal(
+                          order: 4,
+                          child: MiniPlayerBar(padBottom: true),
+                        ),
                       ],
                     ),
                   ),
@@ -64,12 +76,15 @@ class _RootShellState extends State<RootShell> {
             : tabs,
         bottomNavigationBar: wide
             ? null
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const MiniPlayerBar(),
-                  SwarNavBar(index: _tab, onChanged: _select),
-                ],
+            : TutorialReveal(
+                order: 4,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const MiniPlayerBar(),
+                    SwarNavBar(index: _tab, onChanged: _select),
+                  ],
+                ),
               ),
       ),
     );

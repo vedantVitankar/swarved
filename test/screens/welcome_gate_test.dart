@@ -8,6 +8,7 @@ import 'package:swarved/screens/welcome/reveal_text.dart';
 import 'package:swarved/screens/welcome/welcome_gate.dart';
 import 'package:swarved/screens/welcome/welcome_screen.dart';
 import 'package:swarved/services/welcome_service.dart';
+import 'package:swarved/tutorial/tutorial_intro.dart';
 
 /// Fonts come from the bundled files, as in the app.
 void _useBundledFonts() => GoogleFonts.config.allowRuntimeFetching = false;
@@ -311,6 +312,42 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(find.byType(WelcomeScreen), findsNothing);
+    });
+  });
+
+  group('The intro after the welcome', () {
+    testWidgets('waits behind the welcome, then runs and hands over',
+        (tester) async {
+      _roomyScreen(tester);
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome));
+      await _finishIntro(tester);
+
+      // Nothing has started yet, but it is waiting underneath.
+      expect(find.byType(TutorialIntro), findsOneWidget);
+
+      await _comeIn(tester);
+      expect(find.byType(WelcomeScreen), findsNothing);
+      expect(find.byType(TutorialIntro), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 15));
+      expect(find.byType(TutorialIntro), findsNothing);
+      expect(find.text('the app'), findsOneWidget);
+    });
+
+    testWidgets('with reduced motion there is no intro to wait for',
+        (tester) async {
+      _roomyScreen(tester);
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome, reduceMotion: true));
+      await tester.pump();
+
+      await tester.tap(find.text(Labels.welcomeSkip));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byType(WelcomeScreen), findsNothing);
+      expect(find.byType(TutorialIntro), findsNothing);
     });
   });
 }
