@@ -45,4 +45,5 @@ flutter:
   assets:
     - assets/google_fonts/
     - assets/content/
+    - assets/welcome/
     - assets/memories/

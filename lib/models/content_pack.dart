@@ -6,7 +6,6 @@ import 'note_slot.dart';
 import 'song_note.dart';
 import 'song_of_the_day.dart';
 import 'track.dart';
-import 'welcome_settings.dart';
 import '../utils/song_match.dart';
 
 /// Everything he has written for her, as one immutable bundle.
@@ -31,9 +30,6 @@ class ContentPack {
   /// When the recap appears and what he says at the end of it.
   final RecapSettings recap;
 
-  /// What the welcome screen says.
-  final WelcomeSettings welcome;
-
   const ContentPack({
     this.notes = const [],
     this.songOfTheDay,
@@ -41,7 +37,6 @@ class ContentPack {
     this.folderNotes = const {},
     this.memories = const [],
     this.recap = const RecapSettings(),
-    this.welcome = const WelcomeSettings(),
   });
 
   static const empty = ContentPack();
@@ -69,7 +64,6 @@ class ContentPack {
       folderNotes: _parseFolderNotes(decoded['folderNotes']),
       memories: _parseMemories(decoded['memories']),
       recap: RecapSettings.parse(decoded['recap']),
-      welcome: WelcomeSettings.parse(decoded['welcome']),
     );
   }
 

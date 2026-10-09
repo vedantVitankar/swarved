@@ -5,7 +5,7 @@ import '../../content/labels.dart';
 import '../../content/words.dart';
 import '../../models/note_line.dart';
 import '../../models/welcome_settings.dart';
-import '../../services/content_service.dart';
+import '../../services/welcome_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/shape.dart';
 import '../../theme/swar_glyphs.dart';
@@ -122,9 +122,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final settings = context.select<ContentService, WelcomeSettings>(
-      (content) => content.welcomeSettings,
-    );
+    // Read once: the welcome file never changes while the app runs.
+    final settings = context.read<WelcomeService>().settings;
 
     return AnimatedBuilder(
       animation: _exit,

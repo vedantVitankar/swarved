@@ -22,14 +22,15 @@ class Words {
     return 'Still up,\n$baby?';
   }
 
-  // The welcome screen, unless he writes his own under "welcome" in
-  // content.json. The name above the line is always hers.
+  // The welcome screen, unless he writes his own in assets/welcome/welcome.json
+  // (its own file, apart from content.json). The name above the line is
+  // always hers.
   static const welcomeLine =
       'I made this for you, every corner of it. Take your time.';
   static const welcomeSignature = '— Ved';
 
   // The rest of the welcome: why he made it, a few notes, and a short tour.
-  // His own story and notes, under "welcome" in content.json, take over.
+  // His own story and notes, in welcome.json, take over.
   static const welcomeStoryTitle = 'Why I made this';
   static const welcomeStory = <String>[
     'We both love music. It is the one thing we always share, even from far away.',

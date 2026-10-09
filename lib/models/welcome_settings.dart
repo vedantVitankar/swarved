@@ -1,6 +1,7 @@
 import 'note_line.dart';
 
-/// What the welcome screen says, as set in the content file under "welcome".
+/// What the welcome screen says, as set in its own file,
+/// assets/welcome/welcome.json (see WelcomeService).
 class WelcomeSettings {
   /// His handwritten line on the first page. Null uses the default.
   final String? line;

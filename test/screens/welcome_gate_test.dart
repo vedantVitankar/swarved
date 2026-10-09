@@ -7,7 +7,7 @@ import 'package:swarved/content/words.dart';
 import 'package:swarved/screens/welcome/reveal_text.dart';
 import 'package:swarved/screens/welcome/welcome_gate.dart';
 import 'package:swarved/screens/welcome/welcome_screen.dart';
-import 'package:swarved/services/content_service.dart';
+import 'package:swarved/services/welcome_service.dart';
 
 /// Fonts come from the bundled files, as in the app.
 void _useBundledFonts() => GoogleFonts.config.allowRuntimeFetching = false;
@@ -21,15 +21,15 @@ void _roomyScreen(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-Future<ContentService> _content(WidgetTester tester, String json) async {
-  final service = ContentService(loader: () async => json);
+Future<WelcomeService> _welcome(WidgetTester tester, String json) async {
+  final service = WelcomeService(loader: () async => json);
   await tester.runAsync(service.load);
   return service;
 }
 
-Widget _app(ContentService content, {bool reduceMotion = false}) {
-  return ChangeNotifierProvider<ContentService>.value(
-    value: content,
+Widget _app(WelcomeService welcome, {bool reduceMotion = false}) {
+  return Provider<WelcomeService>.value(
+    value: welcome,
     child: MaterialApp(
       home: Builder(
         builder: (context) => MediaQuery(
@@ -85,8 +85,8 @@ void main() {
     testWidgets('shows the welcome over the app, with the default words',
         (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       expect(find.byType(WelcomeScreen), findsOneWidget);
@@ -103,11 +103,11 @@ void main() {
     testWidgets('his own line and signature take over from the defaults',
         (tester) async {
       _roomyScreen(tester);
-      final content = await _content(
+      final welcome = await _welcome(
         tester,
-        '{"welcome": {"line": "Stay a while.", "signature": "Yours"}}',
+        '{"line": "Stay a while.", "signature": "Yours"}',
       );
-      await tester.pumpWidget(_app(content));
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       expect(_revealed(tester), [Words.swarnima, 'Stay a while.', 'Yours']);
@@ -116,8 +116,8 @@ void main() {
     testWidgets('Come in fades the welcome away and leaves the app',
         (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       await _comeIn(tester);
@@ -129,8 +129,8 @@ void main() {
     testWidgets('a tap before the intro ends skips ahead, not in',
         (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
@@ -147,8 +147,8 @@ void main() {
     testWidgets('with reduced motion everything is there at once',
         (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content, reduceMotion: true));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome, reduceMotion: true));
       await tester.pump();
 
       // No waiting for the intro: the buttons already work.
@@ -161,8 +161,8 @@ void main() {
 
     testWidgets('Skip leaves from the first step', (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       await tester.tap(find.text(Labels.welcomeSkip));
@@ -177,8 +177,8 @@ void main() {
   group('The welcome journey', () {
     testWidgets('the second step tells why he made it', (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       await _next(tester);
@@ -192,11 +192,11 @@ void main() {
 
     testWidgets('his own story takes over from the default', (tester) async {
       _roomyScreen(tester);
-      final content = await _content(
+      final welcome = await _welcome(
         tester,
-        '{"welcome": {"story": ["Once upon a song."]}}',
+        '{"story": ["Once upon a song."]}',
       );
-      await tester.pumpWidget(_app(content));
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       await _next(tester);
@@ -208,12 +208,12 @@ void main() {
     testWidgets('the third step shows his notes, one at a time',
         (tester) async {
       _roomyScreen(tester);
-      final content = await _content(
+      final welcome = await _welcome(
         tester,
-        '{"welcome": {"notes": ["One.", "Two.", '
-        '{"label": "Gold", "note": "Three."}]}}',
+        '{"notes": ["One.", "Two.", '
+        '{"label": "Gold", "note": "Three."}]}',
       );
-      await tester.pumpWidget(_app(content));
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       await _next(tester);
@@ -233,8 +233,8 @@ void main() {
 
     testWidgets('the default notes appear when he wrote none', (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       await _next(tester);
@@ -247,8 +247,8 @@ void main() {
     testWidgets('the last step tours the four tabs and offers Come in',
         (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       for (var i = 0; i < 3; i++) {
@@ -272,8 +272,8 @@ void main() {
 
     testWidgets('Back returns to the step before', (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome));
       await _finishIntro(tester);
 
       // No way back from the first step.
@@ -296,8 +296,8 @@ void main() {
     testWidgets('with reduced motion every step is there at once',
         (tester) async {
       _roomyScreen(tester);
-      final content = await _content(tester, '{}');
-      await tester.pumpWidget(_app(content, reduceMotion: true));
+      final welcome = await _welcome(tester, '{}');
+      await tester.pumpWidget(_app(welcome, reduceMotion: true));
       await tester.pump();
 
       await _next(tester);

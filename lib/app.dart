@@ -17,6 +17,7 @@ import 'services/save_controller.dart';
 import 'services/saved_songs_index.dart';
 import 'services/song_saver.dart';
 import 'services/content_service.dart';
+import 'services/welcome_service.dart';
 
 class SwarVedApp extends StatelessWidget {
   final StatsService statsService;
@@ -28,6 +29,7 @@ class SwarVedApp extends StatelessWidget {
   final SavedSongsIndex savedSongsIndex;
   final SongSaver songSaver;
   final ContentService contentService;
+  final WelcomeService welcomeService;
 
   const SwarVedApp({
     super.key,
@@ -40,6 +42,7 @@ class SwarVedApp extends StatelessWidget {
     required this.savedSongsIndex,
     required this.songSaver,
     required this.contentService,
+    required this.welcomeService,
   });
 
   @override
@@ -56,6 +59,7 @@ class SwarVedApp extends StatelessWidget {
           ),
         ),
         ChangeNotifierProvider.value(value: contentService),
+        Provider.value(value: welcomeService),
         Provider.value(value: serverConfig),
         Provider.value(value: serverApi),
         ChangeNotifierProvider.value(value: connectionService),
