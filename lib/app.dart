@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'root_shell.dart';
 import 'screens/welcome/welcome_gate.dart';
 import 'services/library_service.dart';
+import 'services/playlist_service.dart';
 import 'services/player_service.dart';
 import 'services/search_service.dart';
 import 'services/stats_service.dart';
@@ -28,6 +29,7 @@ class SwarVedApp extends StatelessWidget {
   final StreamEndpoint streamEndpoint;
   final SavedSongsIndex savedSongsIndex;
   final SongSaver songSaver;
+  final PlaylistService playlistService;
   final ContentService contentService;
   final WelcomeService welcomeService;
 
@@ -41,6 +43,7 @@ class SwarVedApp extends StatelessWidget {
     required this.streamEndpoint,
     required this.savedSongsIndex,
     required this.songSaver,
+    required this.playlistService,
     required this.contentService,
     required this.welcomeService,
   });
@@ -58,6 +61,7 @@ class SwarVedApp extends StatelessWidget {
             prefetcher: QueuePrefetcher(api: serverApi),
           ),
         ),
+        ChangeNotifierProvider.value(value: playlistService),
         ChangeNotifierProvider.value(value: contentService),
         ChangeNotifierProvider.value(value: welcomeService),
         Provider.value(value: serverConfig),

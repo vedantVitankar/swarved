@@ -440,6 +440,35 @@ void main() {
     });
   });
 
+  group('toggleLiked (the heart held down)', () {
+    test('likes a song, then unlikes it, and says which', () async {
+      final service = await loaded();
+
+      expect(service.toggleLiked(_youtube('a')), isTrue);
+      expect(service.isLiked(_youtube('a')), isTrue);
+
+      expect(service.toggleLiked(_youtube('a')), isFalse);
+      expect(service.isLiked(_youtube('a')), isFalse);
+    });
+
+    test('leaves the rest of Liked songs alone', () async {
+      final service = await loaded();
+      service.add(Playlist.likedId, _youtube('a'));
+      service.add(Playlist.likedId, _youtube('b'));
+      service.add(Playlist.likedId, _youtube('c'));
+
+      service.toggleLiked(_youtube('b'));
+
+      expect(keysOf(service, Playlist.likedId), ['yt:a', 'yt:c']);
+    });
+
+    test('says no before the playlists are loaded', () {
+      final service = serviceOver(_FakeStore());
+
+      expect(service.toggleLiked(_youtube('a')), isFalse);
+    });
+  });
+
   group('applyMembership (the Done button)', () {
     test('adds to the ticked playlists and removes from the cleared ones',
         () async {

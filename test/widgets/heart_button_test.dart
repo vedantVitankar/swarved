@@ -59,6 +59,23 @@ void main() {
       expect(surfaceTaps, 0);
     });
 
+    testWidgets('calls onLongPress when it is held', (tester) async {
+      var held = 0;
+      var pressed = 0;
+      await tester.pumpWidget(_surface(
+        onSurfaceTap: () {},
+        heart: HeartButton(
+          onPressed: () => pressed++,
+          onLongPress: () => held++,
+        ),
+      ));
+
+      await tester.longPress(find.byType(HeartButton));
+
+      expect(held, 1);
+      expect(pressed, 0);
+    });
+
     testWidgets('isFilled swaps the outline for the solid heart',
         (tester) async {
       await tester.pumpWidget(

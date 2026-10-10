@@ -66,8 +66,8 @@ class Labels {
   static const previousSong = 'Previous song';
   static const nextSong = 'Next song';
   static const closePlayer = 'Close player';
-  static const heartSong = 'Heart this song';
-  static const unheartSong = 'Remove from hearts';
+  static const heartSong = 'Add to a playlist';
+  static const unheartSong = 'In Liked songs. Change playlists';
   static const nothingPlaying = 'Nothing playing';
 
   static const shuffleOn = 'Turn shuffle on';
@@ -78,4 +78,13 @@ class Labels {
 
   static const mute = 'Mute';
   static const unmute = 'Unmute';
+
+  // The playlist popup.
+  static const addToPlaylist = 'Add to playlist';
+  static const newPlaylist = 'New playlist';
+  static const playlistNameHint = 'Name your playlist';
+  static const createPlaylist = 'Add this playlist';
+  static const done = 'Done';
+  static const cancel = 'Cancel';
+  static const newBadge = 'New';
 }

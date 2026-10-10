@@ -120,6 +120,11 @@ class Words {
   /// The playlist every listener has, and the heart fills it.
   static const likedSongs = 'Liked songs';
 
+  // The heart and the playlist popup. His own lines can replace these later.
+  static const likedAdded = 'Kept in Liked songs.';
+  static const likedRemoved = 'Taken out of Liked songs.';
+  static const playlistsSaved = 'Saved to your playlists.';
+
   // Search.
   static const searchTitle = 'What shall we hear?';
   static const searchSubline =

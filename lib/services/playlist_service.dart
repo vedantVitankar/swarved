@@ -206,6 +206,17 @@ class PlaylistService extends ChangeNotifier {
     return AddResult.added;
   }
 
+  /// The heart's long press: puts [track] in Liked songs, or takes it out
+  /// when it is there. Answers whether it is liked now.
+  bool toggleLiked(Track track) {
+    final key = track.playlistKey;
+    if (liked.contains(key)) {
+      remove(Playlist.likedId, key);
+      return false;
+    }
+    return add(Playlist.likedId, track) == AddResult.added;
+  }
+
   /// Takes the song with [key] out of a playlist.
   bool remove(String playlistId, String key) {
     final playlist = byId(playlistId);

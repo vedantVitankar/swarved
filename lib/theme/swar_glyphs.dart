@@ -26,6 +26,8 @@ enum SwarGlyph {
   volumeLow,
   volumeHigh,
   disc, // stands in for missing artwork
+  add, // a plus: make something new
+  check, // a tick: chosen
 }
 
 /// What one glyph is made of: a solid part, a line part, or both.
@@ -71,6 +73,8 @@ class SwarGlyphs {
         SwarGlyph.volumeLow => GlyphShape(stroke: _volumeLow()),
         SwarGlyph.volumeHigh => GlyphShape(stroke: _volumeHigh()),
         SwarGlyph.disc => GlyphShape(stroke: _disc()),
+        SwarGlyph.add => GlyphShape(stroke: _add()),
+        SwarGlyph.check => GlyphShape(stroke: _check()),
       };
 
   // ---- From the theme preview ----
@@ -191,6 +195,17 @@ class SwarGlyphs {
     ..lineTo(18, 18)
     ..moveTo(18, 6)
     ..lineTo(6, 18);
+
+  static Path _add() => Path()
+    ..moveTo(12, 5)
+    ..lineTo(12, 19)
+    ..moveTo(5, 12)
+    ..lineTo(19, 12);
+
+  static Path _check() => Path()
+    ..moveTo(5, 12.5)
+    ..lineTo(10, 17.5)
+    ..lineTo(19, 7);
 
   /// A circle with a tick: a song that is already saved.
   static Path _saved() => Path()

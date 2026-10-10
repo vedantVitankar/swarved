@@ -9,7 +9,7 @@ import '../theme/shape.dart';
 import '../theme/swar_glyphs.dart';
 import '../theme/typography.dart';
 import '../widgets/compact_icon_button.dart';
-import '../widgets/heart_button.dart';
+import '../widgets/track_heart.dart';
 import '../widgets/play_pause_button.dart';
 import '../widgets/playback_mode_buttons.dart';
 import '../widgets/seek_bar.dart';
@@ -138,7 +138,7 @@ class NowPlayingScreen extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                const HeartButton(iconSize: 26),
+                                TrackHeart(track: track, iconSize: 26),
                               ],
                             ),
                             const SizedBox(height: 18),

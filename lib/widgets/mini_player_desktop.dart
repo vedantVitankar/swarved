@@ -8,7 +8,7 @@ import '../theme/swar_glyphs.dart';
 import '../theme/shape.dart';
 import '../theme/typography.dart';
 import 'compact_icon_button.dart';
-import 'heart_button.dart';
+import 'track_heart.dart';
 import 'play_pause_button.dart';
 import 'playback_mode_buttons.dart';
 import 'seek_bar.dart';
@@ -97,7 +97,7 @@ class _SongZone extends StatelessWidget {
             ),
           ),
         ),
-        const HeartButton(),
+        TrackHeart(track: track),
       ],
     );
   }

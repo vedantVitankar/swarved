@@ -4,6 +4,8 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'app.dart';
 import 'services/library_service.dart';
+import 'services/playlist_service.dart';
+import 'services/playlist_store.dart';
 import 'services/stats_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/server_api.dart';
@@ -71,6 +73,9 @@ Future<void> main() async {
     index: savedSongsIndex,
   );
 
+  final playlistService = PlaylistService(store: FilePlaylistStore());
+  await playlistService.load();
+
   final contentService = ContentService();
   await contentService.load();
 
@@ -86,6 +91,7 @@ Future<void> main() async {
     connectionService: connectionService,
     savedSongsIndex: savedSongsIndex,
     songSaver: songSaver,
+    playlistService: playlistService,
     contentService: contentService,
     welcomeService: welcomeService,
   ));

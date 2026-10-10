@@ -10,6 +10,9 @@ import 'swar_icon.dart';
 class CompactIconButton extends StatelessWidget {
   final SwarGlyph icon;
   final VoidCallback? onPressed;
+
+  /// Optional. Held down instead of tapped.
+  final VoidCallback? onLongPress;
   final String? tooltip;
   final Color color;
   final Color? background;
@@ -23,6 +26,7 @@ class CompactIconButton extends StatelessWidget {
     super.key,
     required this.icon,
     required this.onPressed,
+    this.onLongPress,
     this.tooltip,
     this.color = AppColors.textPrimary,
     this.background,
@@ -42,6 +46,7 @@ class CompactIconButton extends StatelessWidget {
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onPressed,
+          onLongPress: onLongPress,
           child: Center(
             child: busy
                 ? SizedBox.square(
@@ -58,6 +63,13 @@ class CompactIconButton extends StatelessWidget {
     );
 
     final label = tooltip;
-    return label == null ? button : Tooltip(message: label, child: button);
+    if (label == null) return button;
+    return Tooltip(
+      message: label,
+      // A tooltip also listens for a long press on touch screens, which
+      // would compete with the button's own.
+      triggerMode: onLongPress == null ? null : TooltipTriggerMode.manual,
+      child: button,
+    );
   }
 }
