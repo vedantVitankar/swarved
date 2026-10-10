@@ -88,10 +88,7 @@ class WelcomeSun extends StatelessWidget {
                         breath: breath,
                         rotation: reduceMotion
                             ? 0.0
-                            : ambient.value *
-                                2 *
-                                math.pi /
-                                SunlightPainter.rayCount,
+                            : ambient.value * SunlightPainter.loopTurn,
                       ),
                       child: const SunMark(size: _discSize),
                     ),
