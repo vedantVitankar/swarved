@@ -463,4 +463,121 @@ void main() {
       expect(c.step, TutorialStep.us);
     });
   });
+
+  group('TutorialSpotlight caption while the hole moves', () {
+    /// One part near the top and one near the bottom of an 800 high screen,
+    /// so the caption belongs below the first and above the second.
+    Widget topAndBottom(TutorialController c) {
+      return MaterialApp(
+        home: Scaffold(
+          body: TutorialScope(
+            controller: c,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Positioned(
+                  left: 20,
+                  top: 40,
+                  width: 200,
+                  height: 60,
+                  child: Container(key: c.keyFor(TutorialStep.folders)),
+                ),
+                Positioned(
+                  left: 20,
+                  top: 700,
+                  width: 200,
+                  height: 60,
+                  child: Container(key: c.keyFor(TutorialStep.chips)),
+                ),
+                TutorialSpotlight(controller: c),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    testWidgets('a caption never leaps across the screen on the way',
+        (tester) async {
+      _phoneScreen(tester);
+      final c = _touring();
+      await tester.pumpWidget(topAndBottom(c));
+      await _settle(tester);
+
+      final folders = find.text(Words.tutorialFolders);
+      final chips = find.text(Words.tutorialChips);
+      final foldersAt = tester.getTopLeft(folders).dy;
+      // Below the top part, which ends at 100.
+      expect(foldersAt, greaterThan(100));
+
+      c.advance();
+      await tester.pump();
+
+      double? chipsAt;
+      for (var i = 0; i < 14; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+        if (folders.evaluate().isNotEmpty) {
+          expect(tester.getTopLeft(folders).dy, foldersAt);
+        }
+        if (chips.evaluate().isNotEmpty) {
+          final at = tester.getTopLeft(chips).dy;
+          chipsAt ??= at;
+          expect(at, chipsAt);
+        }
+      }
+
+      // It ends above the bottom part, which starts at 700.
+      expect(chips, findsOneWidget);
+      expect(folders, findsNothing);
+      expect(tester.getBottomLeft(chips).dy, lessThan(700));
+    });
+
+    testWidgets('only one caption is ever on show', (tester) async {
+      _phoneScreen(tester);
+      final c = _touring();
+      await tester.pumpWidget(topAndBottom(c));
+      await _settle(tester);
+
+      c.advance();
+      await tester.pump();
+      for (var i = 0; i < 14; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+        final shown = find.text(Words.tutorialFolders).evaluate().length +
+            find.text(Words.tutorialChips).evaluate().length;
+        expect(shown, 1);
+      }
+    });
+
+    testWidgets('the new caption takes no taps until it has arrived',
+        (tester) async {
+      _phoneScreen(tester);
+      final c = _touring();
+      await tester.pumpWidget(topAndBottom(c));
+      await _settle(tester);
+
+      c.advance();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Neither the leaving card nor the arriving one answers yet.
+      await tester.tap(find.text(Labels.welcomeNext), warnIfMissed: false);
+      await tester.pump();
+      expect(c.step, TutorialStep.chips);
+
+      await _settle(tester);
+      await tester.tap(find.text(Labels.welcomeNext));
+      await tester.pump();
+      expect(c.step, TutorialStep.search);
+    });
+
+    testWidgets('waiting for her to press play redraws nothing',
+        (tester) async {
+      _phoneScreen(tester);
+      final c = _touring(song: _song);
+      await tester.pumpWidget(_host(c));
+      await _settle(tester);
+
+      expect(tester.binding.hasScheduledFrame, isFalse);
+    });
+  });
 }

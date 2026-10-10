@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../content/labels.dart';
@@ -71,12 +72,22 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
 
   late final AnimationController _fade;
   late final AnimationController _move;
-  late final AnimationController _wait;
+  Timer? _patienceTimer;
+
+  /// The song has had its chance to start, so "Continue" may show.
+  bool _canContinue = false;
 
   TutorialStep? _shown;
   String? _folderAtEntry;
   Rect? _from;
   Rect? _drawn;
+
+  /// The step the tour has just left, and where its caption was, so that
+  /// caption can fade out where it stood while the hole moves on.
+  int _shownIndex = 0;
+  TutorialStep? _previous;
+  int _previousIndex = 0;
+  Rect? _previousHole;
   VoidCallback? _afterFade;
 
   @override
@@ -85,13 +96,13 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
     _fade = AnimationController(vsync: this, duration: _fadeTime)
       ..addStatusListener(_onFadeStatus);
     _move = AnimationController(vsync: this, duration: _moveTime);
-    _wait = AnimationController(vsync: this, duration: _patience);
 
     widget.controller.addListener(_onController);
     widget.playback?.addListener(_onPlayback);
     widget.library?.addListener(_onLibrary);
 
     _shown = widget.controller.step;
+    _shownIndex = widget.controller.stepIndex;
     _enter(_shown);
     _fade.forward();
   }
@@ -103,7 +114,7 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
     widget.library?.removeListener(_onLibrary);
     _fade.dispose();
     _move.dispose();
-    _wait.dispose();
+    _patienceTimer?.cancel();
     super.dispose();
   }
 
@@ -112,12 +123,17 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
   /// the play step starts.
   void _enter(TutorialStep? step) {
     if (step == null) return;
-    if (step == TutorialStep.addFolder) _folderAtEntry = widget.folderPath?.call();
+    if (step == TutorialStep.addFolder)
+      _folderAtEntry = widget.folderPath?.call();
     _move.forward(from: 0);
+    // A timer, not an animation: nothing changes on screen while she
+    // waits, so nothing should be redrawn every frame.
+    _patienceTimer?.cancel();
     if (step == TutorialStep.play) {
-      _wait.forward(from: 0);
-    } else {
-      _wait.stop();
+      _canContinue = false;
+      _patienceTimer = Timer(_patience, () {
+        if (mounted) setState(() => _canContinue = true);
+      });
     }
     // Two frames on: a step that changes the tab needs the new tab on
     // screen first.
@@ -141,7 +157,11 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
     final step = widget.controller.step;
     if (step == null || step == _shown) return;
     _from = _drawn;
+    _previous = _shown;
+    _previousIndex = _shownIndex;
+    _previousHole = _drawn;
     _shown = step;
+    _shownIndex = widget.controller.stepIndex;
     _enter(step);
   }
 
@@ -187,7 +207,8 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
   /// it can't be found.
   Rect? _measure(TutorialStep step) {
     final mine = context.findRenderObject();
-    final theirs = widget.controller.keyFor(step).currentContext?.findRenderObject();
+    final theirs =
+        widget.controller.keyFor(step).currentContext?.findRenderObject();
     if (mine is! RenderBox || theirs is! RenderBox) return null;
     if (!mine.hasSize || !theirs.attached || !theirs.hasSize) return null;
     final corner = mine.globalToLocal(theirs.localToGlobal(Offset.zero));
@@ -205,7 +226,7 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
       child: SizedBox.expand(
         child: LayoutBuilder(
           builder: (context, box) => AnimatedBuilder(
-            animation: Listenable.merge([_fade, _move, _wait]),
+            animation: Listenable.merge([_fade, _move]),
             builder: (context, _) => _content(box.biggest),
           ),
         ),
@@ -221,9 +242,8 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
     final lit = target == null ? null : SpotlightLayout.hole(target, screen);
     final from = _from;
     final moved = Curves.easeInOutCubic.transform(_move.value);
-    final hole = lit == null
-        ? null
-        : (from == null ? lit : Rect.lerp(from, lit, moved));
+    final hole =
+        lit == null ? null : (from == null ? lit : Rect.lerp(from, lit, moved));
     _drawn = hole;
 
     return Stack(
@@ -238,7 +258,7 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
           ),
         ),
         ..._blockers(step, hole, screen),
-        _caption(step, hole, screen),
+        ..._captions(step, lit, screen),
       ],
     );
   }
@@ -270,7 +290,82 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
     ];
   }
 
-  Widget _caption(TutorialStep step, Rect? hole, Size screen) {
+  /// The part of a move in which the old caption fades out, and the part in
+  /// which the new one fades in. Between the two there is no caption, so the
+  /// card never jumps across the screen while the hole is in motion.
+  static const double _captionOutEnd = 0.25;
+  static const double _captionInStart = 0.5;
+
+  /// The caption to draw now. A caption always sits beside the part it
+  /// belongs to, never beside the moving hole: when the hole travels from
+  /// the top of the screen to the bottom, a card that followed it would
+  /// leap from below the hole to above it halfway. Instead the old card
+  /// fades out where it stood, and the new one fades in where it belongs.
+  List<Widget> _captions(TutorialStep step, Rect? lit, Size screen) {
+    final previous = _previous;
+    final t = _move.value;
+
+    if (previous != null && t < _captionOutEnd) {
+      return [
+        _placedCard(
+          previous,
+          _previousIndex,
+          _previousHole,
+          screen,
+          opacity: 1 - t / _captionOutEnd,
+          interactive: false,
+        ),
+      ];
+    }
+
+    // The very first step has nothing to wait for.
+    final arrived = previous == null
+        ? 1.0
+        : ((t - _captionInStart) / (1 - _captionInStart)).clamp(0.0, 1.0);
+    return [
+      _placedCard(
+        step,
+        _shownIndex,
+        lit,
+        screen,
+        opacity: arrived,
+        interactive: arrived >= 1,
+      ),
+    ];
+  }
+
+  Widget _placedCard(
+    TutorialStep step,
+    int index,
+    Rect? hole,
+    Size screen, {
+    required double opacity,
+    required bool interactive,
+  }) {
+    final card = IgnorePointer(
+      ignoring: !interactive,
+      child: Opacity(opacity: opacity, child: _card(step, index, screen)),
+    );
+
+    // No lit part to point at: the words simply sit in the middle.
+    if (hole == null) return Center(child: card);
+
+    const gap = SpotlightLayout.captionGap;
+    // Align, not Center: the card should be as tall as it is, not as tall
+    // as the room it is given.
+    final placed = Align(heightFactor: 1, child: card);
+    if (SpotlightLayout.captionAbove(hole, screen)) {
+      return Positioned(
+        left: 0,
+        right: 0,
+        bottom: screen.height - hole.top + gap,
+        child: placed,
+      );
+    }
+    return Positioned(left: 0, right: 0, top: hole.bottom + gap, child: placed);
+  }
+
+  Widget _card(TutorialStep step, int index, Size screen) {
     final controller = widget.controller;
     final text = tutorialCaption(
       step,
@@ -278,22 +373,23 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
       noFolders: step == TutorialStep.folders &&
           (widget.foldersEmpty?.call() ?? false),
     );
-    final isLast = controller.stepIndex + 1 >= controller.steps.length;
+    final isLast = index + 1 >= controller.steps.length;
     final isPlay = step == TutorialStep.play;
     // Pressing play is the only way on, unless the song never starts. The
     // folder can always be left for later.
-    final showNext = !isPlay || _wait.isCompleted;
+    final showNext = !isPlay || _canContinue;
     final nextLabel = switch (step) {
       TutorialStep.play => Words.tutorialContinue,
       TutorialStep.addFolder => Words.tutorialNotNow,
       _ => isLast ? Words.tutorialDone : Labels.welcomeNext,
     };
 
-    final card = FadeTransition(
+    return FadeTransition(
       opacity: _fade,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: math.min(_captionMaxWidth, screen.width - 2 * _captionMargin),
+          maxWidth:
+              math.min(_captionMaxWidth, screen.width - 2 * _captionMargin),
         ),
         child: Container(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
@@ -305,21 +401,14 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              WelcomeDots(
-                count: controller.steps.length,
-                index: controller.stepIndex,
-              ),
+              WelcomeDots(count: controller.steps.length, index: index),
               const SizedBox(height: 12),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: Text(
-                  text,
-                  key: ValueKey<TutorialStep>(step),
-                  textAlign: TextAlign.center,
-                  style: AppType.note.copyWith(
-                    fontSize: 26,
-                    color: AppColors.textPrimary,
-                  ),
+              Text(
+                text,
+                textAlign: TextAlign.center,
+                style: AppType.note.copyWith(
+                  fontSize: 26,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 10),
@@ -342,23 +431,6 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
         ),
       ),
     );
-
-    // No lit part to point at: the words simply sit in the middle.
-    if (hole == null) return Center(child: card);
-
-    const gap = SpotlightLayout.captionGap;
-    // Align, not Center: the card should be as tall as it is, not as tall
-    // as the room it is given.
-    final placed = Align(heightFactor: 1, child: card);
-    if (SpotlightLayout.captionAbove(hole, screen)) {
-      return Positioned(
-        left: 0,
-        right: 0,
-        bottom: screen.height - hole.top + gap,
-        child: placed,
-      );
-    }
-    return Positioned(left: 0, right: 0, top: hole.bottom + gap, child: placed);
   }
 }
 

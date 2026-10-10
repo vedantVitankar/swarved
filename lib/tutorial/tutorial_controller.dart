@@ -28,7 +28,8 @@ class TutorialController extends ChangeNotifier {
   /// greeting to exactly where the real one sits.
   final GlobalKey greetingKey = GlobalKey(debugLabel: 'tutorial greeting');
 
-  TutorialController({TutorialStage stage = TutorialStage.off, this.tour = false})
+  TutorialController(
+      {TutorialStage stage = TutorialStage.off, this.tour = false})
       : _stage = stage,
         _noteShown = stage == TutorialStage.off;
 
@@ -94,8 +95,8 @@ class TutorialController extends ChangeNotifier {
 
   /// A key for the part of the screen a step lights up. Home and the
   /// shell put it on the right widget; the spotlight measures it.
-  GlobalKey keyFor(TutorialStep step) =>
-      _keys.putIfAbsent(step, () => GlobalKey(debugLabel: 'tutorial ${step.name}'));
+  GlobalKey keyFor(TutorialStep step) => _keys.putIfAbsent(
+      step, () => GlobalKey(debugLabel: 'tutorial ${step.name}'));
 
   /// The key for a navigation tab, or null for the tabs the tour doesn't
   /// stop at.
@@ -108,8 +109,7 @@ class TutorialController extends ChangeNotifier {
 
   /// The tab Home's shell should be showing: the Library while she is asked
   /// to choose a folder, Home at every other time.
-  int get wantedTab =>
-      step == TutorialStep.addFolder ? libraryTab : homeTab;
+  int get wantedTab => step == TutorialStep.addFolder ? libraryTab : homeTab;
 
   static const int homeTab = 0;
   static const int libraryTab = 2;
@@ -138,7 +138,9 @@ class TutorialController extends ChangeNotifier {
   /// The opening is over: on to the tour, or, with none, to the end.
   void finish() {
     if (_stage != TutorialStage.revealing) return;
-    _go(tour && _steps.isNotEmpty ? TutorialStage.touring : TutorialStage.finished);
+    _go(tour && _steps.isNotEmpty
+        ? TutorialStage.touring
+        : TutorialStage.finished);
   }
 
   /// On to the next step, and after the last one the tutorial is over.

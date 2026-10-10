@@ -51,8 +51,7 @@ class Words {
   // under "tutorial" in assets/welcome/welcome.json, take over.
   static const tutorialSongFolder = 'Our first song';
   static const tutorialPlay = 'Press play, baby. This one is for you.';
-  static const tutorialFolders =
-      'Your folders live here. Tap one to open it.';
+  static const tutorialFolders = 'Your folders live here. Tap one to open it.';
   static const tutorialFoldersEmpty =
       'Your folders will live here, once you add one. We will do that in a moment.';
   static const tutorialChips =
@@ -61,8 +60,7 @@ class Words {
       'Whatever is playing stays right here. Tap it to open the full player.';
   static const tutorialSearch =
       'Search finds anything. Play it, or save it to keep.';
-  static const tutorialLibrary =
-      'Library is your own songs, folder by folder.';
+  static const tutorialLibrary = 'Library is your own songs, folder by folder.';
   static const tutorialAddFolder =
       'Tap here and pick the folder where your songs live, baby. '
       'They never leave this phone.';

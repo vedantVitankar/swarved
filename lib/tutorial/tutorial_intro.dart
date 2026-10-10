@@ -88,7 +88,8 @@ class _TutorialIntroState extends State<TutorialIntro>
     }
     // With the song first, only the song fades in at the end of the
     // opening, so it is over sooner. Known now that the opening has begun.
-    final blocks = widget.controller.songFirst ? 1 : TutorialTimeline.revealBlocks;
+    final blocks =
+        widget.controller.songFirst ? 1 : TutorialTimeline.revealBlocks;
     _endMs = TutorialTimeline.end(_text.length, blocks: blocks).inMilliseconds;
     _master.duration = Duration(milliseconds: _endMs);
     _master.forward();
@@ -163,7 +164,8 @@ class _TutorialIntroState extends State<TutorialIntro>
     );
 
     final glideT = Curves.easeInOutCubic.transform(
-      _unit((elapsed.inMilliseconds - _glideStartMs) / (_glideEndMs - _glideStartMs)),
+      _unit((elapsed.inMilliseconds - _glideStartMs) /
+          (_glideEndMs - _glideStartMs)),
     );
     final target = _target();
     final scale = _between(startScale, 1.0, glideT);

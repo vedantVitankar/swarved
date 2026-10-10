@@ -84,8 +84,7 @@ class _WelcomeGateState extends State<WelcomeGate> {
       playback: player,
       songIsPlaying: song == null
           ? null
-          : () =>
-              player!.current?.id == song.track.id && player.isPlaying,
+          : () => player!.current?.id == song.track.id && player.isPlaying,
       foldersEmpty: _foldersEmpty,
       library: _library(),
       folderPath: () => _library()?.rootPath,

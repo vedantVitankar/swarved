@@ -12,7 +12,8 @@ class TutorialSongCard extends StatelessWidget {
   final TutorialSong song;
   final GlobalKey cardKey;
 
-  const TutorialSongCard({super.key, required this.song, required this.cardKey});
+  const TutorialSongCard(
+      {super.key, required this.song, required this.cardKey});
 
   @override
   Widget build(BuildContext context) {

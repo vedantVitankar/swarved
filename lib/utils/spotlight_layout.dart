@@ -22,7 +22,8 @@ class SpotlightLayout {
     final bottom = math.min(screen.height, grown.bottom);
     // A target entirely off screen collapses to nothing rather than
     // turning inside out.
-    return Rect.fromLTRB(left, top, math.max(left, right), math.max(top, bottom));
+    return Rect.fromLTRB(
+        left, top, math.max(left, right), math.max(top, bottom));
   }
 
   /// Whether the caption goes above the hole. It goes on whichever side has
