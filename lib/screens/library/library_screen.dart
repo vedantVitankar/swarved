@@ -12,15 +12,29 @@ import '../../utils/folder_order.dart';
 import '../../widgets/folder_row.dart';
 import '../../widgets/page_body.dart';
 import '../../widgets/slot_note_card.dart';
+import '../../widgets/swar_chips.dart';
 import '../../widgets/swar_outlined_button.dart';
 import '../folder/folder_screen.dart';
 import 'empty_library_state.dart';
+import 'library_playlists.dart';
 
-/// The Library tab: every folder, A to Z, and the way to choose the music
-/// folder. Without a folder it shows how to pick one. Mixes, notes and
-/// pinned items join later, once the pieces they depend on exist.
-class LibraryScreen extends StatelessWidget {
+/// The Library tab, in two views: every folder A to Z with the way to choose
+/// the music folder, or her playlists with Liked songs first. Without a
+/// folder the folders view shows how to pick one. Mixes and notes join
+/// later, once the pieces they depend on exist.
+class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
+
+  @override
+  State<LibraryScreen> createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> {
+  static const _foldersView = 0;
+  static const _playlistsView = 1;
+  static const _chipLabels = [Labels.chipFolders, Labels.chipPlaylists];
+
+  int _view = _foldersView;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +52,15 @@ class LibraryScreen extends StatelessWidget {
             defaultLabel: Words.libraryNoteLabel,
             bottomGap: 12,
           ),
-          if (library.rootPath == null)
+          SwarChips(
+            labels: _chipLabels,
+            selected: _view,
+            onSelected: (i) => setState(() => _view = i),
+          ),
+          const SizedBox(height: 8),
+          if (_view == _playlistsView)
+            const LibraryPlaylists()
+          else if (library.rootPath == null)
             EmptyLibraryState(
               problem: library.problem,
               onChoose: library.pickAndScanFolder,

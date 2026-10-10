@@ -38,20 +38,24 @@ class NowPlayingScreen extends StatelessWidget {
   /// overflowing.
   static const double _reservedHeight = 380;
 
-  /// "Playing from Slow dances" for a folder song, or the search for a
-  /// YouTube song, which has no folder.
-  static String _playingFrom(Track track) =>
-      track.isLocal && track.folder.isNotEmpty
-          ? Labels.playingFrom(track.folder)
-          : Labels.playingFromSearch;
+  /// "Playing from Liked songs" for a playlist, "Playing from Slow dances"
+  /// for a folder song, or the search for a YouTube song, which has no
+  /// folder.
+  static String _playingFrom(Track track, String? playlistName) {
+    if (playlistName != null) return Labels.playingFrom(playlistName);
+    return track.isLocal && track.folder.isNotEmpty
+        ? Labels.playingFrom(track.folder)
+        : Labels.playingFromSearch;
+  }
 
   @override
   Widget build(BuildContext context) {
     // Only rebuilds when the current TRACK changes — artwork/title/artist
     // stay stable across the many position-tick notifications per second.
-    return Selector<PlayerService, Track?>(
-      selector: (_, player) => player.current,
-      builder: (context, track, _) {
+    return Selector<PlayerService, (Track?, String?)>(
+      selector: (_, player) => (player.current, player.source?.name),
+      builder: (context, now, _) {
+        final (track, sourceName) = now;
         if (track == null) {
           return Scaffold(
             backgroundColor: AppColors.base,
@@ -80,7 +84,7 @@ class NowPlayingScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _playingFrom(track),
+              _playingFrom(track, sourceName),
               style: AppType.caption,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

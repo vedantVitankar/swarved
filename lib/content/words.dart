@@ -125,6 +125,16 @@ class Words {
   static const likedRemoved = 'Taken out of Liked songs.';
   static const playlistsSaved = 'Saved to your playlists.';
 
+  // A playlist's page and the Playlists view in the Library.
+  static const playlistEmpty =
+      'Nothing here yet. Tap the heart on any song to add it.';
+  static const playlistReorderHint = 'Hold a song to move it.';
+  static const playlistGone = 'This playlist is gone.';
+  static const songNotOnDevice = "That song isn't on this device.";
+  static const playlistsHint =
+      'Make a new one from the heart on any song.';
+  static String songTakenOut(String playlist) => 'Taken out of $playlist.';
+
   // Search.
   static const searchTitle = 'What shall we hear?';
   static const searchSubline =

@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/play_source.dart';
 import '../models/playback_problem.dart';
 import '../models/track.dart';
 import '../utils/queue_order.dart';
@@ -70,6 +72,12 @@ class PlayerService extends ChangeNotifier {
 
   List<Track> _queue = [];
   int _currentIndex = -1;
+
+  /// Where the queue came from (a playlist), for "Playing from ...". Null
+  /// for a folder or a search, which Now Playing words from the song itself.
+  PlaySource? _source;
+
+  final math.Random _random = math.Random();
 
   /// The id of the song the player actually holds. Null while a song is
   /// still loading or failed to load, so listening time is never credited to
@@ -153,13 +161,32 @@ class PlayerService extends ChangeNotifier {
   bool get canGoNext => _order.hasNext;
   bool get canGoPrevious => _order.hasPrevious;
 
-  Future<void> playQueue(List<Track> tracks, {int startIndex = 0}) async {
+  /// Where the queue now playing came from, or null when it has no name.
+  PlaySource? get source => _source;
+
+  Future<void> playQueue(
+    List<Track> tracks, {
+    int startIndex = 0,
+    PlaySource? source,
+  }) async {
     if (tracks.isEmpty) return;
     _logCurrentListen(completedNaturally: false);
     _queue = tracks;
+    _source = source;
     _order.start(length: tracks.length, startIndex: startIndex);
     _currentIndex = _order.currentIndex ?? 0;
     await _loadAndPlay();
+  }
+
+  /// Turns shuffle on and starts [tracks] from a random song.
+  Future<void> playShuffled(List<Track> tracks, {PlaySource? source}) async {
+    if (tracks.isEmpty) return;
+    _order.setShuffle(true);
+    await playQueue(
+      tracks,
+      startIndex: _random.nextInt(tracks.length),
+      source: source,
+    );
   }
 
   /// Loads the current song and starts it, keeping [isLoading] and

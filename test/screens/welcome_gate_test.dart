@@ -30,7 +30,7 @@ Future<WelcomeService> _welcome(WidgetTester tester, String json) async {
 }
 
 Widget _app(WelcomeService welcome, {bool reduceMotion = false}) {
-  return Provider<WelcomeService>.value(
+  return ChangeNotifierProvider<WelcomeService>.value(
     value: welcome,
     child: MaterialApp(
       home: Builder(

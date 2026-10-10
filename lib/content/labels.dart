@@ -12,6 +12,7 @@ class Labels {
   // Filter chips.
   static const chipAll = 'All';
   static const chipFolders = 'Folders';
+  static const chipPlaylists = 'Playlists';
   static const chipMixes = 'Mixes';
   static const chipNotes = 'Notes';
 
@@ -33,6 +34,9 @@ class Labels {
   static const playingFromSearch = 'Playing from your search';
 
   static String songCount(int count) => count == 1 ? '1 song' : '$count songs';
+
+  /// The line under Liked songs in the Library, which is always first.
+  static String pinnedSongCount(int count) => 'Pinned · ${songCount(count)}';
 
   // Logbook.
   static const logbook = 'Logbook';
@@ -87,4 +91,8 @@ class Labels {
   static const done = 'Done';
   static const cancel = 'Cancel';
   static const newBadge = 'New';
+
+  // A playlist's page.
+  static const playAll = 'Play';
+  static const shuffleAll = 'Shuffle';
 }

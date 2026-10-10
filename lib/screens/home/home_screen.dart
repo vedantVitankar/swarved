@@ -3,18 +3,25 @@ import 'package:provider/provider.dart';
 import '../../content/labels.dart';
 import '../../content/words.dart';
 import '../../models/note_slot.dart';
+import '../../models/playlist.dart';
+import '../../models/track.dart';
 import '../../services/library_service.dart';
+import '../../services/playlist_service.dart';
+import '../../services/stats_service.dart';
 import '../../theme/typography.dart';
 import '../../tutorial/tutorial_controller.dart';
 import '../../tutorial/tutorial_reveal.dart';
 import '../../tutorial/tutorial_song_card.dart';
 import '../../tutorial/tutorial_step.dart';
+import '../../utils/home_tiles.dart';
+import '../../utils/recent_folders.dart';
 import '../../widgets/page_body.dart';
 import '../../widgets/slot_note_card.dart';
 import '../../widgets/slot_text.dart';
 import '../../widgets/swar_chips.dart';
 import '../folder/folder_screen.dart';
-import 'folder_tile_grid.dart';
+import '../playlist/playlist_screen.dart';
+import 'home_tile_grid.dart';
 import 'home_song_of_the_day.dart';
 
 enum _HomeFilter { all, folders, notes }
@@ -53,9 +60,56 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) setState(() {});
   }
 
+  /// The Home grid: Liked songs, her newest playlists and the folders she
+  /// played last, six in all.
+  Widget _tiles(
+    LibraryService library,
+    List<Playlist> playlists,
+    StatsService stats,
+  ) {
+    final byFolder = library.byFolder;
+    final tiles = pickHomeTiles(
+      playlists: playlists,
+      foldersByRecency: foldersByRecency(
+        byFolder,
+        stats.entries.map((entry) => entry.trackPath),
+      ),
+    );
+    if (tiles.isEmpty) {
+      return Text(Words.homeNoFolders, style: AppType.bodyMuted);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        HomeTileGrid(
+          tiles: tiles,
+          onOpen: (tile) => _open(tile, byFolder),
+        ),
+        // Liked songs is always there, so say where folders will gather.
+        if (byFolder.isEmpty) ...[
+          const SizedBox(height: 10),
+          Text(Words.homeNoFolders, style: AppType.bodyMuted),
+        ],
+      ],
+    );
+  }
+
+  /// A playlist tile opens its page, a folder tile opens the folder.
+  void _open(HomeTile tile, Map<String, List<Track>> byFolder) {
+    if (tile.kind == HomeTileKind.playlist) {
+      PlaylistScreen.open(context, tile.id);
+      return;
+    }
+    final tracks = byFolder[tile.id];
+    if (tracks == null) return;
+    FolderScreen.open(context, title: tile.id, tracks: tracks);
+  }
+
   @override
   Widget build(BuildContext context) {
     final library = context.watch<LibraryService>();
+    final playlists = context.watch<PlaylistService>().playlists;
+    final stats = context.watch<StatsService>();
 
     final showFolders = _filter != _HomeFilter.notes;
     final showNote = _filter != _HomeFilter.folders;
@@ -108,16 +162,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               order: 2,
               child: KeyedSubtree(
                 key: tutorial?.keyFor(TutorialStep.folders),
-                child: library.byFolder.isEmpty
-                    ? Text(Words.homeNoFolders, style: AppType.bodyMuted)
-                    : FolderTileGrid(
-                        byFolder: library.byFolder,
-                        onOpenFolder: (folder, tracks) => FolderScreen.open(
-                          context,
-                          title: folder,
-                          tracks: tracks,
-                        ),
-                      ),
+                child: _tiles(library, playlists, stats),
               ),
             ),
           ],

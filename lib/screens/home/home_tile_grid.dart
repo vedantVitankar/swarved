@@ -1,59 +1,45 @@
 import 'package:flutter/material.dart';
-import '../../models/track.dart';
 import '../../theme/colors.dart';
 import '../../theme/shape.dart';
 import '../../theme/typography.dart';
+import '../../utils/home_tiles.dart';
 import '../../widgets/folder_art.dart';
+import '../../widgets/playlist_art.dart';
 
-/// The folder tiles on Home: colour block on the left, name beside it.
-/// Shows the biggest folders first; the Library tab will list them all.
-class FolderTileGrid extends StatelessWidget {
-  final Map<String, List<Track>> byFolder;
-  final void Function(String folder, List<Track> tracks) onOpenFolder;
+/// The tiles on Home: colour block on the left, name beside it, two columns
+/// by three rows. What fills them is chosen by [pickHomeTiles].
+class HomeTileGrid extends StatelessWidget {
+  final List<HomeTile> tiles;
+  final void Function(HomeTile tile) onOpen;
 
-  const FolderTileGrid({
-    super.key,
-    required this.byFolder,
-    required this.onOpenFolder,
-  });
-
-  static const _maxTiles = 8;
+  const HomeTileGrid({super.key, required this.tiles, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
-    final shown = (byFolder.entries.toList()
-          ..sort((a, b) => b.value.length.compareTo(a.value.length)))
-        .take(_maxTiles)
-        .toList();
-
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: EdgeInsets.zero,
-      // Two columns on a phone, more on a wide window.
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 260,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
         mainAxisExtent: 46,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
       ),
-      itemCount: shown.length,
+      itemCount: tiles.length,
       itemBuilder: (context, i) {
-        final entry = shown[i];
-        return _FolderTile(
-          name: entry.key,
-          onTap: () => onOpenFolder(entry.key, entry.value),
-        );
+        final tile = tiles[i];
+        return _Tile(tile: tile, onTap: () => onOpen(tile));
       },
     );
   }
 }
 
-class _FolderTile extends StatelessWidget {
-  final String name;
+class _Tile extends StatelessWidget {
+  final HomeTile tile;
   final VoidCallback onTap;
 
-  const _FolderTile({required this.name, required this.onTap});
+  const _Tile({required this.tile, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -65,13 +51,15 @@ class _FolderTile extends StatelessWidget {
         onTap: onTap,
         child: Row(
           children: [
-            FolderArt(seed: name, size: 46),
+            tile.kind == HomeTileKind.playlist
+                ? PlaylistArt(seed: tile.id, isLiked: tile.isLiked, size: 46)
+                : FolderArt(seed: tile.name, size: 46),
             const SizedBox(width: 8),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Text(
-                  name,
+                  tile.name,
                   style: AppType.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

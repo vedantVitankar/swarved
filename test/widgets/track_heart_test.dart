@@ -99,7 +99,9 @@ void main() {
       expect(find.text(Words.likedAdded), findsOneWidget);
       expect(find.text(Labels.addToPlaylist), findsNothing);
 
+      // Let the first message leave, or the next one waits behind it.
       await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
       await tester.longPress(find.byType(TrackHeart));
       await tester.pump();
 
