@@ -99,9 +99,11 @@ void main() {
       expect(find.text(Words.likedAdded), findsOneWidget);
       expect(find.text(Labels.addToPlaylist), findsNothing);
 
-      // Let the first message leave, or the next one waits behind it.
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
+      // A message only starts its countdown once it has finished sliding
+      // in, so remove it outright, or the next one waits behind it.
+      ScaffoldMessenger.of(tester.element(find.byType(TrackHeart)))
+          .removeCurrentSnackBar();
+      await tester.pump();
       await tester.longPress(find.byType(TrackHeart));
       await tester.pump();
 

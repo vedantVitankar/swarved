@@ -28,6 +28,7 @@ enum SwarGlyph {
   disc, // stands in for missing artwork
   add, // a plus: make something new
   check, // a tick: chosen
+  more, // three dots: more choices
 }
 
 /// What one glyph is made of: a solid part, a line part, or both.
@@ -75,6 +76,7 @@ class SwarGlyphs {
         SwarGlyph.disc => GlyphShape(stroke: _disc()),
         SwarGlyph.add => GlyphShape(stroke: _add()),
         SwarGlyph.check => GlyphShape(stroke: _check()),
+        SwarGlyph.more => GlyphShape(fill: _more()),
       };
 
   // ---- From the theme preview ----
@@ -201,6 +203,11 @@ class SwarGlyphs {
     ..lineTo(12, 19)
     ..moveTo(5, 12)
     ..lineTo(19, 12);
+
+  static Path _more() => Path()
+    ..addOval(Rect.fromCircle(center: const Offset(5, 12), radius: 1.8))
+    ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 1.8))
+    ..addOval(Rect.fromCircle(center: const Offset(19, 12), radius: 1.8));
 
   static Path _check() => Path()
     ..moveTo(5, 12.5)

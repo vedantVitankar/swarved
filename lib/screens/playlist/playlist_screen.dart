@@ -16,6 +16,7 @@ import '../../widgets/mini_player_bar.dart';
 import '../../widgets/playlist_item_row.dart';
 import '../../widgets/swar_icon.dart';
 import 'playlist_header.dart';
+import 'playlist_menu.dart';
 
 /// One playlist's page: its songs in order, Play and Shuffle, and for her own
 /// playlists (and Liked songs) holding a song to move it and swiping it away
@@ -53,6 +54,10 @@ class PlaylistScreen extends StatelessWidget {
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        actions: [
+          if (playlist != null && playlist.kind == PlaylistKind.user)
+            PlaylistMenu(playlist: playlist),
+        ],
       ),
       bottomNavigationBar: const MiniPlayerBar(padBottom: true),
       body: Align(

@@ -132,7 +132,8 @@ class Words {
   static const playlistGone = 'This playlist is gone.';
   static const songNotOnDevice = "That song isn't on this device.";
   static const playlistsHint =
-      'Make a new one from the heart on any song.';
+      'Make one with New playlist, or from the heart on any song.';
+  static String playlistDeleted(String playlist) => 'Deleted $playlist.';
   static String songTakenOut(String playlist) => 'Taken out of $playlist.';
 
   // Search.

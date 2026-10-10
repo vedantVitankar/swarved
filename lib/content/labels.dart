@@ -95,4 +95,10 @@ class Labels {
   // A playlist's page.
   static const playAll = 'Play';
   static const shuffleAll = 'Shuffle';
+  static const playlistOptions = 'Playlist options';
+  static const rename = 'Rename';
+  static const renamePlaylist = 'Rename playlist';
+  static const delete = 'Delete';
+  static const save = 'Save';
+  static const undo = 'Undo';
 }
