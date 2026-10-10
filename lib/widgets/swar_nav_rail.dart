@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../tutorial/tutorial_controller.dart';
 import 'nav_destinations.dart';
 import 'nav_item.dart';
 
@@ -14,6 +15,8 @@ class SwarNavRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Keys for the tour's spotlight; null when there is no tour.
+    final tutorial = TutorialScope.read(context);
     return Container(
       width: width,
       decoration: const BoxDecoration(
@@ -31,6 +34,7 @@ class SwarNavRail extends StatelessWidget {
                 child: SizedBox(
                   width: width,
                   child: NavItem(
+                    key: tutorial?.navKey(i),
                     destination: swarDestinations[i],
                     selected: i == index,
                     onTap: () => onChanged(i),

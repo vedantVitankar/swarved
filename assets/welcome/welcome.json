@@ -14,5 +14,16 @@
             "note": "Thank you for being the Swarnima you are."
         },
         "I wish to be so close to you that even our atoms get confused about who they belong to."
-    ]
+    ],
+    "tutorial": {
+        "song": {
+            "asset": "assets/welcome/Asal - How Bad.mp3",
+            "label": "Song of the day, Sweetheart",
+            "note": "I picked this one for your very first minute here."
+        },
+        "captions": {
+            "play": "Press play, baby. This one is for you."
+        },
+        "alwaysAskForFolder": false
+    }
 }

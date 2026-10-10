@@ -8,7 +8,7 @@ void main() {
     });
 
     test('a long greeting takes a set time per letter', () {
-      final letters = 40;
+      const letters = 40;
       expect(
         TutorialTimeline.typing(letters),
         TutorialTimeline.perLetter * letters,
@@ -81,6 +81,38 @@ void main() {
         TutorialTimeline.revealDuration,
         TutorialTimeline.revealFade +
             TutorialTimeline.revealGap * (TutorialTimeline.revealBlocks - 1),
+      );
+    });
+  });
+
+  group('TutorialTimeline reveal length', () {
+    test('one block takes one fade, with no gaps', () {
+      expect(TutorialTimeline.revealFor(1), TutorialTimeline.revealFade);
+    });
+
+    test('more blocks add a gap each', () {
+      expect(
+        TutorialTimeline.revealFor(4),
+        TutorialTimeline.revealFade + TutorialTimeline.revealGap * 3,
+      );
+    });
+
+    test('no blocks still takes no more than one fade', () {
+      expect(TutorialTimeline.revealFor(0), TutorialTimeline.revealFade);
+    });
+
+    test('the opening is shorter when only the song fades in', () {
+      const letters = 20;
+
+      expect(
+        TutorialTimeline.end(letters, blocks: 1),
+        lessThan(TutorialTimeline.end(letters)),
+      );
+      expect(
+        TutorialTimeline.end(letters, blocks: 1),
+        TutorialTimeline.glideEnd(letters) +
+            TutorialTimeline.revealFade +
+            TutorialTimeline.settle,
       );
     });
   });

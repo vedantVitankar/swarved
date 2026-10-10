@@ -24,9 +24,10 @@ class TutorialTimeline {
   /// A moment to rest before the intro hands over.
   static const Duration settle = Duration(milliseconds: 400);
 
-  /// What fades in, in order: 0 the subline, 1 the filter chips, 2 the
-  /// folders, 3 the song of the day, 4 the mini player and navigation bar.
-  /// The home note comes later, on its own.
+  /// What fades in without a tutorial song, in order: 0 the subline, 1 the
+  /// filter chips, 2 the folders, 3 the song of the day, 4 the mini player
+  /// and navigation bar. With a tutorial song only the song comes first, and
+  /// the rest follows once she has pressed play. The home note comes last.
   static const int revealBlocks = 5;
 
   /// How long the typing takes for a greeting of [letters] characters.
@@ -47,11 +48,14 @@ class TutorialTimeline {
 
   static Duration glideEnd(int letters) => glideStart(letters) + glide;
 
-  /// From the first block starting to the last one arriving.
-  static Duration get revealDuration =>
-      revealFade + revealGap * (revealBlocks - 1);
+  /// From the first of [blocks] starting to the last one arriving.
+  static Duration revealFor(int blocks) =>
+      revealFade + revealGap * (blocks > 1 ? blocks - 1 : 0);
 
-  /// When the whole intro is over.
-  static Duration end(int letters) =>
-      glideEnd(letters) + revealDuration + settle;
+  /// The reveal of every block.
+  static Duration get revealDuration => revealFor(revealBlocks);
+
+  /// When the opening is over, with [blocks] fading in at the end of it.
+  static Duration end(int letters, {int blocks = revealBlocks}) =>
+      glideEnd(letters) + revealFor(blocks) + settle;
 }

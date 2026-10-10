@@ -5,6 +5,8 @@ import '../services/player_service.dart';
 import '../theme/colors.dart';
 import '../theme/responsive.dart';
 import '../theme/shape.dart';
+import '../tutorial/tutorial_controller.dart';
+import '../tutorial/tutorial_step.dart';
 import 'mini_player_compact.dart';
 import 'mini_player_desktop.dart';
 
@@ -55,6 +57,8 @@ class MiniPlayerBar extends StatelessWidget {
                       : Responsive.contentMaxWidth,
                 ),
                 child: Material(
+                  // The tour's spotlight finds the player by this key.
+                  key: TutorialScope.read(context)?.keyFor(TutorialStep.player),
                   color: AppColors.surfaceRaised,
                   borderRadius: BorderRadius.circular(AppShape.panel),
                   clipBehavior: Clip.antiAlias,

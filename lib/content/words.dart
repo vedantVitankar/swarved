@@ -47,6 +47,31 @@ class Words {
     'I wish to be so close to you that even our atoms get confused about who they belong to.',
   ];
 
+  // The tour of Home that plays over the bundled song. His own captions,
+  // under "tutorial" in assets/welcome/welcome.json, take over.
+  static const tutorialSongFolder = 'Our first song';
+  static const tutorialPlay = 'Press play, baby. This one is for you.';
+  static const tutorialFolders =
+      'Your folders live here. Tap one to open it.';
+  static const tutorialFoldersEmpty =
+      'Your folders will live here, once you add one. We will do that in a moment.';
+  static const tutorialChips =
+      'Show everything, only your folders, or only my notes.';
+  static const tutorialPlayer =
+      'Whatever is playing stays right here. Tap it to open the full player.';
+  static const tutorialSearch =
+      'Search finds anything. Play it, or save it to keep.';
+  static const tutorialLibrary =
+      'Library is your own songs, folder by folder.';
+  static const tutorialAddFolder =
+      'Tap here and pick the folder where your songs live, baby. '
+      'They never leave this phone.';
+  static const tutorialNotNow = 'Not now';
+  static const tutorialUs =
+      'Us is ours: the logbook, our memories, and the year in songs.';
+  static const tutorialContinue = 'Continue';
+  static const tutorialDone = 'Start listening';
+
   static const welcomeTourTitle = 'What is inside';
   static const tourHome =
       'Your folders, a song of the day picked by me, and a note that changes each day.';

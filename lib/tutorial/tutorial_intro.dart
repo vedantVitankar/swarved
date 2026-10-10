@@ -37,7 +37,7 @@ class _TutorialIntroState extends State<TutorialIntro>
   late final double _textHeight;
   late final int _glideStartMs;
   late final int _glideEndMs;
-  late final int _endMs;
+  int _endMs = 0;
   bool _running = false;
 
   @override
@@ -86,6 +86,11 @@ class _TutorialIntroState extends State<TutorialIntro>
         ..finish();
       return;
     }
+    // With the song first, only the song fades in at the end of the
+    // opening, so it is over sooner. Known now that the opening has begun.
+    final blocks = widget.controller.songFirst ? 1 : TutorialTimeline.revealBlocks;
+    _endMs = TutorialTimeline.end(_text.length, blocks: blocks).inMilliseconds;
+    _master.duration = Duration(milliseconds: _endMs);
     _master.forward();
   }
 
@@ -139,6 +144,7 @@ class _TutorialIntroState extends State<TutorialIntro>
     // is nothing to draw.
     if (stage == TutorialStage.blank ||
         stage == TutorialStage.revealing ||
+        stage == TutorialStage.touring ||
         stage == TutorialStage.finished ||
         stage == TutorialStage.off) {
       return const SizedBox.shrink();

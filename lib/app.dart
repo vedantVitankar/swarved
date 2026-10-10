@@ -59,7 +59,7 @@ class SwarVedApp extends StatelessWidget {
           ),
         ),
         ChangeNotifierProvider.value(value: contentService),
-        Provider.value(value: welcomeService),
+        ChangeNotifierProvider.value(value: welcomeService),
         Provider.value(value: serverConfig),
         Provider.value(value: serverApi),
         ChangeNotifierProvider.value(value: connectionService),

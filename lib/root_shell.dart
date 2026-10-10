@@ -22,6 +22,9 @@ class _RootShellState extends State<RootShell> {
   static const _homeTab = 0;
   int _tab = _homeTab;
 
+  /// The tab the tour last asked for, so it is only followed when it changes.
+  int _wantedTab = _homeTab;
+
   void _select(int index) {
     // A home note held back by the intro appears the next time Home does.
     TutorialScope.read(context)?.setHomeVisible(index == _homeTab);
@@ -32,6 +35,21 @@ class _RootShellState extends State<RootShell> {
   Widget build(BuildContext context) {
     final wide =
         Responsive.of(MediaQuery.sizeOf(context).width) == ScreenClass.expanded;
+
+    // The mini player and navigation bar fade in with the rest of Home: last
+    // of the blocks, or right after the song when the song comes first.
+    final tutorial = TutorialScope.maybeOf(context);
+    final barOrder = tutorial != null && tutorial.songFirst ? 3 : 4;
+
+    // The tour takes her to the Library to pick a folder, and brings her
+    // back to Home afterwards.
+    final wanted = tutorial?.wantedTab ?? _homeTab;
+    if (wanted != _wantedTab) {
+      _wantedTab = wanted;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _select(wanted);
+      });
+    }
 
     final tabs = IndexedStack(
       index: _tab,
@@ -55,7 +73,7 @@ class _RootShellState extends State<RootShell> {
             ? Row(
                 children: [
                   TutorialReveal(
-                    order: 4,
+                    order: barOrder,
                     child: SwarNavRail(index: _tab, onChanged: _select),
                   ),
                   // Pages and the mini player share one column, so the
@@ -64,9 +82,9 @@ class _RootShellState extends State<RootShell> {
                     child: Column(
                       children: [
                         Expanded(child: tabs),
-                        const TutorialReveal(
-                          order: 4,
-                          child: MiniPlayerBar(padBottom: true),
+                        TutorialReveal(
+                          order: barOrder,
+                          child: const MiniPlayerBar(padBottom: true),
                         ),
                       ],
                     ),
@@ -77,7 +95,7 @@ class _RootShellState extends State<RootShell> {
         bottomNavigationBar: wide
             ? null
             : TutorialReveal(
-                order: 4,
+                order: barOrder,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -1,4 +1,5 @@
 import 'note_line.dart';
+import 'tutorial_settings.dart';
 
 /// What the welcome screen says, as set in its own file,
 /// assets/welcome/welcome.json (see WelcomeService).
@@ -15,11 +16,15 @@ class WelcomeSettings {
   /// The notes in the carousel. Empty uses the default.
   final List<NoteLine> notes;
 
+  /// The tutorial that follows the welcome: its song and its captions.
+  final TutorialSettings tutorial;
+
   const WelcomeSettings({
     this.line,
     this.signature,
     this.story = const [],
     this.notes = const [],
+    this.tutorial = const TutorialSettings(),
   });
 
   /// Accepts an object with "line", "signature", "story" and "notes", or
@@ -34,6 +39,7 @@ class WelcomeSettings {
       signature: _clean(map['signature']),
       story: _parseStory(map['story']),
       notes: _parseNotes(map['notes']),
+      tutorial: TutorialSettings.parse(map['tutorial']),
     );
   }
 

@@ -2,21 +2,34 @@ import 'package:flutter/material.dart';
 import '../utils/tutorial_timeline.dart';
 import 'tutorial_controller.dart';
 
-/// Keeps its child invisible, but still laid out, until the intro lets it
-/// appear, then fades it in. [order] sets its turn among the blocks of Home;
-/// [note] makes it wait for the home note's own moment instead.
+/// Which moment of the tutorial lets a block appear.
+enum TutorialPart {
+  /// The song of the day's card, which comes first when there is a
+  /// tutorial song.
+  song,
+
+  /// Everything else on Home, which follows once she has pressed play.
+  rest,
+
+  /// The home note, which waits for the end of the tutorial.
+  note,
+}
+
+/// Keeps its child invisible, but still laid out, until the tutorial lets it
+/// appear, then fades it in. [part] says which moment that is, and [order]
+/// sets its turn among the blocks that appear at the same moment.
 ///
 /// Built after its moment has passed (a filter switched back on, say), or
 /// with no intro at all, it is simply there. So are reduced-motion users.
 class TutorialReveal extends StatefulWidget {
+  final TutorialPart part;
   final int order;
-  final bool note;
   final Widget child;
 
   const TutorialReveal({
     super.key,
+    this.part = TutorialPart.rest,
     this.order = 0,
-    this.note = false,
     required this.child,
   });
 
@@ -34,25 +47,38 @@ class _TutorialRevealState extends State<TutorialReveal>
   @override
   void initState() {
     super.initState();
-    final wait = TutorialTimeline.revealGap * (widget.note ? 0 : widget.order);
-    final total = wait + TutorialTimeline.revealFade;
-    _controller = AnimationController(vsync: this, duration: total);
-    _opacity = CurvedAnimation(
-      parent: _controller,
-      curve: Interval(
-        wait.inMilliseconds / total.inMilliseconds,
-        1.0,
-        curve: Curves.easeOut,
-      ),
+    _controller = AnimationController(
+      vsync: this,
+      duration: TutorialTimeline.revealFade,
     );
+    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+  }
+
+  bool _mayShow(TutorialController tutorial) => switch (widget.part) {
+        TutorialPart.song => tutorial.songVisible,
+        TutorialPart.rest => tutorial.restVisible,
+        TutorialPart.note => tutorial.noteVisible,
+      };
+
+  /// Waits for its turn within the fade: [order] gaps, then the fade itself.
+  void _fadeIn() {
+    final wait = TutorialTimeline.revealGap *
+        (widget.part == TutorialPart.note ? 0 : widget.order);
+    final total = wait + TutorialTimeline.revealFade;
+    _controller.duration = total;
+    _opacity.curve = Interval(
+      wait.inMilliseconds / total.inMilliseconds,
+      1.0,
+      curve: Curves.easeOut,
+    );
+    _controller.forward(from: 0);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final tutorial = TutorialScope.maybeOf(context);
-    final show = tutorial == null ||
-        (widget.note ? tutorial.noteVisible : tutorial.blocksVisible);
+    final show = tutorial == null || _mayShow(tutorial);
     final firstLook = _first;
     _first = false;
     if (!show || _shown) return;
@@ -60,7 +86,7 @@ class _TutorialRevealState extends State<TutorialReveal>
     if (firstLook || (MediaQuery.maybeDisableAnimationsOf(context) ?? false)) {
       _controller.value = 1;
     } else {
-      _controller.forward();
+      _fadeIn();
     }
   }
 

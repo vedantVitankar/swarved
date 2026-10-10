@@ -347,30 +347,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  /// A soft rose halo that slowly swells and fades, like breathing. The halo
-  /// itself is drawn once and kept; only its opacity changes each frame, so
-  /// the blur is never redone.
+  /// A soft rose halo that slowly swells and fades, like breathing. It is
+  /// drawn as a few thin rings that fade outwards, with the strength changing
+  /// as it is painted. No blur and no opacity layer: fading a blurred shadow
+  /// that way makes Impeller log an error on every frame.
   Widget _glow() {
-    return AnimatedBuilder(
-      animation: _ambient,
-      builder: (context, halo) {
-        final pulse = _reduceMotion
-            ? 0.5
-            : (math.sin(_ambient.value * 2 * math.pi) + 1) / 2;
-        return Opacity(opacity: 0.4 + 0.6 * pulse, child: halo);
-      },
-      child: RepaintBoundary(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppShape.button),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accent.withAlpha(alphaFor(0.2)),
-                blurRadius: 22,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: _HaloPainter(
+          ambient: _ambient,
+          still: _reduceMotion,
+          radius: AppShape.button,
         ),
       ),
     );
@@ -418,4 +405,49 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       child: words,
     );
   }
+}
+
+/// The halo around the button: rings that fade outwards, breathing with the
+/// ambient loop. It paints beyond the box it is given.
+class _HaloPainter extends CustomPainter {
+  final Animation<double> ambient;
+  final bool still;
+  final double radius;
+
+  _HaloPainter({
+    required this.ambient,
+    required this.still,
+    required this.radius,
+  }) : super(repaint: ambient);
+
+  static const int _rings = 7;
+  static const double _step = 3;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final pulse = still ? 0.5 : (math.sin(ambient.value * 2 * math.pi) + 1) / 2;
+    final strength = 0.4 + 0.6 * pulse;
+    final box = Offset.zero & size;
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _step + 0.4;
+
+    for (var i = 1; i <= _rings; i++) {
+      final fade = 1 - i / (_rings + 1);
+      paint.color = AppColors.accent.withAlpha(
+        alphaFor(0.17 * strength * fade * fade),
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          box.inflate(i * _step),
+          Radius.circular(radius + i * _step),
+        ),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_HaloPainter old) =>
+      old.ambient != ambient || old.still != still || old.radius != radius;
 }

@@ -7,6 +7,8 @@ import '../../services/library_service.dart';
 import '../../theme/typography.dart';
 import '../../tutorial/tutorial_controller.dart';
 import '../../tutorial/tutorial_reveal.dart';
+import '../../tutorial/tutorial_song_card.dart';
+import '../../tutorial/tutorial_step.dart';
 import '../../widgets/page_body.dart';
 import '../../widgets/slot_note_card.dart';
 import '../../widgets/slot_text.dart';
@@ -62,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // intro, tutorial is null or off and everything simply shows.
     final tutorial = TutorialScope.maybeOf(context);
     final greetingShown = tutorial == null || tutorial.greetingVisible;
+    final songFirst = tutorial != null && tutorial.songFirst;
 
     return PageBody(
       child: Column(
@@ -89,37 +92,56 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           const SizedBox(height: 12),
           TutorialReveal(
             order: 1,
-            child: SwarChips(
-              labels: _chipLabels,
-              selected: _filter.index,
-              onSelected: (i) =>
-                  setState(() => _filter = _HomeFilter.values[i]),
+            child: KeyedSubtree(
+              key: tutorial?.keyFor(TutorialStep.chips),
+              child: SwarChips(
+                labels: _chipLabels,
+                selected: _filter.index,
+                onSelected: (i) =>
+                    setState(() => _filter = _HomeFilter.values[i]),
+              ),
             ),
           ),
           if (showFolders) ...[
             const SizedBox(height: 12),
             TutorialReveal(
               order: 2,
-              child: library.byFolder.isEmpty
-                  ? Text(Words.homeNoFolders, style: AppType.bodyMuted)
-                  : FolderTileGrid(
-                      byFolder: library.byFolder,
-                      onOpenFolder: (folder, tracks) => FolderScreen.open(
-                        context,
-                        title: folder,
-                        tracks: tracks,
+              child: KeyedSubtree(
+                key: tutorial?.keyFor(TutorialStep.folders),
+                child: library.byFolder.isEmpty
+                    ? Text(Words.homeNoFolders, style: AppType.bodyMuted)
+                    : FolderTileGrid(
+                        byFolder: library.byFolder,
+                        onOpenFolder: (folder, tracks) => FolderScreen.open(
+                          context,
+                          title: folder,
+                          tracks: tracks,
+                        ),
                       ),
-                    ),
+              ),
             ),
           ],
           if (showNote) ...[
             // Brings its own gap above, and nothing when there is no pick.
-            const TutorialReveal(order: 3, child: HomeSongOfTheDay()),
+            // While the tutorial runs the card holds the tutorial's own
+            // song, never the song of the day from the content file.
+            TutorialReveal(
+              part: TutorialPart.song,
+              // First when the song comes alone, otherwise in its old place
+              // among the blocks.
+              order: songFirst ? 0 : 3,
+              child: tutorial != null && tutorial.songOnHome
+                  ? TutorialSongCard(
+                      song: tutorial.song!,
+                      cardKey: tutorial.keyFor(TutorialStep.play),
+                    )
+                  : const HomeSongOfTheDay(),
+            ),
             const SizedBox(height: 14),
             // Left out of the intro: it fades in once the intro is over
             // and Home is on screen.
             const TutorialReveal(
-              note: true,
+              part: TutorialPart.note,
               child: SlotNoteCard(
                 slot: NoteSlot.homeNote,
                 defaultLabel: Words.noteForYouLabel,

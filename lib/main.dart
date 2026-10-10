@@ -14,6 +14,7 @@ import 'services/stream_endpoint.dart';
 import 'services/saved_songs_index.dart';
 import 'services/song_saver.dart';
 import 'services/content_service.dart';
+import 'services/tutorial_song_service.dart';
 import 'services/welcome_service.dart';
 
 Future<void> main() async {
@@ -73,7 +74,7 @@ Future<void> main() async {
   final contentService = ContentService();
   await contentService.load();
 
-  final welcomeService = WelcomeService();
+  final welcomeService = WelcomeService(songService: TutorialSongService());
   await welcomeService.load();
 
   runApp(SwarVedApp(

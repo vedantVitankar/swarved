@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:swarved/models/content_pack.dart';
+import 'package:swarved/services/tutorial_song_service.dart';
 import 'package:swarved/services/welcome_service.dart';
 
 void main() {
@@ -105,6 +107,73 @@ void main() {
 
       expect(pubspec, contains('- assets/welcome/'));
       expect(pubspec, contains('- assets/content/'));
+    });
+  });
+
+  group('WelcomeService tutorial song', () {
+    late Directory cache;
+
+    setUp(() {
+      cache = Directory.systemTemp.createTempSync('welcome_service_test');
+      addTearDown(() => cache.deleteSync(recursive: true));
+    });
+
+    TutorialSongService songs({bool present = true}) => TutorialSongService(
+          loadAsset: (_) async => present
+              ? Uint8List.fromList([1, 2, 3])
+              : throw Exception('Unable to load asset'),
+          readTags: (_) => const SongTags(title: 'How Bad', artist: 'Asal'),
+          cacheDirectory: () async => cache,
+        );
+
+    test('there is no song without a song service', () async {
+      final service = WelcomeService(loader: () async => '{}');
+
+      await service.load();
+      await service.songReady;
+
+      expect(service.tutorialSong, isNull);
+    });
+
+    test('the song is ready once it has been prepared', () async {
+      final service = WelcomeService(
+        loader: () async => '{"tutorial": {"song": {"note": "Hi."}}}',
+        songService: songs(),
+      );
+      var notified = 0;
+      service.addListener(() => notified++);
+
+      await service.load();
+      await service.songReady;
+
+      expect(service.tutorialSong!.track.title, 'How Bad');
+      expect(service.tutorialSong!.note, 'Hi.');
+      expect(notified, 1);
+    });
+
+    test('a missing song file leaves the tutorial without a song', () async {
+      final service = WelcomeService(
+        loader: () async => '{}',
+        songService: songs(present: false),
+      );
+
+      await service.load();
+      await service.songReady;
+
+      expect(service.tutorialSong, isNull);
+    });
+
+    test('a broken welcome file still prepares the default song', () async {
+      final service = WelcomeService(
+        loader: () async => 'not json',
+        songService: songs(),
+      );
+
+      await service.load();
+      await service.songReady;
+
+      expect(service.tutorialSong, isNotNull);
+      expect(service.settings.line, isNull);
     });
   });
 }

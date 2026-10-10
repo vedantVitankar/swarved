@@ -9,6 +9,7 @@ import 'package:swarved/screens/welcome/welcome_gate.dart';
 import 'package:swarved/screens/welcome/welcome_screen.dart';
 import 'package:swarved/services/welcome_service.dart';
 import 'package:swarved/tutorial/tutorial_intro.dart';
+import 'package:swarved/tutorial/tutorial_spotlight.dart';
 
 /// Fonts come from the bundled files, as in the app.
 void _useBundledFonts() => GoogleFonts.config.allowRuntimeFetching = false;
@@ -316,7 +317,7 @@ void main() {
   });
 
   group('The intro after the welcome', () {
-    testWidgets('waits behind the welcome, then runs and hands over',
+    testWidgets('waits behind the welcome, then runs, then tours',
         (tester) async {
       _roomyScreen(tester);
       final welcome = await _welcome(tester, '{}');
@@ -330,12 +331,21 @@ void main() {
       expect(find.byType(WelcomeScreen), findsNothing);
       expect(find.byType(TutorialIntro), findsOneWidget);
 
+      // The opening ends and the tour takes over.
       await tester.pump(const Duration(seconds: 15));
       expect(find.byType(TutorialIntro), findsNothing);
+      expect(find.byType(TutorialSpotlight), findsOneWidget);
+      expect(find.text('the app'), findsOneWidget);
+
+      // Skipping the tour hands the app back.
+      await tester.tap(find.text(Labels.welcomeSkip));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byType(TutorialSpotlight), findsNothing);
       expect(find.text('the app'), findsOneWidget);
     });
 
-    testWidgets('with reduced motion there is no intro to wait for',
+    testWidgets('with reduced motion the opening is skipped but the tour is not',
         (tester) async {
       _roomyScreen(tester);
       final welcome = await _welcome(tester, '{}');
@@ -347,7 +357,9 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(WelcomeScreen), findsNothing);
+      // No opening to wait for, but the tour is still there.
       expect(find.byType(TutorialIntro), findsNothing);
+      expect(find.byType(TutorialSpotlight), findsOneWidget);
     });
   });
 }

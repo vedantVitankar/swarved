@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:swarved/content/words.dart';
+import 'package:swarved/models/track.dart';
+import 'package:swarved/models/tutorial_song.dart';
 import 'package:swarved/tutorial/tutorial_controller.dart';
 import 'package:swarved/tutorial/tutorial_intro.dart';
+import 'package:swarved/tutorial/tutorial_step.dart';
 import 'package:swarved/utils/tutorial_timeline.dart';
 
 /// A stand-in for Home: the real greeting where the intro should land, and
@@ -129,6 +132,30 @@ void main() {
         TutorialStage.revealing,
         TutorialStage.finished,
       ]);
+    });
+
+    testWidgets('with the song first the opening ends as soon as it appears',
+        (tester) async {
+      final song = TutorialSong(
+        track: Track(
+          filePath: '/cache/song.mp3',
+          title: 'How Bad',
+          artist: 'Asal',
+          album: '',
+          duration: Duration.zero,
+          folder: 'Our first song',
+        ),
+      );
+      final c = TutorialController(stage: TutorialStage.blank, tour: true);
+      await tester.pumpWidget(_host(c));
+
+      c.start(song: song);
+      await tester.pump();
+      // Long enough for the song alone to fade in, not for every block.
+      await tester.pump(TutorialTimeline.end(letters, blocks: 1));
+
+      expect(c.stage, TutorialStage.touring);
+      expect(c.step, TutorialStep.play);
     });
 
     testWidgets('takes every tap while it plays', (tester) async {

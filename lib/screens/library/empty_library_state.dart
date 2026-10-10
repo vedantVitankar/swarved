@@ -3,6 +3,8 @@ import '../../content/labels.dart';
 import '../../content/words.dart';
 import '../../models/library_problem.dart';
 import '../../theme/typography.dart';
+import '../../tutorial/tutorial_controller.dart';
+import '../../tutorial/tutorial_step.dart';
 import '../../widgets/sun_mark.dart';
 import '../../widgets/swar_outlined_button.dart';
 
@@ -51,9 +53,13 @@ class EmptyLibraryState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            SwarOutlinedButton(
-              label: Labels.chooseFolder,
-              onPressed: onChoose,
+            // The tour lights this button up when it asks her to choose.
+            KeyedSubtree(
+              key: TutorialScope.read(context)?.keyFor(TutorialStep.addFolder),
+              child: SwarOutlinedButton(
+                label: Labels.chooseFolder,
+                onPressed: onChoose,
+              ),
             ),
             if (problem == LibraryProblem.noPermission) ...[
               const SizedBox(height: 12),

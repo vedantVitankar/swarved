@@ -6,6 +6,8 @@ import '../../models/note_slot.dart';
 import '../../services/library_service.dart';
 import '../../services/player_service.dart';
 import '../../theme/typography.dart';
+import '../../tutorial/tutorial_controller.dart';
+import '../../tutorial/tutorial_step.dart';
 import '../../utils/folder_order.dart';
 import '../../widgets/folder_row.dart';
 import '../../widgets/page_body.dart';
@@ -77,9 +79,14 @@ class LibraryScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: SwarOutlinedButton(
-                label: Labels.changeFolder,
-                onPressed: library.pickAndScanFolder,
+              // Lit by the tour when it is made to ask for a folder anyway.
+              child: KeyedSubtree(
+                key:
+                    TutorialScope.read(context)?.keyFor(TutorialStep.addFolder),
+                child: SwarOutlinedButton(
+                  label: Labels.changeFolder,
+                  onPressed: library.pickAndScanFolder,
+                ),
               ),
             ),
           ],
