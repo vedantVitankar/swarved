@@ -117,6 +117,9 @@ class Words {
   /// The small gold line on the song of the day, unless he writes his own.
   static const songOfTheDayLabel = 'Song of the day, $sweetheart';
 
+  /// The playlist every listener has, and the heart fills it.
+  static const likedSongs = 'Liked songs';
+
   // Search.
   static const searchTitle = 'What shall we hear?';
   static const searchSubline =
