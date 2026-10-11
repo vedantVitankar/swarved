@@ -271,4 +271,53 @@ void main() {
       expect(cannotAsk.controller.needsFolder, isFalse);
     });
   });
+
+  group('saving into a given folder', () {
+    test('goes there instead of the library folder', () async {
+      final setup = _Setup();
+
+      await setup.controller.save(_song(), intoFolder: '/music/Mix');
+
+      expect(setup.savedInto, '/music/Mix');
+    });
+
+    test('never asks for a folder, even when there is no library folder',
+        () async {
+      final setup = _Setup(folder: null, onChoose: (_) async => '/picked');
+
+      await setup.controller.save(_song(), intoFolder: '/music/Mix');
+
+      expect(setup.asked, 0);
+      expect(setup.savedInto, '/music/Mix');
+    });
+  });
+
+  group('ensureFolder', () {
+    test('answers with the library folder when there is one', () async {
+      final setup = _Setup(onChoose: (_) async => '/picked');
+
+      expect(await setup.controller.ensureFolder(), '/music');
+      expect(setup.asked, 0);
+    });
+
+    test('asks when there is none', () async {
+      final setup = _Setup(folder: null, onChoose: (_) async => '/picked');
+
+      expect(await setup.controller.ensureFolder(), '/picked');
+      expect(setup.asked, 1);
+    });
+
+    test('answers null when the picker is closed without a folder',
+        () async {
+      final setup = _Setup(folder: null, onChoose: (_) async => null);
+
+      expect(await setup.controller.ensureFolder(), isNull);
+    });
+
+    test('answers null when it cannot ask', () async {
+      final setup = _Setup(folder: null);
+
+      expect(await setup.controller.ensureFolder(), isNull);
+    });
+  });
 }

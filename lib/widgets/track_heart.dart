@@ -13,25 +13,34 @@ import 'playlist_picker.dart';
 class TrackHeart extends StatelessWidget {
   final Track track;
   final double iconSize;
+  final double boxSize;
 
-  const TrackHeart({super.key, required this.track, this.iconSize = 22});
+  const TrackHeart({
+    super.key,
+    required this.track,
+    this.iconSize = 22,
+    this.boxSize = 40,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final service = context.read<PlaylistService>();
     return Selector<PlaylistService, bool>(
       selector: (_, playlists) => playlists.isLiked(track),
       builder: (context, liked, _) => HeartButton(
         isFilled: liked,
         iconSize: iconSize,
-        onPressed: () => showPlaylistPicker(context, track, service),
-        onLongPress: () => _quickToggle(context, service),
+        boxSize: boxSize,
+        onPressed: () =>
+            showPlaylistPicker(context, track, context.read<PlaylistService>()),
+        onLongPress: () => quickToggle(context, track),
       ),
     );
   }
 
-  void _quickToggle(BuildContext context, PlaylistService service) {
-    final nowLiked = service.toggleLiked(track);
+  /// Adds the song to Liked songs, or takes it out, straight away, and says
+  /// which. Used by the heart's long press and by holding a song in a list.
+  static void quickToggle(BuildContext context, Track track) {
+    final nowLiked = context.read<PlaylistService>().toggleLiked(track);
     HapticFeedback.mediumImpact();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(nowLiked ? Words.likedAdded : Words.likedRemoved)),

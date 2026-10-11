@@ -80,16 +80,26 @@ class SaveController extends ChangeNotifier {
   /// True when a save would have to ask for a folder first.
   bool get needsFolder => _chooseFolder != null && _folderPath() == null;
 
+  /// The library folder, asking for it first when there is none. Null when
+  /// none was chosen, or the picker is already open.
+  Future<String?> ensureFolder() async {
+    final folder = _folderPath();
+    if (folder != null) return folder;
+    if (_chooseFolder == null || _choosing) return null;
+    return _askForFolder();
+  }
+
   /// Saves [song] into the library folder, asking for the folder first when
-  /// there is none. Returns null when the song is already being saved or the
+  /// there is none. With [intoFolder] it saves there instead, and never asks:
+  /// the caller made that folder. Returns null when the song is already being saved or the
   /// folder picker is already open, so a second tap does nothing. Closing
   /// the picker without a folder fails with [SaveProblem.noFolder] and leaves
   /// the song as it was, ready to try again. Never throws.
-  Future<SaveOutcome?> save(YoutubeResult song) async {
+  Future<SaveOutcome?> save(YoutubeResult song, {String? intoFolder}) async {
     final id = song.id;
     if (_saving.containsKey(id)) return null;
 
-    var folder = _folderPath();
+    var folder = intoFolder ?? _folderPath();
     if (folder == null && _chooseFolder != null) {
       if (_choosing) return null;
       folder = await _askForFolder();

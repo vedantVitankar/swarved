@@ -11,6 +11,7 @@ import '../theme/shape.dart';
 import '../theme/typography.dart';
 import 'compact_icon_button.dart';
 import 'track_heart.dart';
+import 'track_save_button.dart';
 import 'play_pause_button.dart';
 import 'swipe_to_skip.dart';
 import 'track_artwork.dart';
@@ -96,6 +97,7 @@ class MiniPlayerCompact extends StatelessWidget {
                     ),
                   ),
                 ),
+                TrackSaveButton(track: track),
                 TrackHeart(track: track),
                 if (showSkipButtons)
                   CompactIconButton(

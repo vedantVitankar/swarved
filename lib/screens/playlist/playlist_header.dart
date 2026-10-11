@@ -6,17 +6,26 @@ import '../../theme/colors.dart';
 import '../../theme/shape.dart';
 import '../../theme/swar_glyphs.dart';
 import '../../theme/typography.dart';
-import '../../widgets/playlist_art.dart';
+import '../../widgets/playlist_picture.dart';
 import '../../widgets/swar_icon.dart';
 import '../../widgets/swar_outlined_button.dart';
 
 /// The top of a playlist's page: picture, name, song count, and the Play and
-/// Shuffle buttons. Both buttons are off while no song can be played.
+/// Shuffle buttons. Both buttons are off while no song can be played. A
+/// download button and a line saying how far it has got can sit with them.
 class PlaylistHeader extends StatelessWidget {
   final Playlist playlist;
   final bool canPlay;
   final VoidCallback onPlay;
   final VoidCallback onShuffle;
+
+  /// Saves the whole playlist, and says how far that has got. Both optional.
+  final Widget? downloadButton;
+  final Widget? downloadStatus;
+
+  /// The three dots, at the right end of the button row. Null for a playlist
+  /// that cannot be renamed or deleted.
+  final Widget? menu;
 
   const PlaylistHeader({
     super.key,
@@ -24,6 +33,9 @@ class PlaylistHeader extends StatelessWidget {
     required this.canPlay,
     required this.onPlay,
     required this.onShuffle,
+    this.downloadButton,
+    this.downloadStatus,
+    this.menu,
   });
 
   @override
@@ -36,9 +48,8 @@ class PlaylistHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              PlaylistArt(
-                seed: playlist.id,
-                isLiked: playlist.isLiked,
+              PlaylistPicture(
+                playlistId: playlist.id,
                 size: 64,
                 radius: AppShape.panel,
               ),
@@ -63,14 +74,27 @@ class PlaylistHeader extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              _PlayButton(enabled: canPlay, onPressed: onPlay),
-              const SizedBox(width: 10),
-              SwarOutlinedButton(
-                label: Labels.shuffleAll,
-                onPressed: canPlay ? onShuffle : null,
+              // The buttons wrap onto a second line on a very narrow screen
+              // instead of pushing the menu out of view.
+              Expanded(
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _PlayButton(enabled: canPlay, onPressed: onPlay),
+                    SwarOutlinedButton(
+                      label: Labels.shuffleAll,
+                      onPressed: canPlay ? onShuffle : null,
+                    ),
+                    if (downloadButton != null) downloadButton!,
+                  ],
+                ),
               ),
+              if (menu != null) menu!,
             ],
           ),
+          if (downloadStatus != null) downloadStatus!,
           if (playlist.isEditable && count > 1) ...[
             const SizedBox(height: 10),
             Text(Words.playlistReorderHint, style: AppType.caption),

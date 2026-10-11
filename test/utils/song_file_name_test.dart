@@ -65,4 +65,31 @@ void main() {
       expect(numberedFileName('Song', 2), 'Song (2)');
     });
   });
+
+  group('safeFolderName', () {
+    test('keeps an ordinary playlist name', () {
+      expect(safeFolderName('Slow dances'), 'Slow dances');
+    });
+
+    test('replaces characters a folder name cannot hold', () {
+      expect(safeFolderName('Road trip: Goa/Pune?'), 'Road trip Goa Pune');
+    });
+
+    test('does not start or end with dots or spaces', () {
+      expect(safeFolderName('  ..Mornings.. '), 'Mornings');
+    });
+
+    test('a name with nothing usable becomes Playlist', () {
+      expect(safeFolderName(''), 'Playlist');
+      expect(safeFolderName('???'), 'Playlist');
+    });
+
+    test('a name Windows reserves gets an underscore', () {
+      expect(safeFolderName('con'), '_con');
+    });
+
+    test('a very long name is cut to fit', () {
+      expect(utf8.encode(safeFolderName('a' * 500)).length, lessThanOrEqualTo(200));
+    });
+  });
 }

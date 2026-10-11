@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:swarved/models/track_source.dart';
 import 'package:swarved/models/youtube_result.dart';
+import 'package:swarved/models/track.dart';
 
 void main() {
   group('YoutubeResult.tryParse', () {
@@ -105,6 +106,50 @@ void main() {
     test('an unknown length becomes zero', () {
       const result = YoutubeResult(id: 'abc', title: 'Song', artist: '');
       expect(result.toTrack().duration, Duration.zero);
+    });
+  });
+
+  group('fromTrack', () {
+    test('turns a YouTube track back into its save details', () {
+      final track = Track.youtube(
+        videoId: 'abc',
+        title: 'Song',
+        artist: 'Singer',
+        duration: const Duration(seconds: 90),
+        artworkUrl: 'https://x/a.jpg',
+      );
+
+      final result = YoutubeResult.fromTrack(track)!;
+
+      expect(result.id, 'abc');
+      expect(result.title, 'Song');
+      expect(result.artist, 'Singer');
+      expect(result.duration, const Duration(seconds: 90));
+      expect(result.thumbnailUrl, 'https://x/a.jpg');
+    });
+
+    test('an unknown length stays unknown', () {
+      final track = Track.youtube(
+        videoId: 'abc',
+        title: 'Song',
+        artist: '',
+        duration: Duration.zero,
+      );
+
+      expect(YoutubeResult.fromTrack(track)!.duration, isNull);
+    });
+
+    test('a local song has nothing to save', () {
+      final track = Track(
+        filePath: '/music/a.mp3',
+        title: 'Song',
+        artist: '',
+        album: '',
+        duration: const Duration(seconds: 90),
+        folder: 'music',
+      );
+
+      expect(YoutubeResult.fromTrack(track), isNull);
     });
   });
 }

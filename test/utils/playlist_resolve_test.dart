@@ -136,4 +136,84 @@ void main() {
       expect(playableTracks(resolvePlaylist(playlist, const [])), isEmpty);
     });
   });
+
+  group('youtubeSongsOf', () {
+    test('lists the YouTube songs in order and leaves local ones out', () {
+      final playlist = _playlistOf([
+        _youtube('aaaaaaaaaaa'),
+        _local('Local'),
+        _youtube('bbbbbbbbbbb'),
+      ]);
+
+      final songs = youtubeSongsOf(playlist);
+
+      expect(songs.map((s) => s.id), ['aaaaaaaaaaa', 'bbbbbbbbbbb']);
+      expect(songs.first.title, 'Online aaaaaaaaaaa');
+    });
+
+    test('a playlist of local songs has none', () {
+      expect(youtubeSongsOf(_playlistOf([_local('Local')])), isEmpty);
+    });
+  });
+
+  group('playlistCovers', () {
+    Track localWithArt(String title) => Track(
+          filePath: '/music/$title.mp3',
+          title: title,
+          artist: 'Artist',
+          album: '',
+          duration: const Duration(seconds: 200),
+          folder: 'music',
+          artworkBytes: const [1, 2, 3],
+        );
+
+    test('takes the first four songs\' pictures in order', () {
+      final playlist = _playlistOf([
+        _youtube('aaaaaaaaaaa'),
+        _youtube('bbbbbbbbbbb'),
+        _youtube('ccccccccccc'),
+        _youtube('ddddddddddd'),
+        _youtube('eeeeeeeeeee'),
+      ]);
+
+      final covers = playlistCovers(playlist, const []);
+
+      expect(covers.map((c) => c.url), [
+        'https://x/aaaaaaaaaaa.jpg',
+        'https://x/bbbbbbbbbbb.jpg',
+        'https://x/ccccccccccc.jpg',
+        'https://x/ddddddddddd.jpg',
+      ]);
+    });
+
+    test('a local song\'s picture comes from the library', () {
+      final song = localWithArt('Local');
+      final playlist = _playlistOf([song, _youtube('aaaaaaaaaaa')]);
+
+      final covers = playlistCovers(playlist, [song]);
+
+      expect(covers.first.bytes, [1, 2, 3]);
+      expect(covers.last.url, 'https://x/aaaaaaaaaaa.jpg');
+    });
+
+    test('a local song missing from the library adds no picture', () {
+      final playlist = _playlistOf([localWithArt('Gone')]);
+
+      expect(playlistCovers(playlist, const []), isEmpty);
+    });
+
+    test('a song with no picture is left out', () {
+      final noArt = _local('Plain');
+      final playlist = _playlistOf([noArt, _youtube('aaaaaaaaaaa')]);
+
+      final covers = playlistCovers(playlist, [noArt]);
+
+      expect(covers, hasLength(1));
+      expect(covers.single.url, 'https://x/aaaaaaaaaaa.jpg');
+    });
+
+    test('an empty playlist has none', () {
+      expect(playlistCovers(_playlistOf([]), const []), isEmpty);
+    });
+  });
 }

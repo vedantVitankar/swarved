@@ -12,6 +12,7 @@ class HeartButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final VoidCallback? onLongPress;
   final double iconSize;
+  final double boxSize;
 
   const HeartButton({
     super.key,
@@ -19,6 +20,7 @@ class HeartButton extends StatelessWidget {
     this.onPressed,
     this.onLongPress,
     this.iconSize = 22,
+    this.boxSize = 40,
   });
 
   // A button with no handler would let the tap fall through to the card
@@ -30,6 +32,7 @@ class HeartButton extends StatelessWidget {
     return CompactIconButton(
       icon: isFilled ? SwarGlyph.heartFilled : SwarGlyph.heart,
       iconSize: iconSize,
+      boxSize: boxSize,
       tooltip: isFilled ? Labels.unheartSong : Labels.heartSong,
       color: AppColors.accent,
       onPressed: onPressed ?? _absorbTap,

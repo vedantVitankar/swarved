@@ -14,6 +14,7 @@ import 'widgets/text_scale_scope.dart';
 import 'services/connection_service.dart';
 import 'services/stream_endpoint.dart';
 import 'services/queue_prefetcher.dart';
+import 'services/playlist_downloader.dart';
 import 'services/save_controller.dart';
 import 'services/saved_songs_index.dart';
 import 'services/song_saver.dart';
@@ -75,6 +76,12 @@ class SwarVedApp extends StatelessWidget {
             folderPath: () => libraryService.rootPath,
             chooseFolder: libraryService.chooseFolder,
             onSaved: libraryService.addSavedFile,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => PlaylistDownloader(
+            saves: context.read<SaveController>(),
+            index: savedSongsIndex,
           ),
         ),
       ],

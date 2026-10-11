@@ -10,6 +10,7 @@ import '../theme/swar_glyphs.dart';
 import '../theme/typography.dart';
 import '../widgets/compact_icon_button.dart';
 import '../widgets/track_heart.dart';
+import '../widgets/track_save_button.dart';
 import '../widgets/play_pause_button.dart';
 import '../widgets/playback_mode_buttons.dart';
 import '../widgets/seek_bar.dart';
@@ -142,6 +143,7 @@ class NowPlayingScreen extends StatelessWidget {
                                     ],
                                   ),
                                 ),
+                                TrackSaveButton(track: track, iconSize: 24),
                                 TrackHeart(track: track, iconSize: 26),
                               ],
                             ),

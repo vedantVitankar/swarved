@@ -15,6 +15,7 @@ import '../../utils/playlist_resolve.dart';
 import '../../widgets/mini_player_bar.dart';
 import '../../widgets/playlist_item_row.dart';
 import '../../widgets/swar_icon.dart';
+import 'playlist_download.dart';
 import 'playlist_header.dart';
 import 'playlist_menu.dart';
 
@@ -54,10 +55,6 @@ class PlaylistScreen extends StatelessWidget {
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          if (playlist != null && playlist.kind == PlaylistKind.user)
-            PlaylistMenu(playlist: playlist),
-        ],
       ),
       bottomNavigationBar: const MiniPlayerBar(padBottom: true),
       body: Align(
@@ -101,6 +98,15 @@ class _PlaylistBody extends StatelessWidget {
       canPlay: playable.isNotEmpty,
       onPlay: () => player.playQueue(playable, source: source),
       onShuffle: () => player.playShuffled(playable, source: source),
+      downloadButton: PlaylistDownloadButton(
+        playlistId: playlist.id,
+        playlistName: playlist.name,
+        songs: youtubeSongsOf(playlist),
+      ),
+      downloadStatus: PlaylistDownloadStatus(playlistId: playlist.id),
+      menu: playlist.kind == PlaylistKind.user
+          ? PlaylistMenu(playlist: playlist)
+          : null,
     );
 
     if (lines.isEmpty) {

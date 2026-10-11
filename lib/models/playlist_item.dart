@@ -1,5 +1,6 @@
 import '../utils/track_key.dart';
 import 'track.dart';
+import 'youtube_result.dart';
 
 /// One song in a playlist: its key, and a snapshot of how it looked when it
 /// was added, so a playlist can be drawn without the song being on this
@@ -52,6 +53,12 @@ class PlaylistItem {
       duration: duration,
       artworkUrl: artworkUrl,
     );
+  }
+
+  /// What saving needs for a YouTube item, or null for any other.
+  YoutubeResult? toYoutubeResult() {
+    final track = toYoutubeTrack();
+    return track == null ? null : YoutubeResult.fromTrack(track);
   }
 
   Map<String, dynamic> toJson() => {

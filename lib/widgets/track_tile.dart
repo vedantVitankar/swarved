@@ -3,10 +3,14 @@ import '../models/track.dart';
 import '../theme/colors.dart';
 import '../theme/shape.dart';
 import '../theme/typography.dart';
+import 'song_row_end.dart';
 import 'track_artwork.dart';
+import 'track_heart.dart';
 
 /// One song in a folder: rounded art, title, artist, length.
-/// The song that is playing gets a rose title on a soft velvet row.
+/// The song that is playing gets a rose title on a soft velvet row. The end
+/// of the row has download (YouTube songs), length and the heart. Holding the
+/// row likes the song, or takes it out of Liked songs.
 class TrackTile extends StatelessWidget {
   final Track track;
   final bool isActive;
@@ -14,20 +18,15 @@ class TrackTile extends StatelessWidget {
   /// Null shows the row without making it tappable.
   final VoidCallback? onTap;
 
-  /// Something at the end of the row, such as a save button.
-  final Widget? trailing;
-
   const TrackTile({
     super.key,
     required this.track,
     required this.onTap,
     this.isActive = false,
-    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    final trailing = this.trailing;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Material(
@@ -36,6 +35,7 @@ class TrackTile extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
+          onLongPress: () => TrackHeart.quickToggle(context, track),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
             child: Row(
@@ -70,12 +70,8 @@ class TrackTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Text(track.durationLabel, style: AppType.readout),
-                if (trailing != null) ...[
-                  const SizedBox(width: 4),
-                  trailing,
-                ],
+                const SizedBox(width: 4),
+                SongRowEnd(track: track, durationLabel: track.durationLabel),
               ],
             ),
           ),

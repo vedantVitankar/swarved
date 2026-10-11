@@ -27,6 +27,17 @@ String songFileName(String artist, String title) {
   return '$name.mp3';
 }
 
+/// A playlist's name made safe to use as a folder name on Android and
+/// Windows, for the folder a whole playlist is saved into. A name with
+/// nothing usable left in it becomes "Playlist".
+String safeFolderName(String name) {
+  var folder =
+      _fitBytes(_tidy(name), _maxNameBytes).replaceAll(_edges, '').trim();
+  if (folder.isEmpty) folder = 'Playlist';
+  if (_reserved.contains(folder.toUpperCase())) folder = '_$folder';
+  return folder;
+}
+
 /// "Artist - Title.mp3" becomes "Artist - Title (2).mp3", for when the name
 /// is taken by a different song.
 String numberedFileName(String fileName, int number) {

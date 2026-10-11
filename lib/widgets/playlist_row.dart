@@ -4,7 +4,7 @@ import '../models/playlist.dart';
 import '../theme/colors.dart';
 import '../theme/shape.dart';
 import '../theme/typography.dart';
-import 'playlist_art.dart';
+import 'playlist_picture.dart';
 
 /// One playlist in the Library list: picture, name, song count. Liked songs
 /// says it is pinned.
@@ -27,9 +27,8 @@ class PlaylistRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
           child: Row(
             children: [
-              PlaylistArt(
-                seed: playlist.id,
-                isLiked: playlist.isLiked,
+              PlaylistPicture(
+                playlistId: playlist.id,
                 size: 46,
                 radius: AppShape.thumbnail,
               ),

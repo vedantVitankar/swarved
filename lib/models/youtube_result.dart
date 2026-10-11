@@ -68,6 +68,20 @@ class YoutubeResult {
     return results;
   }
 
+  /// The save details of a YouTube [track], or null for a local song, which
+  /// has nothing to download.
+  static YoutubeResult? fromTrack(Track track) {
+    final id = track.videoId;
+    if (track.isLocal || id == null || id.isEmpty) return null;
+    return YoutubeResult(
+      id: id,
+      title: track.title,
+      artist: track.artist,
+      duration: track.duration > Duration.zero ? track.duration : null,
+      thumbnailUrl: track.artworkUrl,
+    );
+  }
+
   /// The same song as a [Track], so it can sit in the app's queue and lists.
   Track toTrack() => Track.youtube(
         videoId: id,

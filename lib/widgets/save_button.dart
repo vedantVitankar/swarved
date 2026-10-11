@@ -15,7 +15,21 @@ import 'save_folder_dialog.dart';
 class SaveButton extends StatelessWidget {
   final YoutubeResult song;
 
-  const SaveButton({super.key, required this.song});
+  /// The size of the icon and of the button around it. Rows use a smaller
+  /// button than the mini player does.
+  final double iconSize;
+  final double boxSize;
+
+  const SaveButton({
+    super.key,
+    required this.song,
+    this.iconSize = 22,
+    this.boxSize = 40,
+  });
+
+  // A button with no handler would let the tap fall through to the row
+  // behind it, and play the song.
+  static void _absorbTap() {}
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +42,7 @@ class SaveButton extends StatelessWidget {
             return Tooltip(
               message: SaveWords.saving,
               child: SizedBox.square(
-                dimension: 40,
+                dimension: boxSize,
                 child: Center(
                   child: SizedBox.square(
                     dimension: 20,
@@ -42,12 +56,13 @@ class SaveButton extends StatelessWidget {
               ),
             );
           case SaveStage.saved:
-            return const CompactIconButton(
+            return CompactIconButton(
               icon: SwarGlyph.saved,
-              onPressed: null,
+              onPressed: _absorbTap,
               tooltip: SaveWords.saved,
               color: AppColors.accent,
-              iconSize: 22,
+              iconSize: iconSize,
+              boxSize: boxSize,
             );
           case SaveStage.failed:
             return CompactIconButton(
@@ -55,7 +70,8 @@ class SaveButton extends StatelessWidget {
               onPressed: () => _save(context),
               tooltip: SaveWords.retry,
               color: AppColors.danger,
-              iconSize: 22,
+              iconSize: iconSize,
+              boxSize: boxSize,
             );
           case SaveStage.idle:
             return CompactIconButton(
@@ -63,7 +79,8 @@ class SaveButton extends StatelessWidget {
               onPressed: () => _save(context),
               tooltip: SaveWords.save,
               color: AppColors.textSecondary,
-              iconSize: 22,
+              iconSize: iconSize,
+              boxSize: boxSize,
             );
         }
       },

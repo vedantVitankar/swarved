@@ -4,7 +4,7 @@ import '../../theme/shape.dart';
 import '../../theme/typography.dart';
 import '../../utils/home_tiles.dart';
 import '../../widgets/folder_art.dart';
-import '../../widgets/playlist_art.dart';
+import '../../widgets/playlist_picture.dart';
 
 /// The tiles on Home: colour block on the left, name beside it, two columns
 /// by three rows. What fills them is chosen by [pickHomeTiles].
@@ -52,7 +52,7 @@ class _Tile extends StatelessWidget {
         child: Row(
           children: [
             tile.kind == HomeTileKind.playlist
-                ? PlaylistArt(seed: tile.id, isLiked: tile.isLiked, size: 46)
+                ? PlaylistPicture(playlistId: tile.id, size: 46)
                 : FolderArt(seed: tile.name, size: 46),
             const SizedBox(width: 8),
             Expanded(

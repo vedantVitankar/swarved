@@ -5,12 +5,16 @@ import '../theme/colors.dart';
 import '../theme/shape.dart';
 import '../theme/typography.dart';
 import '../utils/duration_format.dart';
+import 'song_row_end.dart';
 import 'track_artwork.dart';
 
 /// One line of a playlist: art, title, artist, length. It is drawn from the
 /// details saved with the song, so it shows even when the song is not on
 /// this device. [track] is the playable song when there is one, and is only
-/// used for its artwork. A line with no song is dimmed.
+/// used for its artwork and its heart. A line with no song is dimmed.
+///
+/// Holding a row moves it, so unlike other lists it does not like the song
+/// on a long press: the heart does that.
 class PlaylistItemRow extends StatelessWidget {
   final PlaylistItem item;
   final Track? track;
@@ -72,8 +76,12 @@ class PlaylistItemRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(formatDuration(item.duration), style: AppType.readout),
+                  const SizedBox(width: 4),
+                  SongRowEnd(
+                    track: track,
+                    durationLabel: formatDuration(item.duration),
+                    keepSaveSlot: true,
+                  ),
                 ],
               ),
             ),
