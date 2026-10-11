@@ -123,4 +123,46 @@ void main() {
       expect(service.folderNoteFor('Late night'), isNull);
     });
   });
+
+  group('ContentService.apply', () {
+    test('takes in new content and tells listeners', () {
+      final service = ContentService(loader: () async => '{}');
+      var told = 0;
+      service.addListener(() => told++);
+
+      final applied = service
+          .apply('{"notes":[{"title":"Kesariya","note":"Ours, now."}]}');
+
+      expect(applied, isTrue);
+      expect(service.noteFor(_track)?.note, 'Ours, now.');
+      expect(told, 1);
+    });
+
+    test('replaces what was there, nothing is left over', () async {
+      final service = ContentService(
+        loader: () async => '{"notes":[{"title":"Kesariya","note":"Old."}]}',
+      );
+      await service.load();
+
+      service.apply('{"notes":[{"title":"Other","note":"New."}]}');
+
+      expect(service.noteFor(_track), isNull);
+      expect(service.noteFor(_other)?.note, 'New.');
+    });
+
+    test('text that is not content changes nothing and says so', () async {
+      final service = ContentService(
+        loader: () async => '{"notes":[{"title":"Kesariya","note":"Kept."}]}',
+      );
+      await service.load();
+      var told = 0;
+      service.addListener(() => told++);
+
+      expect(service.apply('not json'), isFalse);
+      expect(service.apply('[1,2]'), isFalse);
+
+      expect(service.noteFor(_track)?.note, 'Kept.');
+      expect(told, 0);
+    });
+  });
 }

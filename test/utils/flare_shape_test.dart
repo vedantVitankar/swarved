@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:swarved/utils/flare_shape.dart';
 
@@ -42,7 +41,7 @@ void main() {
       final path = _bent.path();
 
       // Halfway along, the middle has moved a quarter of the bend.
-      final middle = Offset(51 + 99 * 0.5, 99 * 0.36 * 0.25);
+      const middle = Offset(51 + 99 * 0.5, 99 * 0.36 * 0.25);
       expect(path.contains(middle), isTrue);
       expect(path.contains(Offset(middle.dx, 0)), isFalse);
     });
@@ -51,11 +50,11 @@ void main() {
       final path = _bent.path();
 
       // Six steps to the side of the middle line, a tenth of the way up.
-      final nearBase = Offset(51 + 9.9, 1.05 + 6);
+      const nearBase = Offset(51 + 9.9, 1.05 + 6);
       expect(path.contains(nearBase), isTrue);
 
       // The same six steps, nine tenths of the way up.
-      final nearTip = Offset(51 + 89.1, 28.1 + 6);
+      const nearTip = Offset(51 + 89.1, 28.1 + 6);
       expect(path.contains(nearTip), isFalse);
     });
 

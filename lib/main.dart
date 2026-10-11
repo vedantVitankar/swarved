@@ -15,7 +15,11 @@ import 'services/connection_service.dart';
 import 'services/stream_endpoint.dart';
 import 'services/saved_songs_index.dart';
 import 'services/song_saver.dart';
+import 'services/content_cache.dart';
 import 'services/content_service.dart';
+import 'services/content_source.dart';
+import 'services/content_sync.dart';
+import 'services/media_cache.dart';
 import 'services/tutorial_song_service.dart';
 import 'services/welcome_service.dart';
 
@@ -76,8 +80,19 @@ Future<void> main() async {
   final playlistService = PlaylistService(store: FilePlaylistStore());
   await playlistService.load();
 
+  // His notes: first what ships inside the app, then the copy kept from the
+  // last time the server sent them, so everything is there at once. The
+  // server is asked once the first screen is up.
   final contentService = ContentService();
   await contentService.load();
+  final mediaCache = MediaCache(config: serverConfig, tokenStore: tokenStore);
+  final contentSync = ContentSync(
+    source: ServerContentSource(config: serverConfig, tokenStore: tokenStore),
+    cache: FileContentCache(),
+    content: contentService,
+    onPhotos: mediaCache.sync,
+  );
+  await contentSync.loadCache();
 
   final welcomeService = WelcomeService(songService: TutorialSongService());
   await welcomeService.load();
@@ -94,5 +109,14 @@ Future<void> main() async {
     playlistService: playlistService,
     contentService: contentService,
     welcomeService: welcomeService,
+    mediaCache: mediaCache,
   ));
+
+  // While the app is open it hears about each publish at once. In the
+  // background it asks nothing, and on return it catches up first.
+  contentSync.start();
+  AppLifecycleListener(
+    onHide: contentSync.pause,
+    onShow: contentSync.resume,
+  );
 }

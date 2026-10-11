@@ -19,6 +19,7 @@ import 'services/save_controller.dart';
 import 'services/saved_songs_index.dart';
 import 'services/song_saver.dart';
 import 'services/content_service.dart';
+import 'services/media_cache.dart';
 import 'services/welcome_service.dart';
 
 class SwarVedApp extends StatelessWidget {
@@ -33,6 +34,7 @@ class SwarVedApp extends StatelessWidget {
   final PlaylistService playlistService;
   final ContentService contentService;
   final WelcomeService welcomeService;
+  final MediaCache mediaCache;
 
   const SwarVedApp({
     super.key,
@@ -47,6 +49,7 @@ class SwarVedApp extends StatelessWidget {
     required this.playlistService,
     required this.contentService,
     required this.welcomeService,
+    required this.mediaCache,
   });
 
   @override
@@ -65,6 +68,7 @@ class SwarVedApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: playlistService),
         ChangeNotifierProvider.value(value: contentService),
         ChangeNotifierProvider.value(value: welcomeService),
+        Provider.value(value: mediaCache),
         Provider.value(value: serverConfig),
         Provider.value(value: serverApi),
         ChangeNotifierProvider.value(value: connectionService),

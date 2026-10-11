@@ -7,6 +7,17 @@ class ServerConfig {
 
   Uri get healthUri => Uri.parse('$baseUrl/health');
 
+  /// What he has published for her: notes, memories and the rest.
+  Uri get contentUri => Uri.parse('$baseUrl/api/content');
+
+  /// The same, but the server holds the request open until he publishes
+  /// something new, so the app can update while it is open.
+  Uri get contentWaitUri => Uri.parse('$baseUrl/api/content/wait');
+
+  /// One uploaded photo or recording, by the name the server gave it.
+  Uri mediaUri(String file) =>
+      Uri.parse('$baseUrl/api/media/${Uri.encodeComponent(file)}');
+
   /// Where the audio of one YouTube song is streamed from.
   Uri playUri(String videoId) {
     return Uri.parse('$baseUrl/api/play').replace(

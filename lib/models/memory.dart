@@ -1,17 +1,38 @@
-/// One moment on memory lane: a date, a few words, and usually a photo.
-/// Built from the content file; a bad entry is skipped rather than
-/// breaking the others.
+/// One moment on memory lane: a date, a title, a few words, and usually a
+/// photo, like a note with a picture. Built from the content; a bad entry is
+/// skipped rather than breaking the others.
 class Memory {
-  /// Photos must live inside the app, under assets/.
+  /// Photos bundled inside the app live under assets/.
   static const _assetPrefix = 'assets/';
 
+  /// Photos he uploads are named by the server: sixteen hex digits and an
+  /// extension. Anything else is not a photo the app may fetch.
+  static final _serverPhoto = RegExp(r'^[a-f0-9]{16}\.(jpg|png|webp)$');
+
   final DateTime date;
+
+  /// His words about the moment.
   final String caption;
 
-  /// An asset path such as "assets/memories/first-date.jpg", or null.
+  /// A short heading, or empty when he gave none.
+  final String title;
+
+  /// Either an asset path such as "assets/memories/first-date.jpg", or the
+  /// name of a photo on the server, or null.
   final String? image;
 
-  const Memory({required this.date, required this.caption, this.image});
+  const Memory({
+    required this.date,
+    required this.caption,
+    this.title = '',
+    this.image,
+  });
+
+  /// Whether [name] is a photo kept on the server.
+  static bool isServerPhoto(String name) => _serverPhoto.hasMatch(name);
+
+  /// True when the photo has to be fetched from the server.
+  bool get hasServerPhoto => image != null && isServerPhoto(image!);
 
   static Memory? tryParse(Object? json) {
     if (json is! Map) return null;
@@ -27,10 +48,12 @@ class Memory {
     if (date == null || caption.isEmpty) return null;
 
     final image = text('image');
+    final usable = image.startsWith(_assetPrefix) || isServerPhoto(image);
     return Memory(
       date: date,
       caption: caption,
-      image: image.startsWith(_assetPrefix) ? image : null,
+      title: text('title'),
+      image: usable ? image : null,
     );
   }
 

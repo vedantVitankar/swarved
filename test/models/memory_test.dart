@@ -92,4 +92,61 @@ void main() {
       expect(longDate(DateTime(2026, 12, 31)), '31 December 2026');
     });
   });
+
+  group('Memory title and server photos', () {
+    test('reads the title, trimmed, and keeps it apart from the caption', () {
+      final memory = Memory.tryParse({
+        'date': '2025-02-14',
+        'title': '  Our first rain ',
+        'caption': 'We got soaked.',
+      });
+      expect(memory?.title, 'Our first rain');
+      expect(memory?.caption, 'We got soaked.');
+    });
+
+    test('the title is optional', () {
+      final memory = Memory.tryParse({'date': '2025-02-14', 'caption': 'Hi'});
+      expect(memory?.title, '');
+    });
+
+    test('a photo uploaded to the server is kept, by its name', () {
+      final memory = Memory.tryParse({
+        'date': '2025-02-14',
+        'caption': 'Hi',
+        'image': '0123456789abcdef.jpg',
+      });
+      expect(memory?.image, '0123456789abcdef.jpg');
+      expect(memory?.hasServerPhoto, isTrue);
+    });
+
+    test('a bundled photo is not a server photo', () {
+      final memory = Memory.tryParse({
+        'date': '2025-02-14',
+        'caption': 'Hi',
+        'image': 'assets/memories/walk.jpg',
+      });
+      expect(memory?.hasServerPhoto, isFalse);
+    });
+
+    test('only names the server gives are accepted as server photos', () {
+      expect(Memory.isServerPhoto('0123456789abcdef.png'), isTrue);
+      expect(Memory.isServerPhoto('0123456789abcdef.webp'), isTrue);
+      expect(Memory.isServerPhoto('../0123456789abcdef.jpg'), isFalse);
+      expect(Memory.isServerPhoto('0123456789abcdef.exe'), isFalse);
+      expect(Memory.isServerPhoto('0123456789ABCDEF.jpg'), isFalse);
+      expect(Memory.isServerPhoto('photo.jpg'), isFalse);
+      expect(Memory.isServerPhoto(''), isFalse);
+    });
+
+    test('a photo name that is not the server\'s is dropped, the memory kept',
+        () {
+      final memory = Memory.tryParse({
+        'date': '2025-02-14',
+        'caption': 'Hi',
+        'image': '../../secret.jpg',
+      });
+      expect(memory?.caption, 'Hi');
+      expect(memory?.image, isNull);
+    });
+  });
 }

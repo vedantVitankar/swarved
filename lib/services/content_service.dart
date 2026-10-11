@@ -12,8 +12,9 @@ import '../utils/daily_pick.dart';
 
 typedef ContentLoader = Future<String> Function();
 
-/// Holds what he has written for her. Today the content file ships inside
-/// the app; later the server fills it. Only [loader] changes then.
+/// Holds what he has written for her. It starts from the content file that
+/// ships inside the app, and takes in newer content from the server through
+/// [apply] whenever he publishes.
 class ContentService extends ChangeNotifier {
   final ContentLoader _loader;
   ContentPack _pack = ContentPack.empty;
@@ -35,6 +36,21 @@ class ContentService extends ChangeNotifier {
       _pack = ContentPack.empty;
     }
     notifyListeners();
+  }
+
+  /// Takes in content as text: from the server, or from the copy kept on
+  /// this phone. When [source] is not content, what the app already has stays
+  /// and the answer is false. Listeners hear about every change, so what is
+  /// on screen updates at once.
+  bool apply(String source) {
+    try {
+      _pack = ContentPack.parse(source);
+    } catch (error) {
+      debugPrint('Content not applied: $error');
+      return false;
+    }
+    notifyListeners();
+    return true;
   }
 
   SongNote? noteFor(Track track) => _pack.noteFor(track);

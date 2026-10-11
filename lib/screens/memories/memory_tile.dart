@@ -4,10 +4,11 @@ import '../../theme/colors.dart';
 import '../../theme/shape.dart';
 import '../../theme/typography.dart';
 import '../../utils/date_label.dart';
+import '../../widgets/server_photo.dart';
 import '../../widgets/sun_mark.dart';
 
-/// One moment: the date in gold, the photo if there is one, then his words
-/// in his handwriting.
+/// One moment, like a note with a picture: the date in gold, his title, the
+/// photo if there is one, then his words in his handwriting.
 class MemoryTile extends StatelessWidget {
   final Memory memory;
 
@@ -24,20 +25,32 @@ class MemoryTile extends StatelessWidget {
         children: [
           Text(longDate(memory.date), style: AppType.goldLabel),
           const SizedBox(height: 8),
+          if (memory.title.isNotEmpty) ...[
+            Text(memory.title, style: AppType.trackTitle),
+            const SizedBox(height: 8),
+          ],
           if (image != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(AppShape.card),
               child: AspectRatio(
                 aspectRatio: 4 / 3,
-                child: Image.asset(
-                  image,
-                  fit: BoxFit.cover,
-                  // Photos are big; decode them near the size they show.
-                  cacheWidth: 960,
-                  // A missing or misspelled file shows the sun instead of
-                  // an error.
-                  errorBuilder: (_, __, ___) => const _MissingPhoto(),
-                ),
+                child: memory.hasServerPhoto
+                    // Fetched from the server once, then kept on the phone.
+                    ? ServerPhoto(
+                        name: image,
+                        placeholder: const _MissingPhoto(),
+                        cacheWidth: 960,
+                      )
+                    : Image.asset(
+                        image,
+                        fit: BoxFit.cover,
+                        // Photos are big; decode them near the size they
+                        // show.
+                        cacheWidth: 960,
+                        // A missing or misspelled file shows the sun
+                        // instead of an error.
+                        errorBuilder: (_, __, ___) => const _MissingPhoto(),
+                      ),
               ),
             ),
             const SizedBox(height: 8),

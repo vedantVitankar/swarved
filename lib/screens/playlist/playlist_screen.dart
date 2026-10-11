@@ -161,10 +161,8 @@ class _PlaylistBody extends StatelessWidget {
           itemCount: lines.length,
           // Hold a row to drag it, on touch screens and with a mouse alike.
           buildDefaultDragHandles: false,
-          onReorder: (from, to) {
-            // Dragging down reports its target one place too high.
-            service.move(playlist.id, from, to > from ? to - 1 : to);
-          },
+          // The new place arrives already counted without the dragged row.
+          onReorderItem: (from, to) => service.move(playlist.id, from, to),
           itemBuilder: (context, i) {
             final key = lines[i].item.key;
             return ReorderableDelayedDragStartListener(

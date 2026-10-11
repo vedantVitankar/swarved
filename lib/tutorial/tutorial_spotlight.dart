@@ -123,8 +123,9 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
   /// the play step starts.
   void _enter(TutorialStep? step) {
     if (step == null) return;
-    if (step == TutorialStep.addFolder)
+    if (step == TutorialStep.addFolder) {
       _folderAtEntry = widget.folderPath?.call();
+    }
     _move.forward(from: 0);
     // A timer, not an animation: nothing changes on screen while she
     // waits, so nothing should be redrawn every frame.
