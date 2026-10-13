@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/play_source.dart';
 import '../models/playback_problem.dart';
 import '../models/track.dart';
+import '../utils/stall_detector.dart';
 import '../utils/queue_order.dart';
 import '../utils/volume_level.dart';
 import 'stats_service.dart';
@@ -44,6 +45,12 @@ const _kEarlyEndMargin = Duration(seconds: 8);
 /// Once a retried song has played this much further, the next drop gets a
 /// fresh set of retries.
 const _kRetryRecovered = Duration(seconds: 20);
+
+/// How often the player is checked for a song that has stood still.
+const _kWatchdogEvery = Duration(seconds: 2);
+
+/// A song this close to its end is allowed to stand still: it is finishing.
+const _kNearTheEnd = Duration(seconds: 3);
 
 /// Pressing "previous" restarts the current song if more than this much of
 /// it has played, and only goes back a song when you're near its start.
@@ -115,6 +122,11 @@ class PlayerService extends ChangeNotifier {
   Timer? _retryTimer;
   Duration _retryPoint = Duration.zero;
 
+  /// Notices a stream that was cut without the player saying so.
+  final StallDetector _stalls = StallDetector();
+  Timer? _watchdog;
+  String _lastStateNote = '';
+
   double _volume = VolumeLevel.defaultLevel;
 
   /// The level before mute, so unmuting goes back where the listener was.
@@ -134,6 +146,17 @@ class PlayerService extends ChangeNotifier {
       }
       notifyListeners();
     });
+
+    // Leave a trail in the log of what the player reports, so a song that
+    // stops for no visible reason can be explained afterwards.
+    _player.playerStateStream.listen((state) {
+      final note = 'playing=${state.playing}, ${state.processingState.name}';
+      if (note == _lastStateNote) return;
+      _lastStateNote = note;
+      debugPrint('Player: $note at ${_player.position.inSeconds}s '
+          '(${current?.id ?? 'nothing'})');
+    });
+    _watchdog = Timer.periodic(_kWatchdogEvery, (_) => _checkForStall());
 
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
@@ -225,6 +248,7 @@ class PlayerService extends ChangeNotifier {
   /// dropped connection left it.
   Future<void> _loadAndPlay({Duration? resumeAt}) async {
     final serial = ++_loadSerial;
+    _stalls.reset();
     _retryTimer?.cancel();
     if (resumeAt == null) _autoRetries = 0; // a new song, or a manual retry
     _prefetcher?.cancel(); // a new song: the old "next" no longer applies
@@ -523,6 +547,33 @@ class PlayerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// A YouTube song that is meant to be playing but has stopped moving: its
+  /// connection was cut and the player never said. Treated like any other
+  /// drop, so it is asked for again from the same place.
+  void _checkForStall() {
+    final track = current;
+    final position = _player.position;
+    final total = _player.duration ?? track?.duration ?? Duration.zero;
+    final finishing = total > Duration.zero && position >= total - _kNearTheEnd;
+    final stalled = _stalls.tick(
+      position: position,
+      expectingSound: track != null &&
+          !track.isLocal &&
+          !_loading &&
+          _player.playing &&
+          _player.processingState != ProcessingState.completed &&
+          !finishing &&
+          !(_retryTimer?.isActive ?? false),
+      buffering: _player.processingState == ProcessingState.buffering,
+      now: DateTime.now(),
+    );
+    if (stalled && track != null) {
+      debugPrint('Playback of ${track.id} stood still at '
+          '${position.inSeconds}s (${_player.processingState.name})');
+      _onPlaybackError('the song stood still');
+    }
+  }
+
   /// Whether the stream of [track] stopped well before the song's length.
   bool _endedEarly(Track track) {
     if (track.isLocal) return false;
@@ -554,6 +605,7 @@ class PlayerService extends ChangeNotifier {
 
   @override
   void dispose() {
+    _watchdog?.cancel();
     _retryTimer?.cancel();
     _prefetcher?.dispose();
     // App closing mid-track is the same as a manual skip — same rules.
