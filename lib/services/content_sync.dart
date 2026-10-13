@@ -22,7 +22,7 @@ class ContentSync {
     required ContentSource source,
     required ContentCache cache,
     required ContentService content,
-    this.onPhotos,
+    this.onMedia,
     Duration minGap = const Duration(seconds: 1),
     Future<void> Function(Duration)? sleep,
   })  : _source = source,
@@ -37,9 +37,10 @@ class ContentSync {
   final Duration _minGap;
   final Future<void> Function(Duration) _sleep;
 
-  /// Told the server photos the content uses after each update, so they can
-  /// be fetched ahead of time. Optional.
-  final Future<void> Function(Set<String> names)? onPhotos;
+  /// Told which uploaded files the content uses, so they can be fetched
+  /// ahead of time. [fromServer] is false for the copy kept on the phone,
+  /// which is only a reason to fetch, never to tidy anything away. Optional.
+  final Future<void> Function(Set<String> names, bool fromServer)? onMedia;
 
   /// The tag of the content the app has now.
   String? _etag;
@@ -54,6 +55,7 @@ class ContentSync {
   bool _paused = false;
   Completer<void> _abort = Completer<void>();
   Completer<void>? _resume;
+  Completer<void>? _wake;
 
   /// How long to rest after the [count]th failure in a row.
   @visibleForTesting
@@ -79,7 +81,7 @@ class ContentSync {
     if (cached == null) return;
     if (_content.apply(cached.body)) {
       _etag = cached.etag.isEmpty ? null : cached.etag;
-      _tellPhotos();
+      _tellMedia(fromServer: false);
     }
   }
 
@@ -88,6 +90,13 @@ class ContentSync {
     if (_started) return;
     _started = true;
     unawaited(_loop());
+  }
+
+  /// Something that was stopping the app from asking has changed (a token
+  /// was just saved, say): if it is resting after a failure, try again now.
+  void poke() {
+    final wake = _wake;
+    if (wake != null && !wake.isCompleted) wake.complete();
   }
 
   /// The app went to the background: stop asking, and cancel the request
@@ -125,7 +134,11 @@ class ContentSync {
       }
       final rest = await syncOnce();
       if (_stopped) break;
-      if (rest > Duration.zero) await _sleep(rest);
+      if (rest > Duration.zero) {
+        final wake = _wake = Completer<void>();
+        await Future.any<void>([_sleep(rest), wake.future]);
+        _wake = null;
+      }
     }
   }
 
@@ -148,7 +161,8 @@ class ContentSync {
         _failures = 0;
         _etag = etag.isEmpty ? null : etag;
         await _remember(body, etag);
-        _tellPhotos();
+        debugPrint('Content: new content applied ($etag)');
+        _tellMedia(fromServer: true);
         return _minGap;
       case ContentUnchanged():
       case ContentNothingPublished():
@@ -164,7 +178,10 @@ class ContentSync {
   Duration _failed(ContentFailure reason) {
     _failures++;
     _catchUp = true;
-    return restAfter(reason, _failures);
+    final rest = restAfter(reason, _failures);
+    debugPrint('Content: not fetched ($reason), trying again in '
+        '${rest.inSeconds}s');
+    return rest;
   }
 
   Future<void> _remember(String body, String etag) async {
@@ -176,13 +193,9 @@ class ContentSync {
     }
   }
 
-  void _tellPhotos() {
-    final tell = onPhotos;
+  void _tellMedia({required bool fromServer}) {
+    final tell = onMedia;
     if (tell == null) return;
-    final names = <String>{
-      for (final memory in _content.memories)
-        if (memory.hasServerPhoto) memory.image!,
-    };
-    unawaited(tell(names));
+    unawaited(tell(_content.mediaFiles, fromServer));
   }
 }

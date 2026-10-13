@@ -79,15 +79,16 @@ ContentSync _sync(
   ContentSource source,
   ContentCache cache,
   ContentService content, {
-  Future<void> Function(Set<String>)? onPhotos,
+  Future<void> Function(Set<String>, bool)? onMedia,
+  Future<void> Function(Duration)? sleep,
 }) {
   return ContentSync(
     source: source,
     cache: cache,
     content: content,
-    onPhotos: onPhotos,
+    onMedia: onMedia,
     minGap: Duration.zero,
-    sleep: (_) async {},
+    sleep: sleep ?? (_) async {},
   );
 }
 
@@ -318,34 +319,61 @@ void main() {
         '{"date":"2025-01-03","caption":"c"}'
         ']}';
 
-    test('the server photos a new content uses are announced', () async {
-      final told = <Set<String>>[];
+    test('the files a new content uses are announced as from the server',
+        () async {
+      final told = <(Set<String>, bool)>[];
       final sync = _sync(
         _ScriptedSource([const ContentNew(body: body, etag: '"v1"')]),
         _FakeCache(),
         _service(),
-        onPhotos: (names) async => told.add(names),
+        onMedia: (names, fromServer) async => told.add((names, fromServer)),
       );
 
       await sync.syncOnce();
 
-      expect(told.single, {'0123456789abcdef.jpg'});
+      expect(told.single.$1, {'0123456789abcdef.jpg'});
+      expect(told.single.$2, isTrue);
     });
 
-    test('the copy on the phone announces its photos too', () async {
-      final told = <Set<String>>[];
+    test('the copy on the phone announces its files, but not as the server\'s',
+        () async {
+      final told = <(Set<String>, bool)>[];
       final cache = _FakeCache()
         ..stored = const CachedContent(body: body, etag: '"v1"');
       final sync = _sync(
         _ScriptedSource([]),
         cache,
         _service(),
-        onPhotos: (names) async => told.add(names),
+        onMedia: (names, fromServer) async => told.add((names, fromServer)),
       );
 
       await sync.loadCache();
 
-      expect(told.single, {'0123456789abcdef.jpg'});
+      expect(told.single.$1, {'0123456789abcdef.jpg'});
+      expect(told.single.$2, isFalse);
+    });
+
+    test('a voice or any other file the content names is announced too',
+        () async {
+      final told = <Set<String>>[];
+      final sync = _sync(
+        _ScriptedSource([
+          const ContentNew(
+            body: '{"letters":[{"voice":"fedcba9876543210.m4a"}],'
+                '"memories":[{"date":"2025-01-03","caption":"c",'
+                '"image":"0123456789abcdef.jpg"}]}',
+            etag: '"v1"',
+          ),
+        ]),
+        _FakeCache(),
+        _service(),
+        onMedia: (names, _) async => told.add(names),
+      );
+
+      await sync.syncOnce();
+
+      expect(told.single,
+          {'0123456789abcdef.jpg', 'fedcba9876543210.m4a'});
     });
   });
 
@@ -419,6 +447,50 @@ void main() {
       );
       await pumpEventQueue();
       expect(content.noteFor(_track)?.note, 'Published just now.');
+
+      sync.stop();
+      await pumpEventQueue();
+    });
+
+    test('poke ends the rest after a failure, so a saved token starts it',
+        () async {
+      final rest = Completer<void>(); // a rest that never ends on its own
+      final source = _ScriptedSource([
+        const ContentFailed(ContentFailure.unauthorized),
+        ContentNew(body: _note('After the token.'), etag: '"v1"'),
+      ]);
+      final content = _service();
+      final sync = _sync(
+        source,
+        _FakeCache(),
+        content,
+        sleep: (_) => rest.future,
+      );
+
+      sync.start();
+      await pumpEventQueue();
+      expect(source.calls, hasLength(1)); // failed, now resting
+
+      sync.poke();
+      await pumpEventQueue();
+      expect(source.calls, hasLength(2));
+      expect(content.noteFor(_track)?.note, 'After the token.');
+
+      sync.stop();
+      rest.complete();
+      await pumpEventQueue();
+    });
+
+    test('poke while nothing is resting does nothing', () async {
+      final source = _GatedSource();
+      final sync = _sync(source, _FakeCache(), _service());
+
+      sync.start();
+      await pumpEventQueue();
+      sync.poke();
+      await pumpEventQueue();
+
+      expect(source.waits, [false]);
 
       sync.stop();
       await pumpEventQueue();

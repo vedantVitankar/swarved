@@ -73,17 +73,23 @@ class SongOfTheDay {
     );
   }
 
+  /// The picture for a YouTube song: the one he gave, or else YouTube's own
+  /// for that video, so a pick made with just a link still has artwork.
+  static String thumbnailFor(String videoId) =>
+      'https://i.ytimg.com/vi/$videoId/hqdefault.jpg';
+
   /// The song as a [Track] that can be played, or null when it is a library
   /// song that isn't in [library] (not scanned yet, or since removed).
   Track? resolve(List<Track> library) {
     final id = this.id;
     if (id != null) {
+      final videoId = id.substring(_youtubePrefix.length);
       return Track.youtube(
-        videoId: id.substring(_youtubePrefix.length),
+        videoId: videoId,
         title: title,
         artist: artist,
         duration: duration ?? Duration.zero,
-        artworkUrl: thumbnailUrl,
+        artworkUrl: thumbnailUrl ?? thumbnailFor(videoId),
       );
     }
 

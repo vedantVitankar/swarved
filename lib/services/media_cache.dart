@@ -87,22 +87,57 @@ class MediaCache {
     }
   }
 
-  /// Makes sure every one of [names] is on this phone, then removes the
-  /// files that are no longer used, so the folder never grows for ever.
-  /// Never throws.
-  Future<void> sync(Set<String> names) async {
+  /// Makes sure every one of [names] is on this phone. With [tidy], also
+  /// removes the files the content no longer mentions, so the folder does
+  /// not grow for ever. Only the server's own word is a reason to tidy, so
+  /// callers pass [tidy] only for content that just came from it. Never
+  /// throws.
+  Future<void> sync(Set<String> names, {bool tidy = false}) async {
     for (final name in names) {
       await fileFor(name);
     }
+    if (!tidy) return;
     try {
       final folder = await _folder();
       await for (final entry in folder.list()) {
         if (entry is! File) continue;
-        if (names.contains(p.basename(entry.path))) continue;
+        final name = p.basename(entry.path);
+        if (names.contains(name) || _inFlight.containsKey(name)) continue;
         await entry.delete();
       }
     } catch (error) {
       debugPrint('Media folder not tidied: $error');
+    }
+  }
+
+  /// How many files are kept on this phone and how much room they take.
+  /// Never throws.
+  Future<({int files, int bytes})> usage() async {
+    var files = 0;
+    var bytes = 0;
+    try {
+      final folder = await _folder();
+      await for (final entry in folder.list()) {
+        if (entry is! File || entry.path.endsWith('.part')) continue;
+        files++;
+        bytes += await entry.length();
+      }
+    } catch (error) {
+      debugPrint('Media folder not read: $error');
+    }
+    return (files: files, bytes: bytes);
+  }
+
+  /// Deletes every downloaded file. Photos still in the content download
+  /// again the next time they are shown. Never throws.
+  Future<void> clear() async {
+    try {
+      final folder = await _folder();
+      await for (final entry in folder.list()) {
+        if (entry is File) await entry.delete();
+      }
+    } catch (error) {
+      debugPrint('Media folder not cleared: $error');
     }
   }
 }

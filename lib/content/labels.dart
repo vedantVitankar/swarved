@@ -101,4 +101,14 @@ class Labels {
   static const delete = 'Delete';
   static const save = 'Save';
   static const undo = 'Undo';
+
+  // Photos and recordings kept on this phone.
+  static const downloads = 'On this phone';
+  static const clearDownloads = 'Delete';
+  static String downloadsSummary(int files, int bytes) {
+    final what = files == 1 ? '1 photo or recording' : '$files photos and recordings';
+    final mb = bytes / (1024 * 1024);
+    final size = mb < 0.1 ? 'under 0.1 MB' : '${mb.toStringAsFixed(1)} MB';
+    return '$what, $size';
+  }
 }

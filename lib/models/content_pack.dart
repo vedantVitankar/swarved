@@ -30,6 +30,14 @@ class ContentPack {
   /// When the recap appears and what he says at the end of it.
   final RecapSettings recap;
 
+  /// Words he has written for a named place in the app (the Search page's
+  /// heading, say), keyed by that name. Only non-empty words are kept.
+  final Map<String, String> texts;
+
+  /// Every uploaded photo or voice file the content mentions, wherever it
+  /// is mentioned, so nothing the content still uses is ever cleaned away.
+  final Set<String> mediaFiles;
+
   const ContentPack({
     this.notes = const [],
     this.songOfTheDay,
@@ -37,6 +45,8 @@ class ContentPack {
     this.folderNotes = const {},
     this.memories = const [],
     this.recap = const RecapSettings(),
+    this.texts = const {},
+    this.mediaFiles = const {},
   });
 
   static const empty = ContentPack();
@@ -64,7 +74,28 @@ class ContentPack {
       folderNotes: _parseFolderNotes(decoded['folderNotes']),
       memories: _parseMemories(decoded['memories']),
       recap: RecapSettings.parse(decoded['recap']),
+      texts: _parseTexts(decoded['texts']),
+      mediaFiles: Set.unmodifiable({
+        for (final match in _mediaName.allMatches(source)) match.group(0)!,
+      }),
     );
+  }
+
+  /// The names the server gives uploaded files.
+  static final RegExp _mediaName =
+      RegExp(r'[a-f0-9]{16}\.(?:jpg|png|webp|mp3|m4a|ogg|wav)');
+
+  static Map<String, String> _parseTexts(Object? raw) {
+    if (raw is! Map) return const {};
+    final texts = <String, String>{};
+    for (final entry in raw.entries) {
+      final key = entry.key;
+      final value = entry.value;
+      if (key is! String || value is! String) continue;
+      final words = value.trim();
+      if (words.isNotEmpty) texts[key] = words;
+    }
+    return Map.unmodifiable(texts);
   }
 
   static List<Memory> _parseMemories(Object? raw) {
@@ -101,6 +132,9 @@ class ContentPack {
     }
     return Map.unmodifiable(notes);
   }
+
+  /// His words for the place called [key], or null when he wrote none.
+  String? textFor(String key) => texts[key];
 
   /// His notes for [slot], possibly none.
   List<NoteLine> linesFor(NoteSlot slot) => slots[slot] ?? const [];

@@ -173,6 +173,48 @@ void main() {
     });
   });
 
+  group('MediaCache.usage and clear', () {
+    test('counts the files kept and their size, leaving half-fetched ones out',
+        () async {
+      final folder = Directory(p.join(directory.path, 'media'))..createSync();
+      File(p.join(folder.path, _photo)).writeAsBytesSync([1, 2, 3]);
+      File(p.join(folder.path, _other)).writeAsBytesSync([4, 5]);
+      File(p.join(folder.path, 'half.part')).writeAsBytesSync([9, 9, 9, 9]);
+
+      final cache = cacheFor((request) async => http.Response('', 500));
+      final usage = await cache.usage();
+
+      expect(usage.files, 2);
+      expect(usage.bytes, 5);
+    });
+
+    test('is empty before anything is fetched', () async {
+      final cache = cacheFor((request) async => http.Response('', 500));
+      final usage = await cache.usage();
+
+      expect(usage.files, 0);
+      expect(usage.bytes, 0);
+    });
+
+    test('clear deletes everything, and a photo downloads again after',
+        () async {
+      var fetches = 0;
+      final cache = cacheFor((request) async {
+        fetches++;
+        return http.Response.bytes([1], 200);
+      });
+      await cache.fileFor(_photo);
+      await cache.fileFor(_other);
+
+      await cache.clear();
+      expect(filesKept(), isEmpty);
+
+      await cache.fileFor(_photo);
+      expect(fetches, 3);
+      expect(filesKept(), [_photo]);
+    });
+  });
+
   group('MediaCache.sync', () {
     test('fetches what is missing and removes what is no longer used',
         () async {
@@ -181,15 +223,25 @@ void main() {
       File(p.join(folder.path, 'half.part')).writeAsBytesSync([4]);
 
       final cache = cacheFor((request) async => http.Response.bytes([1], 200));
-      await cache.sync({_photo});
+      await cache.sync({_photo}, tidy: true);
 
       expect(filesKept(), [_photo]);
     });
 
-    test('with nothing in use everything is removed', () async {
+    test('without tidy nothing is ever removed', () async {
+      final folder = Directory(p.join(directory.path, 'media'))..createSync();
+      File(p.join(folder.path, _other)).writeAsBytesSync([4]);
+
+      final cache = cacheFor((request) async => http.Response.bytes([1], 200));
+      await cache.sync({_photo});
+
+      expect(filesKept(), unorderedEquals([_photo, _other]));
+    });
+
+    test('with nothing in use and tidy, everything is removed', () async {
       final cache = cacheFor((request) async => http.Response.bytes([1], 200));
       await cache.fileFor(_photo);
-      await cache.sync({});
+      await cache.sync({}, tidy: true);
       expect(filesKept(), isEmpty);
     });
 

@@ -8,6 +8,7 @@ import '../../theme/typography.dart';
 import '../../widgets/page_body.dart';
 import '../../widgets/slot_note_card.dart';
 import 'connection_card.dart';
+import 'downloads_card.dart';
 import 'memory_lane_card.dart';
 import 'recap_card.dart';
 import 'logbook_card.dart';
@@ -39,6 +40,7 @@ class UsScreen extends StatelessWidget {
           // Hidden until enough time has passed.
           const RecapCard(),
           const SizedBox(height: 12),
+          const DownloadsCard(),
           const ConnectionCard(),
         ],
       ),

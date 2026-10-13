@@ -90,9 +90,14 @@ Future<void> main() async {
     source: ServerContentSource(config: serverConfig, tokenStore: tokenStore),
     cache: FileContentCache(),
     content: contentService,
-    onPhotos: mediaCache.sync,
+    onMedia: (names, fromServer) => mediaCache.sync(names, tidy: fromServer),
   );
   await contentSync.loadCache();
+  // A token saved in Us should get the content moving at once, not after the
+  // sync has finished resting from "no token".
+  connectionService.addListener(() {
+    if (connectionService.hasToken) contentSync.poke();
+  });
 
   final welcomeService = WelcomeService(songService: TutorialSongService());
   await welcomeService.load();

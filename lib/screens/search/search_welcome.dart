@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../content/text_keys.dart';
 import '../../content/words.dart';
 import '../../models/note_slot.dart';
 import '../../theme/typography.dart';
+import '../../widgets/content_text.dart';
 import '../../widgets/slot_text.dart';
 import '../../widgets/sun_mark.dart';
 
@@ -20,14 +22,16 @@ class SearchWelcome extends StatelessWidget {
           children: [
             const SunMark(size: 64),
             const SizedBox(height: 16),
-            Text(
-              Words.searchTitle,
+            ContentText(
+              textKey: TextKeys.searchTitle,
+              fallback: Words.searchTitle,
               textAlign: TextAlign.center,
               style: AppType.display,
             ),
             const SizedBox(height: 6),
-            Text(
-              Words.searchSubline,
+            ContentText(
+              textKey: TextKeys.searchSubline,
+              fallback: Words.searchSubline,
               textAlign: TextAlign.center,
               style: AppType.goldLabel,
             ),
@@ -37,8 +41,9 @@ class SearchWelcome extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    Words.searchIdle,
+                  ContentText(
+                    textKey: TextKeys.searchIdle,
+                    fallback: Words.searchIdle,
                     textAlign: TextAlign.center,
                     style: AppType.bodyMuted,
                   ),

@@ -138,7 +138,25 @@ void main() {
     test('a YouTube song without a length gets a zero length', () {
       final track = const SongOfTheDay(id: 'yt:abc', title: 'T').resolve([])!;
       expect(track.duration, Duration.zero);
-      expect(track.artworkUrl, isNull);
+    });
+
+    test('a YouTube song without a picture gets YouTube\'s own for the video',
+        () {
+      final track =
+          const SongOfTheDay(id: 'yt:dQw4w9WgXcQ', title: 'T').resolve([])!;
+
+      expect(track.artworkUrl, 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+      expect(track.artworkUrl, SongOfTheDay.thumbnailFor('dQw4w9WgXcQ'));
+    });
+
+    test('a picture he gave is kept over YouTube\'s', () {
+      final track = const SongOfTheDay(
+        id: 'yt:abc',
+        title: 'T',
+        thumbnailUrl: 'https://example.com/mine.jpg',
+      ).resolve([])!;
+
+      expect(track.artworkUrl, 'https://example.com/mine.jpg');
     });
   });
 }

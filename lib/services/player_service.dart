@@ -33,6 +33,18 @@ const _kMinPartialListenThreshold = Duration(seconds: 30);
 /// for, before the song is given up on.
 const _kLoadTimeout = Duration(seconds: 20);
 
+/// How many times a YouTube song whose stream drops part-way is quietly
+/// asked for again, from where it stopped, before the listener is told.
+const _kMaxAutoRetries = 3;
+
+/// A stream that ends this much before the song's length has been cut short,
+/// not finished.
+const _kEarlyEndMargin = Duration(seconds: 8);
+
+/// Once a retried song has played this much further, the next drop gets a
+/// fresh set of retries.
+const _kRetryRecovered = Duration(seconds: 20);
+
 /// Pressing "previous" restarts the current song if more than this much of
 /// it has played, and only goes back a song when you're near its start.
 const _kRestartThreshold = Duration(seconds: 3);
@@ -97,6 +109,12 @@ class PlayerService extends ChangeNotifier {
   /// Where a song was when its connection dropped, so retry can resume there.
   Duration? _resumeAt;
 
+  /// Quiet retries used on the current song, the pause before the next one,
+  /// and where the song was when the last one was scheduled.
+  int _autoRetries = 0;
+  Timer? _retryTimer;
+  Duration _retryPoint = Duration.zero;
+
   double _volume = VolumeLevel.defaultLevel;
 
   /// The level before mute, so unmuting goes back where the listener was.
@@ -110,10 +128,23 @@ class PlayerService extends ChangeNotifier {
     _player.playerStateStream
         .listen((_) => notifyListeners(), onError: _onPlaybackError);
     _player.playbackEventStream.listen((_) {}, onError: _onPlaybackError);
-    _player.positionStream.listen((_) => notifyListeners());
+    _player.positionStream.listen((position) {
+      if (_autoRetries > 0 && position - _retryPoint > _kRetryRecovered) {
+        _autoRetries = 0; // it has been playing fine again
+      }
+      notifyListeners();
+    });
 
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
+        // A stream the server cut short also "completes". That is a drop,
+        // not the end of the song: ask again from the same place.
+        final track = current;
+        if (track != null &&
+            _endedEarly(track) &&
+            _tryAgainQuietly(track, _player.position)) {
+          return;
+        }
         // Log the just-finished track as a full, natural completion —
         // then advance WITHOUT letting next() log it a second time.
         _logCurrentListen(completedNaturally: true);
@@ -194,6 +225,8 @@ class PlayerService extends ChangeNotifier {
   /// dropped connection left it.
   Future<void> _loadAndPlay({Duration? resumeAt}) async {
     final serial = ++_loadSerial;
+    _retryTimer?.cancel();
+    if (resumeAt == null) _autoRetries = 0; // a new song, or a manual retry
     _prefetcher?.cancel(); // a new song: the old "next" no longer applies
     final track = current;
     _problem = null;
@@ -482,6 +515,7 @@ class PlayerService extends ChangeNotifier {
     if (_loading || track == null || _loadedId != track.id) return;
 
     debugPrint('Playback error on ${track.id}: $error');
+    if (_tryAgainQuietly(track, _player.position)) return;
     _resumeAt = _player.position;
     _problem = track.isLocal
         ? PlaybackProblem.unexpected
@@ -489,8 +523,38 @@ class PlayerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Whether the stream of [track] stopped well before the song's length.
+  bool _endedEarly(Track track) {
+    if (track.isLocal) return false;
+    final total = _player.duration ?? track.duration;
+    if (total <= Duration.zero) return false;
+    return _player.position < total - _kEarlyEndMargin;
+  }
+
+  /// Asks for [track] again from [at] after a short pause (1, 2, then 4
+  /// seconds), without telling the listener. False once it has been tried
+  /// enough, or for a local song, so the caller does what it always did.
+  bool _tryAgainQuietly(Track track, Duration at) {
+    if (track.isLocal || _autoRetries >= _kMaxAutoRetries) return false;
+    if (_retryTimer?.isActive ?? false) return true; // already on its way
+
+    final wait = Duration(seconds: 1 << _autoRetries);
+    _autoRetries++;
+    _retryPoint = at;
+    _resumeAt = at;
+    debugPrint('Stream of ${track.id} dropped at ${at.inSeconds}s, '
+        'trying again in ${wait.inSeconds}s ($_autoRetries of '
+        '$_kMaxAutoRetries)');
+    _retryTimer = Timer(wait, () {
+      if (current?.id != track.id || _loading) return;
+      unawaited(_loadAndPlay(resumeAt: at));
+    });
+    return true;
+  }
+
   @override
   void dispose() {
+    _retryTimer?.cancel();
     _prefetcher?.dispose();
     // App closing mid-track is the same as a manual skip — same rules.
     _logCurrentListen(completedNaturally: false);

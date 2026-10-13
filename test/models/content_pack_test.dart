@@ -157,4 +157,60 @@ void main() {
       expect(pack.folderNoteFor('Mornings')?.note, 'First.');
     });
   });
+
+  group('ContentPack texts', () {
+    test('keeps his words for named places, trimmed', () {
+      final pack = ContentPack.parse('''
+        {"texts": {"searchTitle": "  What shall we hear, baby?  ",
+                   "searchSubline": "Gold."}}''');
+
+      expect(pack.textFor('searchTitle'), 'What shall we hear, baby?');
+      expect(pack.textFor('searchSubline'), 'Gold.');
+      expect(pack.textFor('searchIdle'), isNull);
+    });
+
+    test('skips empty, blank and non-text values', () {
+      final pack = ContentPack.parse('''
+        {"texts": {"a": "", "b": "   ", "c": 5, "d": null, "e": "ok"}}''');
+
+      expect(pack.texts, {'e': 'ok'});
+    });
+
+    test('something that is not an object means no words', () {
+      expect(ContentPack.parse('{"texts": ["nope"]}').texts, isEmpty);
+      expect(ContentPack.parse('{"texts": "nope"}').texts, isEmpty);
+      expect(ContentPack.parse('{}').texts, isEmpty);
+    });
+
+    test('its words cannot be changed from outside', () {
+      final pack = ContentPack.parse('{"texts": {"a": "x"}}');
+
+      expect(() => pack.texts['b'] = 'y', throwsUnsupportedError);
+    });
+  });
+
+  group('ContentPack media files', () {
+    test('finds every uploaded file named anywhere in the content', () {
+      final pack = ContentPack.parse('''
+        {"memories": [{"date": "2025-02-14", "caption": "c",
+                       "image": "0123456789abcdef.jpg"}],
+         "letters": [{"voice": "fedcba9876543210.m4a"}],
+         "x": "not a file.jpg and short.png"}''');
+
+      expect(pack.mediaFiles,
+          {'0123456789abcdef.jpg', 'fedcba9876543210.m4a'});
+    });
+
+    test('a file named twice counts once', () {
+      final pack = ContentPack.parse(
+        '{"a": "0123456789abcdef.png", "b": "0123456789abcdef.png"}',
+      );
+
+      expect(pack.mediaFiles, {'0123456789abcdef.png'});
+    });
+
+    test('is empty for content with none', () {
+      expect(ContentPack.parse('{"notes": []}').mediaFiles, isEmpty);
+    });
+  });
 }

@@ -64,6 +64,13 @@ class ContentService extends ChangeNotifier {
   /// The song he picked for today, or null.
   SongOfTheDay? get songOfTheDay => _pack.songOfTheDay;
 
+  /// His words for the named place [key], or [fallback] (the app's own
+  /// words) when he hasn't written any.
+  String textFor(String key, String fallback) => _pack.textFor(key) ?? fallback;
+
+  /// Every uploaded photo or voice file the current content mentions.
+  Set<String> get mediaFiles => _pack.mediaFiles;
+
   /// One of his notes for [slot], or null when he hasn't written any. The
   /// same [seed] always gives the same note. Without one, the note changes
   /// each day, walking through the list in order.
