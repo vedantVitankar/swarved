@@ -4,6 +4,7 @@ import '../models/content_pack.dart';
 import '../models/memory.dart';
 import '../models/note_line.dart';
 import '../models/note_slot.dart';
+import '../models/pushed_playlist.dart';
 import '../models/recap_settings.dart';
 import '../models/song_note.dart';
 import '../models/song_of_the_day.dart';
@@ -67,6 +68,9 @@ class ContentService extends ChangeNotifier {
   /// His words for the named place [key], or [fallback] (the app's own
   /// words) when he hasn't written any.
   String textFor(String key, String fallback) => _pack.textFor(key) ?? fallback;
+
+  /// The playlists he made for her, in his order.
+  List<PushedPlaylist> get pushedPlaylists => _pack.playlists;
 
   /// Every uploaded photo or voice file the current content mentions.
   Set<String> get mediaFiles => _pack.mediaFiles;

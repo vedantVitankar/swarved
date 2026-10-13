@@ -23,6 +23,9 @@ class PlaylistHeader extends StatelessWidget {
   final Widget? downloadButton;
   final Widget? downloadStatus;
 
+  /// "Save to your library", for a playlist he made for her. Optional.
+  final Widget? saveButton;
+
   /// The three dots, at the right end of the button row. Null for a playlist
   /// that cannot be renamed or deleted.
   final Widget? menu;
@@ -35,6 +38,7 @@ class PlaylistHeader extends StatelessWidget {
     required this.onShuffle,
     this.downloadButton,
     this.downloadStatus,
+    this.saveButton,
     this.menu,
   });
 
@@ -87,6 +91,7 @@ class PlaylistHeader extends StatelessWidget {
                       label: Labels.shuffleAll,
                       onPressed: canPlay ? onShuffle : null,
                     ),
+                    if (saveButton != null) saveButton!,
                     if (downloadButton != null) downloadButton!,
                   ],
                 ),

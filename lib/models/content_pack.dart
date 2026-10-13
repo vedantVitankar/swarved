@@ -3,6 +3,7 @@ import 'memory.dart';
 import 'note_line.dart';
 import 'recap_settings.dart';
 import 'note_slot.dart';
+import 'pushed_playlist.dart';
 import 'song_note.dart';
 import 'song_of_the_day.dart';
 import 'track.dart';
@@ -34,6 +35,9 @@ class ContentPack {
   /// heading, say), keyed by that name. Only non-empty words are kept.
   final Map<String, String> texts;
 
+  /// The playlists he made for her, in the order he put them.
+  final List<PushedPlaylist> playlists;
+
   /// Every uploaded photo or voice file the content mentions, wherever it
   /// is mentioned, so nothing the content still uses is ever cleaned away.
   final Set<String> mediaFiles;
@@ -46,6 +50,7 @@ class ContentPack {
     this.memories = const [],
     this.recap = const RecapSettings(),
     this.texts = const {},
+    this.playlists = const [],
     this.mediaFiles = const {},
   });
 
@@ -75,6 +80,7 @@ class ContentPack {
       memories: _parseMemories(decoded['memories']),
       recap: RecapSettings.parse(decoded['recap']),
       texts: _parseTexts(decoded['texts']),
+      playlists: _parsePlaylists(decoded['playlists']),
       mediaFiles: Set.unmodifiable({
         for (final match in _mediaName.allMatches(source)) match.group(0)!,
       }),
@@ -84,6 +90,17 @@ class ContentPack {
   /// The names the server gives uploaded files.
   static final RegExp _mediaName =
       RegExp(r'[a-f0-9]{16}\.(?:jpg|png|webp|mp3|m4a|ogg|wav)');
+
+  static List<PushedPlaylist> _parsePlaylists(Object? raw) {
+    if (raw is! List) return const [];
+    final seen = <String>{};
+    return List.unmodifiable([
+      for (final entry in raw)
+        if (PushedPlaylist.tryParse(entry) case final parsed?
+            when seen.add(parsed.playlist.id))
+          parsed,
+    ]);
+  }
 
   static Map<String, String> _parseTexts(Object? raw) {
     if (raw is! Map) return const {};

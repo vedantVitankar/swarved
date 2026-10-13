@@ -4,6 +4,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'app.dart';
 import 'services/library_service.dart';
+import 'services/playlist_reporter.dart';
 import 'services/playlist_service.dart';
 import 'services/playlist_store.dart';
 import 'services/stats_service.dart';
@@ -77,14 +78,20 @@ Future<void> main() async {
     index: savedSongsIndex,
   );
 
-  final playlistService = PlaylistService(store: FilePlaylistStore());
-  await playlistService.load();
-
   // His notes: first what ships inside the app, then the copy kept from the
   // last time the server sent them, so everything is there at once. The
   // server is asked once the first screen is up.
   final contentService = ContentService();
   await contentService.load();
+  // His playlists ride along with the content: read only, and updated the
+  // moment he publishes.
+  final playlistService = PlaylistService(store: FilePlaylistStore());
+  await playlistService.load();
+  void showPushedPlaylists() => playlistService.setPushed([
+        for (final pushed in contentService.pushedPlaylists) pushed.playlist,
+      ]);
+  contentService.addListener(showPushedPlaylists);
+  showPushedPlaylists();
   final mediaCache = MediaCache(config: serverConfig, tokenStore: tokenStore);
   final contentSync = ContentSync(
     source: ServerContentSource(config: serverConfig, tokenStore: tokenStore),
@@ -93,10 +100,21 @@ Future<void> main() async {
     onMedia: (names, fromServer) => mediaCache.sync(names, tidy: fromServer),
   );
   await contentSync.loadCache();
+  // Tells the server what playlists she has, a few seconds after each change,
+  // so he can see them in the admin site. A one-way mirror: nothing comes back.
+  final playlistReporter = PlaylistReporter(
+    config: serverConfig,
+    tokenStore: tokenStore,
+    playlists: playlistService,
+  )..start();
+
   // A token saved in Us should get the content moving at once, not after the
   // sync has finished resting from "no token".
   connectionService.addListener(() {
-    if (connectionService.hasToken) contentSync.poke();
+    if (connectionService.hasToken) {
+      contentSync.poke();
+      playlistReporter.poke();
+    }
   });
 
   final welcomeService = WelcomeService(songService: TutorialSongService());

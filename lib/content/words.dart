@@ -124,6 +124,8 @@ class Words {
   static const likedAdded = 'Kept in Liked songs.';
   static const likedRemoved = 'Taken out of Liked songs.';
   static const playlistsSaved = 'Saved to your playlists.';
+  static const playlistSavedToLibrary = 'Saved to your library.';
+  static const playlistAlreadySaved = 'Already in your library.';
   static const downloadsCleared = 'Deleted. They will come back when you open them.';
 
   // A playlist's page and the Playlists view in the Library.

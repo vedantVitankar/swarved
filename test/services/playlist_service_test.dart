@@ -663,4 +663,79 @@ void main() {
       expect(() => service.create('Late'), returnsNormally);
     });
   });
+
+  group('his playlists', () {
+    Playlist his(String name, List<String> ids) => Playlist(
+          id: 'pushed_$name',
+          name: name,
+          kind: PlaylistKind.pushed,
+          items: [
+            for (final id in ids)
+              PlaylistItem(
+                key: 'yt:$id',
+                title: 'Song $id',
+                artist: 'A',
+                duration: const Duration(seconds: 100),
+                addedAt: DateTime.utc(1970),
+              ),
+          ],
+          createdAt: DateTime.utc(1970),
+          updatedAt: DateTime.utc(1970),
+        );
+
+    test('are found by id but are not part of her library or the file',
+        () async {
+      final store = _FakeStore();
+      final service = await loaded(store);
+      service.setPushed([his('Mix', ['aaaaaaaaaaa'])]);
+
+      expect(service.byId('pushed_Mix')?.name, 'Mix');
+      expect(service.playlists.map((p) => p.id), ['liked']);
+      expect(service.everything.map((p) => p.id), ['liked']);
+      await service.saved;
+      expect(store.kept.any((p) => p.kind == PlaylistKind.pushed), isFalse);
+    });
+
+    test('listeners hear only when they really change', () async {
+      final service = await loaded();
+      var heard = 0;
+      service.addListener(() => heard++);
+
+      service.setPushed([his('Mix', ['aaaaaaaaaaa'])]);
+      service.setPushed([his('Mix', ['aaaaaaaaaaa'])]);
+      expect(heard, 1);
+
+      service.setPushed([his('Mix', ['aaaaaaaaaaa', 'bbbbbbbbbbb'])]);
+      expect(heard, 2);
+      service.setPushed(const []);
+      expect(heard, 3);
+      expect(service.byId('pushed_Mix'), isNull);
+    });
+
+    test('saving makes her own copy, once', () async {
+      final service = await loaded();
+      final mix = his('Mix', ['aaaaaaaaaaa', 'bbbbbbbbbbb']);
+      service.setPushed([mix]);
+
+      expect(service.saveToLibrary(mix), SaveResult.saved);
+      final copy = service.playlists.firstWhere((p) => p.name == 'Mix');
+      expect(copy.kind, PlaylistKind.user);
+      expect(copy.isEditable, isTrue);
+      expect(copy.id, isNot(mix.id));
+      expect(copy.items.map((i) => i.key), ['yt:aaaaaaaaaaa', 'yt:bbbbbbbbbbb']);
+
+      expect(service.saveToLibrary(mix), SaveResult.alreadySaved);
+      expect(service.playlists.where((p) => p.name == 'Mix'), hasLength(1));
+    });
+
+    test('a copy she changed lets the playlist be saved again', () async {
+      final service = await loaded();
+      final mix = his('Mix', ['aaaaaaaaaaa']);
+      service.saveToLibrary(mix);
+      final copy = service.playlists.firstWhere((p) => p.name == 'Mix');
+      service.remove(copy.id, 'yt:aaaaaaaaaaa');
+
+      expect(service.saveToLibrary(mix), SaveResult.saved);
+    });
+  });
 }

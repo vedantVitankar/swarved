@@ -10,6 +10,9 @@ import 'playlist_store.dart';
 /// What happened when a song was added to a playlist.
 enum AddResult { added, alreadyThere, noSuchPlaylist }
 
+/// What happened when one of his playlists was saved to her library.
+enum SaveResult { saved, alreadySaved }
+
 /// Holds every playlist: Liked songs, the ones she makes, and later the ones
 /// he sends. Every change is applied at once, tells listeners, and is saved
 /// in the background, one save after another and never two at once.
@@ -34,6 +37,7 @@ class PlaylistService extends ChangeNotifier {
   final String Function() _newId;
 
   List<Playlist> _all = [];
+  List<Playlist> _pushed = const [];
   Future<void> _writing = Future.value();
 
   /// False when the file could not be read at all. Nothing is saved then, so
@@ -121,7 +125,72 @@ class PlaylistService extends ChangeNotifier {
     for (final playlist in _all) {
       if (playlist.id == id && !playlist.isDeleted) return playlist;
     }
+    for (final playlist in _pushed) {
+      if (playlist.id == id) return playlist;
+    }
     return null;
+  }
+
+  // ---- His playlists ----------------------------------------------------
+
+  /// The playlists he made for her. Read only, never saved to the file and
+  /// never part of [playlists] or [everything]: they belong to the content,
+  /// and change when he publishes.
+  List<Playlist> get pushed => _pushed;
+
+  /// Takes in the playlists from the newest content. Listeners hear about it
+  /// only when something differs.
+  void setPushed(List<Playlist> playlists) {
+    if (_samePushed(_pushed, playlists)) return;
+    _pushed = List.unmodifiable(playlists);
+    if (!_disposed) notifyListeners();
+  }
+
+  static bool _samePushed(List<Playlist> a, List<Playlist> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id || a[i].name != b[i].name) return false;
+      if (!listEquals(
+        [for (final item in a[i].items) item.key],
+        [for (final item in b[i].items) item.key],
+      )) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Saves a copy of [pushed] to her library as a playlist of her own: her
+  /// own to rename, reorder and delete, and no longer following what he
+  /// publishes. A copy she already has (same name, same songs) is not made
+  /// twice.
+  SaveResult saveToLibrary(Playlist pushed) {
+    final keys = [for (final item in pushed.items) item.key];
+    for (final mine in playlists) {
+      if (mine.kind != PlaylistKind.user || mine.name != pushed.name) continue;
+      if (listEquals([for (final item in mine.items) item.key], keys)) {
+        return SaveResult.alreadySaved;
+      }
+    }
+    final now = _clock();
+    final copy = _make(pushed.name);
+    if (copy == null) return SaveResult.alreadySaved;
+    _replace(copy.copyWith(
+      items: [
+        for (final item in pushed.items)
+          PlaylistItem(
+            key: item.key,
+            title: item.title,
+            artist: item.artist,
+            duration: item.duration,
+            artworkUrl: item.artworkUrl,
+            addedAt: now,
+          ),
+      ],
+      updatedAt: now,
+    ));
+    _changed();
+    return SaveResult.saved;
   }
 
   /// Liked songs. Before [load] has run it is an empty one that is not kept.

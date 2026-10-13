@@ -14,6 +14,10 @@ class ServerConfig {
   /// something new, so the app can update while it is open.
   Uri get contentWaitUri => Uri.parse('$baseUrl/api/content/wait');
 
+  /// Where the app tells the server what playlists she has, so he can see
+  /// them (and write notes on her songs) in the admin site.
+  Uri get playlistsReportUri => Uri.parse('$baseUrl/api/playlists/report');
+
   /// One uploaded photo or recording, by the name the server gave it.
   Uri mediaUri(String file) =>
       Uri.parse('$baseUrl/api/media/${Uri.encodeComponent(file)}');

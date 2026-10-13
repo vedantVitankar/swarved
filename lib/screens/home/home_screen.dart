@@ -21,6 +21,7 @@ import '../../widgets/slot_text.dart';
 import '../../widgets/swar_chips.dart';
 import '../folder/folder_screen.dart';
 import '../playlist/playlist_screen.dart';
+import 'home_made_for_you.dart';
 import 'home_tile_grid.dart';
 import 'home_song_of_the_day.dart';
 
@@ -194,6 +195,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
             ),
           ],
+          // Last on Home, below the note, and like the note it stays out of
+          // the first-time intro and fades in once the intro is over. Brings
+          // its own gap above, and nothing when he has made none.
+          if (showFolders)
+            const TutorialReveal(
+              part: TutorialPart.note,
+              child: HomeMadeForYou(),
+            ),
         ],
       ),
     );

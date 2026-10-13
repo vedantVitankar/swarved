@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../content/labels.dart';
 import '../../content/words.dart';
 import '../../models/play_source.dart';
 import '../../models/playlist.dart';
@@ -14,6 +15,7 @@ import '../../utils/playlist_play.dart';
 import '../../utils/playlist_resolve.dart';
 import '../../widgets/mini_player_bar.dart';
 import '../../widgets/playlist_item_row.dart';
+import '../../widgets/swar_outlined_button.dart';
 import '../../widgets/swar_icon.dart';
 import 'playlist_download.dart';
 import 'playlist_header.dart';
@@ -104,6 +106,23 @@ class _PlaylistBody extends StatelessWidget {
         songs: youtubeSongsOf(playlist),
       ),
       downloadStatus: PlaylistDownloadStatus(playlistId: playlist.id),
+      saveButton: playlist.kind == PlaylistKind.pushed
+          ? SwarOutlinedButton(
+              label: Labels.saveToLibrary,
+              onPressed: () {
+                final result = service.saveToLibrary(playlist);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      result == SaveResult.saved
+                          ? Words.playlistSavedToLibrary
+                          : Words.playlistAlreadySaved,
+                    ),
+                  ),
+                );
+              },
+            )
+          : null,
       menu: playlist.kind == PlaylistKind.user
           ? PlaylistMenu(playlist: playlist)
           : null,

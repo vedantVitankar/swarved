@@ -101,6 +101,8 @@ class Labels {
   static const delete = 'Delete';
   static const save = 'Save';
   static const undo = 'Undo';
+  static const saveToLibrary = 'Save to your library';
+  static const madeForYou = 'Made for you';
 
   // Photos and recordings kept on this phone.
   static const downloads = 'On this phone';
