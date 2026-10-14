@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/play_source.dart';
 import '../models/playback_problem.dart';
 import '../models/track.dart';
+import '../utils/played_point.dart';
 import '../utils/stall_detector.dart';
 import '../utils/queue_order.dart';
 import '../utils/volume_level.dart';
@@ -122,6 +123,10 @@ class PlayerService extends ChangeNotifier {
   Timer? _retryTimer;
   Duration _retryPoint = Duration.zero;
 
+  /// How far into the song the listener got. The player itself reads zero
+  /// once a song has ended, so this is what says whether it really ended.
+  final PlayedPoint _played = PlayedPoint();
+
   /// Notices a stream that was cut without the player saying so.
   final StallDetector _stalls = StallDetector();
   Timer? _watchdog;
@@ -141,6 +146,7 @@ class PlayerService extends ChangeNotifier {
         .listen((_) => notifyListeners(), onError: _onPlaybackError);
     _player.playbackEventStream.listen((_) {}, onError: _onPlaybackError);
     _player.positionStream.listen((position) {
+      _played.see(position);
       if (_autoRetries > 0 && position - _retryPoint > _kRetryRecovered) {
         _autoRetries = 0; // it has been playing fine again
       }
@@ -163,9 +169,10 @@ class PlayerService extends ChangeNotifier {
         // A stream the server cut short also "completes". That is a drop,
         // not the end of the song: ask again from the same place.
         final track = current;
+        final reached = _played.at;
         if (track != null &&
-            _endedEarly(track) &&
-            _tryAgainQuietly(track, _player.position)) {
+            _endedEarly(track, reached) &&
+            _tryAgainQuietly(track, reached)) {
           return;
         }
         // Log the just-finished track as a full, natural completion —
@@ -187,11 +194,12 @@ class PlayerService extends ChangeNotifier {
   /// Why the current song isn't playing, or null when nothing is wrong.
   PlaybackProblem? get problem => _problem;
 
-  /// True while a YouTube song is being fetched, or the player is waiting
-  /// for more of it to arrive. Never true for local songs.
+  /// True while a YouTube song is being fetched, asked for again after a
+  /// dropped connection, or the player is waiting for more of it to arrive.
+  /// Never true for local songs.
   bool get isLoading {
     if (_problem != null) return false; // the message takes over
-    if (_loading) return true;
+    if (_loading || _waitingToRetry) return true;
     final track = current;
     if (track == null || track.isLocal) return false;
     return switch (_player.processingState) {
@@ -199,6 +207,10 @@ class PlayerService extends ChangeNotifier {
       _ => false,
     };
   }
+
+  /// A dropped song is being asked for again in a moment (see
+  /// [_tryAgainQuietly]). The play button shows it as loading.
+  bool get _waitingToRetry => _retryTimer?.isActive ?? false;
 
   Duration get position => _player.position;
   Duration get bufferedPosition => _player.bufferedPosition;
@@ -250,6 +262,7 @@ class PlayerService extends ChangeNotifier {
     final serial = ++_loadSerial;
     _stalls.reset();
     _retryTimer?.cancel();
+    _played.moveTo(resumeAt ?? Duration.zero);
     if (resumeAt == null) _autoRetries = 0; // a new song, or a manual retry
     _prefetcher?.cancel(); // a new song: the old "next" no longer applies
     final track = current;
@@ -359,7 +372,7 @@ class PlayerService extends ChangeNotifier {
   /// Play/pause. When the current song has a problem, this is also the way
   /// to try it again, so no mini player needs a button of its own for that.
   Future<void> togglePlayPause() async {
-    if (_loading) return; // already working on it
+    if (_loading || _waitingToRetry) return; // already working on it
     if (_problem != null) {
       await retry();
       return;
@@ -400,7 +413,7 @@ class PlayerService extends ChangeNotifier {
   /// playing for a while, otherwise go back one song.
   Future<void> restartOrPrevious() async {
     if (_player.position > _kRestartThreshold || !_order.hasPrevious) {
-      await _player.seek(Duration.zero);
+      await seek(Duration.zero);
       return;
     }
     await previous();
@@ -457,7 +470,10 @@ class PlayerService extends ChangeNotifier {
     await _switchTo(index);
   }
 
-  Future<void> seek(Duration position) => _player.seek(position);
+  Future<void> seek(Duration position) {
+    _played.moveTo(position);
+    return _player.seek(position);
+  }
 
   /// Sets the volume and persists it. Dragging the slider to zero is treated
   /// as an implicit mute — the premute memory is only updated for non-zero
@@ -575,11 +591,15 @@ class PlayerService extends ChangeNotifier {
   }
 
   /// Whether the stream of [track] stopped well before the song's length.
-  bool _endedEarly(Track track) {
+  /// [reached] is how far it got (see [_played]), never the player's own
+  /// position, which is zero by the time a song has ended.
+  bool _endedEarly(Track track, Duration reached) {
     if (track.isLocal) return false;
-    final total = _player.duration ?? track.duration;
-    if (total <= Duration.zero) return false;
-    return _player.position < total - _kEarlyEndMargin;
+    return endedEarly(
+      reached: reached,
+      total: _player.duration ?? track.duration,
+      margin: _kEarlyEndMargin,
+    );
   }
 
   /// Asks for [track] again from [at] after a short pause (1, 2, then 4
@@ -600,6 +620,7 @@ class PlayerService extends ChangeNotifier {
       if (current?.id != track.id || _loading) return;
       unawaited(_loadAndPlay(resumeAt: at));
     });
+    notifyListeners(); // the play button shows it is working on it
     return true;
   }
 
