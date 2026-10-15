@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../content/labels.dart';
 import '../../models/connection_status.dart';
 import '../../services/connection_service.dart';
+import '../../utils/app_profile.dart';
 import '../../theme/colors.dart';
 import '../../theme/shape.dart';
 import '../../theme/typography.dart';
@@ -95,6 +96,8 @@ class _ConnectionCardState extends State<ConnectionCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(Labels.connection, style: AppType.sectionLabel),
+          const SizedBox(height: 4),
+          Text(Labels.profile(AppProfile.current), style: AppType.bodyMuted),
           const SizedBox(height: 10),
           TextField(
             controller: _controller,

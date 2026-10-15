@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:swarved/models/playlist.dart';
 import 'package:swarved/models/playlist_item.dart';
 import 'package:swarved/services/playlist_store.dart';
+import 'package:swarved/utils/app_profile.dart';
 
 final _t0 = DateTime.utc(2026, 10, 11, 9);
 
@@ -47,6 +48,22 @@ void main() {
   File mainFile() => File(p.join(dir.path, FilePlaylistStore.fileName));
 
   group('FilePlaylistStore', () {
+    test('each profile keeps its own file, hers keeps the old name',
+        () async {
+      final hers = FilePlaylistStore(directory: () async => dir);
+      final trial = FilePlaylistStore(
+        directory: () async => dir,
+        profile: AppProfile.test,
+      );
+      await hers.write([_playlist('a', 'Hers', ['yt:aaaaaaaaaaa'])]);
+      await trial.write([_playlist('b', 'Test', ['yt:bbbbbbbbbbb'])]);
+
+      expect(files(), contains('playlists_v1.json'));
+      expect(files(), contains('playlists_test_v1.json'));
+      expect((await hers.read()).single.name, 'Hers');
+      expect((await trial.read()).single.name, 'Test');
+    });
+
     test('has nothing before anything is saved', () async {
       expect(await store().read(), isEmpty);
     });

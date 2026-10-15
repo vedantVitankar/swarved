@@ -11,6 +11,7 @@ import 'services/stats_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/server_api.dart';
 import 'services/server_config.dart';
+import 'utils/app_profile.dart';
 import 'services/secure_token_store.dart';
 import 'services/connection_service.dart';
 import 'services/stream_endpoint.dart';
@@ -52,7 +53,7 @@ Future<void> main() async {
   final libraryService = LibraryService();
   await libraryService.restoreLastLibrary();
 
-  const serverConfig = ServerConfig();
+  final serverConfig = ServerConfig(profile: AppProfile.current);
   final tokenStore = SecureTokenStore();
   final serverApi = ServerApi(
     config: serverConfig,
@@ -85,7 +86,9 @@ Future<void> main() async {
   await contentService.load();
   // His playlists ride along with the content: read only, and updated the
   // moment he publishes.
-  final playlistService = PlaylistService(store: FilePlaylistStore());
+  final playlistService = PlaylistService(
+    store: FilePlaylistStore(profile: AppProfile.current),
+  );
   await playlistService.load();
   void showPushedPlaylists() => playlistService.setPushed([
         for (final pushed in contentService.pushedPlaylists) pushed.playlist,

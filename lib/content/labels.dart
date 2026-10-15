@@ -50,6 +50,7 @@ class Labels {
 
   // Server connection.
   static const connection = 'Connection';
+  static String profile(String name) => 'Profile: $name';
   static const tokenHint = 'Server token';
   static const saveAndTest = 'Save and test';
   static const testConnection = 'Test connection';

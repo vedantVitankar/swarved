@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../models/playlist.dart';
+import '../utils/app_profile.dart';
 
 /// Where the playlists are kept between runs. The service only needs this
 /// much, so tests can stand in for it.
@@ -27,17 +28,28 @@ typedef PlaylistDirectory = Future<Directory> Function();
 /// - A file that cannot be understood is moved aside, never deleted, and the
 ///   ".prev" copy is tried instead.
 class FilePlaylistStore implements PlaylistStore {
-  FilePlaylistStore({PlaylistDirectory? directory})
-      : _directory = directory ?? getApplicationSupportDirectory;
+  FilePlaylistStore({
+    PlaylistDirectory? directory,
+    this.profile = AppProfile.swarnima,
+  }) : _directory = directory ?? getApplicationSupportDirectory;
 
+  /// Hers keeps the file it has always had, so nothing of hers is moved.
   static const String fileName = 'playlists_v1.json';
+
+  /// Which profile's playlists these are. A test build on the same computer
+  /// as hers keeps its playlists in a file of its own.
+  final String profile;
+
+  String get _name => profile == AppProfile.swarnima
+      ? fileName
+      : 'playlists_${profile}_v1.json';
   static const int version = 1;
 
   final PlaylistDirectory _directory;
 
   Future<File> _file([String suffix = '']) async {
     final directory = await _directory();
-    return File(p.join(directory.path, '$fileName$suffix'));
+    return File(p.join(directory.path, '$_name$suffix'));
   }
 
   @override

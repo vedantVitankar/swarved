@@ -1,26 +1,41 @@
 import '../models/prefetch_mode.dart';
+import '../utils/app_profile.dart';
 
 class ServerConfig {
-  const ServerConfig();
+  const ServerConfig({this.profile = AppProfile.swarnima});
+
+  /// Whose data the server should use for content and playlists. Hers is the
+  /// server's default, so it is never sent: copies of the app that came
+  /// before profiles existed keep working as hers.
+  final String profile;
+
+  /// [path] on the server, naming the profile unless it is hers.
+  Uri _profiled(String path) {
+    final uri = Uri.parse('$baseUrl$path');
+    if (profile == AppProfile.swarnima) return uri;
+    return uri.replace(queryParameters: {'profile': profile});
+  }
 
   static const baseUrl = 'https://swarved.duckdns.org';
 
   Uri get healthUri => Uri.parse('$baseUrl/health');
 
   /// What he has published for her: notes, memories and the rest.
-  Uri get contentUri => Uri.parse('$baseUrl/api/content');
+  Uri get contentUri => _profiled('/api/content');
 
   /// The same, but the server holds the request open until he publishes
   /// something new, so the app can update while it is open.
-  Uri get contentWaitUri => Uri.parse('$baseUrl/api/content/wait');
+  Uri get contentWaitUri => _profiled('/api/content/wait');
 
   /// Where the app tells the server what playlists she has, so he can see
   /// them (and write notes on her songs) in the admin site.
-  Uri get playlistsReportUri => Uri.parse('$baseUrl/api/playlists/report');
+  Uri get playlistsReportUri => _profiled('/api/playlists/report');
 
   /// One uploaded photo or recording, by the name the server gave it.
+  /// Photos and recordings belong to a profile on the server, so this names
+  /// the profile like content does.
   Uri mediaUri(String file) =>
-      Uri.parse('$baseUrl/api/media/${Uri.encodeComponent(file)}');
+      _profiled('/api/media/${Uri.encodeComponent(file)}');
 
   /// Where the audio of one YouTube song is streamed from.
   Uri playUri(String videoId) {
