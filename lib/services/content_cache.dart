@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../utils/app_profile.dart';
+
 /// The last content the server sent, as text, with its tag.
 class CachedContent {
   const CachedContent({required this.body, required this.etag});
@@ -27,16 +29,27 @@ typedef ContentCacheDirectory = Future<Directory> Function();
 /// then renamed over the real one, so a crash half way never leaves half a
 /// file.
 class FileContentCache implements ContentCache {
-  FileContentCache({ContentCacheDirectory? directory})
-      : _directory = directory ?? getApplicationSupportDirectory;
+  FileContentCache({
+    ContentCacheDirectory? directory,
+    this.profile = AppProfile.swarnima,
+  }) : _directory = directory ?? getApplicationSupportDirectory;
 
+  /// Hers keeps the file it has always had.
   static const fileName = 'content_cache_v1.json';
+
+  /// Whose content this is. Each profile keeps its own copy, so a test build
+  /// on the same device never shows hers (or the other way round).
+  final String profile;
+
+  String get _name => profile == AppProfile.swarnima
+      ? fileName
+      : 'content_cache_${profile}_v1.json';
 
   final ContentCacheDirectory _directory;
 
   Future<File> _file([String suffix = '']) async {
     final directory = await _directory();
-    return File(p.join(directory.path, '$fileName$suffix'));
+    return File(p.join(directory.path, '$_name$suffix'));
   }
 
   @override

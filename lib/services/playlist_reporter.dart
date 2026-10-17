@@ -12,8 +12,9 @@ import 'server_config.dart';
 /// Tells the server what playlists she has, so he can see them (with each
 /// song's link) in the admin site and write notes on her songs.
 ///
-/// A one-way mirror: the server never sends playlists back, and nothing here
-/// changes what she has. It sends a few seconds after the last change, only
+/// This is the sending half of keeping her devices in step; reading back what
+/// her other devices reported is PlaylistPuller. It sends a few seconds after
+/// the last change, only
 /// when something is different from what was last sent, and tries again
 /// later when the server could not be reached. It never throws, and a failure
 /// is never shown to her.

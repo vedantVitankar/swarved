@@ -131,6 +131,53 @@ class PlaylistService extends ChangeNotifier {
     return null;
   }
 
+  // ---- Her other devices ------------------------------------------------
+
+  /// A playlist nobody has put a song in or changed: what a fresh install
+  /// starts with. It must never replace a real one.
+  static bool _untouched(Playlist p) =>
+      p.items.isEmpty && p.updatedAt.isAtSameMomentAs(p.createdAt) && !p.isDeleted;
+
+  /// Takes in the playlists the server holds from her other devices, by id:
+  /// a playlist this device does not have is added, and for one it has, the
+  /// copy edited last wins. A deleted marker wins the same way, so a playlist
+  /// deleted on one device goes from the others. A blank, never-touched
+  /// playlist (a fresh install's Liked songs) never replaces a real one, nor
+  /// is it taken in. Answers whether anything here changed.
+  bool mergeRemote(List<Playlist> remote) {
+    final now = _clock();
+    var changed = false;
+    for (final incoming in remote) {
+      if (incoming.kind == PlaylistKind.pushed) continue;
+      if (_untouched(incoming)) continue;
+
+      final theirs = incoming.id == Playlist.likedId
+          ? incoming.copyWith(kind: PlaylistKind.liked, undelete: true)
+          : incoming.copyWith(kind: PlaylistKind.user);
+      final index = _all.indexWhere((p) => p.id == incoming.id);
+
+      if (index < 0) {
+        final deletedAt = incoming.deletedAt;
+        if (deletedAt != null && now.difference(deletedAt) > tombstoneLife) {
+          continue;
+        }
+        _all = [..._all, theirs];
+        changed = true;
+        continue;
+      }
+
+      final mine = _all[index];
+      if (_untouched(mine) || theirs.updatedAt.isAfter(mine.updatedAt)) {
+        _all = [
+          for (var i = 0; i < _all.length; i++) i == index ? theirs : _all[i],
+        ];
+        changed = true;
+      }
+    }
+    if (changed) _changed();
+    return changed;
+  }
+
   // ---- His playlists ----------------------------------------------------
 
   /// The playlists he made for her. Read only, never saved to the file and

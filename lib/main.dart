@@ -4,6 +4,7 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'app.dart';
 import 'services/library_service.dart';
+import 'services/playlist_puller.dart';
 import 'services/playlist_reporter.dart';
 import 'services/playlist_service.dart';
 import 'services/playlist_store.dart';
@@ -98,13 +99,19 @@ Future<void> main() async {
   final mediaCache = MediaCache(config: serverConfig, tokenStore: tokenStore);
   final contentSync = ContentSync(
     source: ServerContentSource(config: serverConfig, tokenStore: tokenStore),
-    cache: FileContentCache(),
+    cache: FileContentCache(profile: AppProfile.current),
     content: contentService,
     onMedia: (names, fromServer) => mediaCache.sync(names, tidy: fromServer),
   );
   await contentSync.loadCache();
-  // Tells the server what playlists she has, a few seconds after each change,
-  // so he can see them in the admin site. A one-way mirror: nothing comes back.
+  // Her playlists follow her to every device: this reads what her other
+  // devices reported and merges it in, and the reporter sends hers a few
+  // seconds after each change (which is also how he sees them in the admin).
+  final playlistPuller = PlaylistPuller(
+    config: serverConfig,
+    tokenStore: tokenStore,
+    playlists: playlistService,
+  )..start();
   final playlistReporter = PlaylistReporter(
     config: serverConfig,
     tokenStore: tokenStore,
@@ -116,6 +123,7 @@ Future<void> main() async {
   connectionService.addListener(() {
     if (connectionService.hasToken) {
       contentSync.poke();
+      playlistPuller.poke();
       playlistReporter.poke();
     }
   });
@@ -143,6 +151,9 @@ Future<void> main() async {
   contentSync.start();
   AppLifecycleListener(
     onHide: contentSync.pause,
-    onShow: contentSync.resume,
+    onShow: () {
+      contentSync.resume();
+      playlistPuller.poke();
+    },
   );
 }
