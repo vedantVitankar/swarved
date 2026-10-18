@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../content/labels.dart';
+import '../content/words.dart';
 import '../models/track.dart';
 import '../services/player_service.dart';
 import '../theme/colors.dart';
@@ -18,6 +19,7 @@ import '../widgets/swar_icon.dart';
 import '../widgets/track_artwork.dart';
 import '../widgets/track_note_card.dart';
 import '../widgets/track_subtitle.dart';
+import '../widgets/voice_break_art.dart';
 
 class NowPlayingScreen extends StatelessWidget {
   const NowPlayingScreen({super.key});
@@ -53,10 +55,11 @@ class NowPlayingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Only rebuilds when the current TRACK changes — artwork/title/artist
     // stay stable across the many position-tick notifications per second.
-    return Selector<PlayerService, (Track?, String?)>(
-      selector: (_, player) => (player.current, player.source?.name),
+    return Selector<PlayerService, (Track?, String?, bool)>(
+      selector: (_, player) =>
+          (player.current, player.source?.name, player.isInterlude),
       builder: (context, now, _) {
-        final (track, sourceName) = now;
+        final (track, sourceName, interlude) = now;
         if (track == null) {
           return Scaffold(
             backgroundColor: AppColors.base,
@@ -85,7 +88,9 @@ class NowPlayingScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _playingFrom(track, sourceName),
+              interlude
+                  ? Words.voiceBreakHeading
+                  : _playingFrom(track, sourceName),
               style: AppType.caption,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -112,14 +117,21 @@ class NowPlayingScreen extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            TrackArtwork(
-                              bytes: track.artworkBytes,
-                              url: track.artworkUrl,
-                              sharpPixels: 544,
-                              size: artSize,
-                              iconSize: 64,
-                              radius: AppShape.panel,
-                            ),
+                            if (interlude)
+                              VoiceBreakArt(
+                                size: artSize,
+                                iconSize: 72,
+                                radius: AppShape.panel,
+                              )
+                            else
+                              TrackArtwork(
+                                bytes: track.artworkBytes,
+                                url: track.artworkUrl,
+                                sharpPixels: 544,
+                                size: artSize,
+                                iconSize: 64,
+                                radius: AppShape.panel,
+                              ),
                             const SizedBox(height: 20),
                             // Title and artist on the left, the heart on the
                             // right, as in the preview.
@@ -130,21 +142,31 @@ class NowPlayingScreen extends StatelessWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(track.title,
+                                      Text(
+                                          interlude
+                                              ? Words.voiceBreakTitle
+                                              : track.title,
                                           style: AppType.trackTitle,
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis),
                                       const SizedBox(height: 2),
-                                      TrackSubtitle(
-                                        track: track,
-                                        style: AppType.bodyMuted,
-                                        textAlign: TextAlign.start,
-                                      ),
+                                      if (interlude)
+                                        Text(Words.voiceBreakFrom,
+                                            style: AppType.bodyMuted,
+                                            textAlign: TextAlign.start)
+                                      else
+                                        TrackSubtitle(
+                                          track: track,
+                                          style: AppType.bodyMuted,
+                                          textAlign: TextAlign.start,
+                                        ),
                                     ],
                                   ),
                                 ),
-                                TrackSaveButton(track: track, iconSize: 24),
-                                TrackHeart(track: track, iconSize: 26),
+                                if (!interlude)
+                                  TrackSaveButton(track: track, iconSize: 24),
+                                if (!interlude)
+                                  TrackHeart(track: track, iconSize: 26),
                               ],
                             ),
                             const SizedBox(height: 18),
@@ -173,7 +195,7 @@ class NowPlayingScreen extends StatelessWidget {
                               ],
                             ),
                             // His handwritten note for this song, if any.
-                            TrackNoteCard(track: track),
+                            if (!interlude) TrackNoteCard(track: track),
                             const SizedBox(height: 16),
                           ],
                         ),

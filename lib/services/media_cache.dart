@@ -87,6 +87,19 @@ class MediaCache {
     }
   }
 
+  /// The file when it is already on this phone, or null. Unlike [fileFor]
+  /// this never downloads, so it is safe to ask while music is playing.
+  Future<File?> existing(String name) async {
+    if (!_validName.hasMatch(name)) return null;
+    try {
+      final file = File(p.join((await _folder()).path, name));
+      return await file.exists() ? file : null;
+    } catch (error) {
+      debugPrint('Media $name not looked up: $error');
+      return null;
+    }
+  }
+
   /// Makes sure every one of [names] is on this phone. With [tidy], also
   /// removes the files the content no longer mentions, so the folder does
   /// not grow for ever. Only the server's own word is a reason to tidy, so

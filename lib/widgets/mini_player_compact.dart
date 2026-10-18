@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../content/labels.dart';
+import '../content/words.dart';
 import '../models/track.dart';
 import '../screens/now_playing_screen.dart';
 import '../services/player_service.dart';
@@ -16,6 +17,7 @@ import 'play_pause_button.dart';
 import 'swipe_to_skip.dart';
 import 'track_artwork.dart';
 import 'track_subtitle.dart';
+import 'voice_break_art.dart';
 
 /// The phone-sized mini player: artwork and title on the left (swipe them
 /// to skip), heart and play/pause on the right, a thin progress line along
@@ -25,11 +27,16 @@ class MiniPlayerCompact extends StatelessWidget {
   final bool canPrevious;
   final bool canNext;
 
+  /// One of his recordings is playing: his words show instead of the song
+  /// that follows it.
+  final bool interlude;
+
   const MiniPlayerCompact({
     super.key,
     required this.track,
     required this.canPrevious,
     required this.canNext,
+    this.interlude = false,
   });
 
   static const double _button = 40;
@@ -69,27 +76,42 @@ class MiniPlayerCompact extends StatelessWidget {
                     onNext: player.next,
                     child: Row(
                       children: [
-                        TrackArtwork(
-                          bytes: track.artworkBytes,
-                          url: track.artworkUrl,
-                          size: _button,
-                          iconSize: 18,
-                          radius: AppShape.thumbnail,
-                        ),
+                        interlude
+                            ? VoiceBreakArt(
+                                size: _button,
+                                iconSize: 18,
+                                radius: AppShape.thumbnail,
+                              )
+                            : TrackArtwork(
+                                bytes: track.artworkBytes,
+                                url: track.artworkUrl,
+                                size: _button,
+                                iconSize: 18,
+                                radius: AppShape.thumbnail,
+                              ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(track.title,
+                              Text(
+                                  interlude
+                                      ? Words.voiceBreakTitle
+                                      : track.title,
                                   style: AppType.body,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis),
-                              TrackSubtitle(
-                                track: track,
-                                style: AppType.caption,
-                              ),
+                              if (interlude)
+                                Text(Words.voiceBreakFrom,
+                                    style: AppType.caption,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis)
+                              else
+                                TrackSubtitle(
+                                  track: track,
+                                  style: AppType.caption,
+                                ),
                             ],
                           ),
                         ),
@@ -97,8 +119,8 @@ class MiniPlayerCompact extends StatelessWidget {
                     ),
                   ),
                 ),
-                TrackSaveButton(track: track),
-                TrackHeart(track: track),
+                if (!interlude) TrackSaveButton(track: track),
+                if (!interlude) TrackHeart(track: track),
                 if (showSkipButtons)
                   CompactIconButton(
                     icon: SwarGlyph.previous,

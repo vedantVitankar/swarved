@@ -9,6 +9,7 @@ import '../models/recap_settings.dart';
 import '../models/song_note.dart';
 import '../models/song_of_the_day.dart';
 import '../models/track.dart';
+import '../models/voice_interludes.dart';
 import '../utils/daily_pick.dart';
 
 typedef ContentLoader = Future<String> Function();
@@ -71,6 +72,9 @@ class ContentService extends ChangeNotifier {
 
   /// The playlists he made for her, in his order.
   List<PushedPlaylist> get pushedPlaylists => _pack.playlists;
+
+  /// The recordings that play between songs, and when.
+  VoiceInterludes get voices => _pack.voices;
 
   /// Every uploaded photo or voice file the current content mentions.
   Set<String> get mediaFiles => _pack.mediaFiles;

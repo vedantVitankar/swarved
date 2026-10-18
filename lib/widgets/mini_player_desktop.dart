@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../content/labels.dart';
+import '../content/words.dart';
 import '../models/track.dart';
 import '../screens/now_playing_screen.dart';
 import '../services/player_service.dart';
@@ -15,6 +16,7 @@ import 'playback_mode_buttons.dart';
 import 'seek_bar.dart';
 import 'track_artwork.dart';
 import 'track_subtitle.dart';
+import 'voice_break_art.dart';
 import 'volume_control.dart';
 
 /// The wide-window mini player, after Spotify's desktop bar: the song on the
@@ -27,7 +29,15 @@ import 'volume_control.dart';
 class MiniPlayerDesktop extends StatelessWidget {
   final Track track;
 
-  const MiniPlayerDesktop({super.key, required this.track});
+  /// One of his recordings is playing: his words show instead of the song
+  /// that follows it.
+  final bool interlude;
+
+  const MiniPlayerDesktop({
+    super.key,
+    required this.track,
+    this.interlude = false,
+  });
 
   static const double _zoneGap = 16;
   static const double _controlsMaxWidth = 520;
@@ -38,7 +48,10 @@ class MiniPlayerDesktop extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          Expanded(flex: 3, child: _SongZone(track: track)),
+          Expanded(
+            flex: 3,
+            child: _SongZone(track: track, interlude: interlude),
+          ),
           const SizedBox(width: _zoneGap),
           const Expanded(flex: 4, child: _ControlsZone()),
           const SizedBox(width: _zoneGap),
@@ -54,8 +67,9 @@ class MiniPlayerDesktop extends StatelessWidget {
 /// which sits outside the tap area so it never opens anything.
 class _SongZone extends StatelessWidget {
   final Track track;
+  final bool interlude;
 
-  const _SongZone({required this.track});
+  const _SongZone({required this.track, required this.interlude});
 
   @override
   Widget build(BuildContext context) {
@@ -69,27 +83,39 @@ class _SongZone extends StatelessWidget {
               padding: const EdgeInsets.all(4),
               child: Row(
                 children: [
-                  TrackArtwork(
-                    bytes: track.artworkBytes,
-                    url: track.artworkUrl,
-                    size: 56,
-                    iconSize: 22,
-                    radius: AppShape.thumbnail,
-                  ),
+                  interlude
+                      ? VoiceBreakArt(
+                          size: 56,
+                          iconSize: 22,
+                          radius: AppShape.thumbnail,
+                        )
+                      : TrackArtwork(
+                          bytes: track.artworkBytes,
+                          url: track.artworkUrl,
+                          size: 56,
+                          iconSize: 22,
+                          radius: AppShape.thumbnail,
+                        ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(track.title,
+                        Text(interlude ? Words.voiceBreakTitle : track.title,
                             style: AppType.body,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
-                        TrackSubtitle(
-                          track: track,
-                          style: AppType.caption,
-                        ),
+                        if (interlude)
+                          Text(Words.voiceBreakFrom,
+                              style: AppType.caption,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis)
+                        else
+                          TrackSubtitle(
+                            track: track,
+                            style: AppType.caption,
+                          ),
                       ],
                     ),
                   ),
@@ -98,8 +124,8 @@ class _SongZone extends StatelessWidget {
             ),
           ),
         ),
-        TrackSaveButton(track: track),
-        TrackHeart(track: track),
+        if (!interlude) TrackSaveButton(track: track),
+        if (!interlude) TrackHeart(track: track),
       ],
     );
   }

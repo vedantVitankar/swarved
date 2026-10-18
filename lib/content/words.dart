@@ -4,6 +4,12 @@
 class Words {
   Words._();
 
+  /// Shown in place of the next song while one of his recordings plays between
+  /// songs (the mini player, Now Playing and the lock screen).
+  static const voiceBreakTitle = 'A little voice, just for you';
+  static const voiceBreakFrom = 'From Ved, with love';
+  static const voiceBreakHeading = 'A message for you';
+
   // The names. Each one has its own moments, so none of them wears out.
   static const swarnima = 'Swarnima';
   static const swara = 'Swara';

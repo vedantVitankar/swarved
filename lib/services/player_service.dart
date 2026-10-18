@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../content/words.dart';
 import '../models/play_source.dart';
 import '../models/playback_problem.dart';
 import '../models/track.dart';
@@ -15,6 +16,7 @@ import '../utils/volume_level.dart';
 import 'stats_service.dart';
 import 'queue_prefetcher.dart';
 import 'stream_endpoint.dart';
+import 'voice_service.dart';
 
 /// just_audio_background (and the MediaItem tag it requires) only works
 /// on Android, iOS, and macOS — audio_service doesn't support Windows or
@@ -86,6 +88,13 @@ class PlayerService extends ChangeNotifier {
   /// Optional, so nothing else about the player depends on it.
   final QueuePrefetcher? _prefetcher;
 
+  /// Says whether one of his recordings plays between two songs. Optional.
+  final VoiceInterludeService? _voices;
+
+  /// True while a recording of his plays between two songs. [current] is
+  /// already the song that follows it.
+  bool _interlude = false;
+
   /// Which song follows which. Shuffle and repeat rules live here, so this
   /// service only has to ask "what's next?".
   final QueueOrder _order = QueueOrder();
@@ -141,7 +150,9 @@ class PlayerService extends ChangeNotifier {
     this.statsService,
     this._streams, {
     QueuePrefetcher? prefetcher,
-  }) : _prefetcher = prefetcher {
+    VoiceInterludeService? voices,
+  })  : _prefetcher = prefetcher,
+        _voices = voices {
     _player.playerStateStream
         .listen((_) => notifyListeners(), onError: _onPlaybackError);
     _player.playbackEventStream.listen((_) {}, onError: _onPlaybackError);
@@ -166,6 +177,11 @@ class PlayerService extends ChangeNotifier {
 
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
+        // His recording ended: on to the song that was waiting for it.
+        if (_interlude) {
+          unawaited(_loadAndPlay());
+          return;
+        }
         // A stream the server cut short also "completes". That is a drop,
         // not the end of the song: ask again from the same place.
         final track = current;
@@ -190,6 +206,11 @@ class PlayerService extends ChangeNotifier {
       : null;
 
   bool get isPlaying => _player.playing;
+
+  /// One of his recordings is playing between two songs. [current] is
+  /// already the song that follows it, so screens show his words instead of
+  /// that song while this is true.
+  bool get isInterlude => _interlude;
 
   /// Why the current song isn't playing, or null when nothing is wrong.
   PlaybackProblem? get problem => _problem;
@@ -224,7 +245,7 @@ class PlayerService extends ChangeNotifier {
 
   /// Whether a next / previous song exists right now (it depends on
   /// shuffle and repeat), for the swipe and the skip buttons.
-  bool get canGoNext => _order.hasNext;
+  bool get canGoNext => _interlude || _order.hasNext;
   bool get canGoPrevious => _order.hasPrevious;
 
   /// Where the queue now playing came from, or null when it has no name.
@@ -260,6 +281,7 @@ class PlayerService extends ChangeNotifier {
   /// dropped connection left it.
   Future<void> _loadAndPlay({Duration? resumeAt}) async {
     final serial = ++_loadSerial;
+    _interlude = false;
     _stalls.reset();
     _retryTimer?.cancel();
     _played.moveTo(resumeAt ?? Duration.zero);
@@ -394,6 +416,10 @@ class PlayerService extends ChangeNotifier {
   /// User-initiated skip forward. Logs the OLD track (by actual position
   /// reached, subject to the 30s threshold) before switching.
   Future<void> next() async {
+    if (_interlude) {
+      await _loadAndPlay(); // skips the recording, on to the song after it
+      return;
+    }
     final index = _order.advance();
     if (index == null) return;
     _logCurrentListen(completedNaturally: false);
@@ -403,6 +429,10 @@ class PlayerService extends ChangeNotifier {
   /// User-initiated skip backward: always the previous song. Used by the
   /// swipe. Same logging rules as next().
   Future<void> previous() async {
+    if (_interlude) {
+      await _loadAndPlay();
+      return;
+    }
     final index = _order.back();
     if (index == null) return;
     _logCurrentListen(completedNaturally: false);
@@ -464,11 +494,65 @@ class PlayerService extends ChangeNotifier {
   /// handler above already logged it, with the correct "full length"
   /// semantics. Logging here too would double-count every completed track.
   Future<void> _advanceAfterCompletion() async {
+    final serial = _loadSerial;
     final index = _order.onSongEnded();
     // Nothing after the last song (and no repeat): playback simply stops.
     if (index == null) return;
-    await _switchTo(index);
+
+    // One of his recordings may come between the two songs. Never when the
+    // same song is looping, and never for one that is not on the phone.
+    final voice = _order.repeat == QueueRepeat.one
+        ? null
+        : await _voices?.afterSong();
+    if (serial != _loadSerial) return; // she chose something meanwhile
+    if (voice == null) {
+      await _switchTo(index);
+      return;
+    }
+    await _playInterlude(voice, upNext: index);
   }
+
+  /// Plays his recording [voice], then (when it ends, see the completion
+  /// handler) the song at [upNext]. Nothing is credited to listening stats
+  /// and the song's own retry and stall rules stay out of it. If the
+  /// recording cannot be played, the song simply starts.
+  Future<void> _playInterlude(File voice, {required int upNext}) async {
+    final serial = ++_loadSerial;
+    _stalls.reset();
+    _retryTimer?.cancel();
+    _prefetcher?.cancel();
+    _currentIndex = upNext;
+    _loadedId = null;
+    _played.moveTo(Duration.zero);
+    _autoRetries = 0;
+    _problem = null;
+    _resumeAt = null;
+    _loading = false;
+    _interlude = true;
+    notifyListeners();
+
+    try {
+      if (_supportsBackgroundPlayback) {
+        await _player.setAudioSource(
+          AudioSource.uri(Uri.file(voice.path), tag: _voiceItem()),
+        );
+      } else {
+        await _player.setFilePath(voice.path);
+      }
+      if (serial != _loadSerial) return; // another song took over
+      _prefetcher?.schedule(current); // the song that follows warms up now
+      await _player.play();
+    } catch (error) {
+      debugPrint('Voice not played: $error');
+      if (serial == _loadSerial) unawaited(_loadAndPlay());
+    }
+  }
+
+  MediaItem _voiceItem() => const MediaItem(
+        id: 'voice',
+        title: Words.voiceBreakTitle,
+        artist: Words.voiceBreakFrom,
+      );
 
   Future<void> seek(Duration position) {
     _played.moveTo(position);

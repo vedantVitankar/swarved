@@ -20,6 +20,7 @@ import 'services/saved_songs_index.dart';
 import 'services/song_saver.dart';
 import 'services/content_service.dart';
 import 'services/media_cache.dart';
+import 'services/voice_service.dart';
 import 'services/welcome_service.dart';
 
 class SwarVedApp extends StatelessWidget {
@@ -36,6 +37,10 @@ class SwarVedApp extends StatelessWidget {
   final WelcomeService welcomeService;
   final MediaCache mediaCache;
 
+  /// Plays his recordings between songs. Optional, so the app also runs
+  /// without it.
+  final VoiceInterludeService? voiceService;
+
   const SwarVedApp({
     super.key,
     required this.statsService,
@@ -50,6 +55,7 @@ class SwarVedApp extends StatelessWidget {
     required this.contentService,
     required this.welcomeService,
     required this.mediaCache,
+    this.voiceService,
   });
 
   @override
@@ -63,6 +69,7 @@ class SwarVedApp extends StatelessWidget {
             statsService,
             streamEndpoint,
             prefetcher: QueuePrefetcher(api: serverApi),
+            voices: voiceService,
           ),
         ),
         ChangeNotifierProvider.value(value: playlistService),

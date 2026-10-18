@@ -7,10 +7,11 @@ import 'pushed_playlist.dart';
 import 'song_note.dart';
 import 'song_of_the_day.dart';
 import 'track.dart';
+import 'voice_interludes.dart';
 import '../utils/song_match.dart';
 
 /// Everything he has written for her, as one immutable bundle.
-/// Later phases add more to this (playlists, voice).
+/// Later phases add more to this.
 class ContentPack {
   final List<SongNote> notes;
 
@@ -38,6 +39,9 @@ class ContentPack {
   /// The playlists he made for her, in the order he put them.
   final List<PushedPlaylist> playlists;
 
+  /// The recordings that surface between songs, and when.
+  final VoiceInterludes voices;
+
   /// Every uploaded photo or voice file the content mentions, wherever it
   /// is mentioned, so nothing the content still uses is ever cleaned away.
   final Set<String> mediaFiles;
@@ -51,6 +55,7 @@ class ContentPack {
     this.recap = const RecapSettings(),
     this.texts = const {},
     this.playlists = const [],
+    this.voices = VoiceInterludes.none,
     this.mediaFiles = const {},
   });
 
@@ -81,6 +86,7 @@ class ContentPack {
       recap: RecapSettings.parse(decoded['recap']),
       texts: _parseTexts(decoded['texts']),
       playlists: _parsePlaylists(decoded['playlists']),
+      voices: VoiceInterludes.parse(decoded['voices']),
       mediaFiles: Set.unmodifiable({
         for (final match in _mediaName.allMatches(source)) match.group(0)!,
       }),

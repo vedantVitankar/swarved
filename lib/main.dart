@@ -5,6 +5,7 @@ import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'app.dart';
 import 'services/library_service.dart';
 import 'services/playlist_puller.dart';
+import 'services/voice_service.dart';
 import 'services/playlist_reporter.dart';
 import 'services/playlist_service.dart';
 import 'services/playlist_store.dart';
@@ -128,6 +129,13 @@ Future<void> main() async {
     }
   });
 
+  // His recordings, played between songs when the content says so. Only the
+  // ones already on the phone are used, so music never waits on a download.
+  final voiceService = VoiceInterludeService(
+    settings: () => contentService.voices,
+    onPhone: mediaCache.existing,
+  );
+
   final welcomeService = WelcomeService(songService: TutorialSongService());
   await welcomeService.load();
 
@@ -144,6 +152,7 @@ Future<void> main() async {
     contentService: contentService,
     welcomeService: welcomeService,
     mediaCache: mediaCache,
+    voiceService: voiceService,
   ));
 
   // While the app is open it hears about each publish at once. In the

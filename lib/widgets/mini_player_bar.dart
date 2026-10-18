@@ -29,11 +29,15 @@ class MiniPlayerBar extends StatelessWidget {
     // is possible changes (shuffle and repeat affect that) — not on every
     // position tick. This is what stops the artwork/title from flickering
     // while playing. The progress line and seek bar rebuild on their own.
-    return Selector<PlayerService, (Track?, bool, bool)>(
-      selector: (_, player) =>
-          (player.current, player.canGoPrevious, player.canGoNext),
+    return Selector<PlayerService, (Track?, bool, bool, bool)>(
+      selector: (_, player) => (
+        player.current,
+        player.canGoPrevious,
+        player.canGoNext,
+        player.isInterlude,
+      ),
       builder: (context, data, _) {
-        final (track, canPrevious, canNext) = data;
+        final (track, canPrevious, canNext, interlude) = data;
         if (track == null) return const SizedBox.shrink();
 
         final desktop = Responsive.of(MediaQuery.sizeOf(context).width) ==
@@ -63,11 +67,12 @@ class MiniPlayerBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppShape.panel),
                   clipBehavior: Clip.antiAlias,
                   child: desktop
-                      ? MiniPlayerDesktop(track: track)
+                      ? MiniPlayerDesktop(track: track, interlude: interlude)
                       : MiniPlayerCompact(
                           track: track,
                           canPrevious: canPrevious,
                           canNext: canNext,
+                          interlude: interlude,
                         ),
                 ),
               ),
