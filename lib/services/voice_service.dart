@@ -55,6 +55,43 @@ class VoiceInterludeService {
 
   int _songsSince = 0;
 
+  /// Tells the server where this phone has got to, without waiting for the
+  /// next voice to play, so the admin site is never wrong about it (a phone
+  /// that has played everything must not show "Waiting" there). A pending
+  /// "Reset played status" is applied first, so Reset shows at once too.
+  /// Called whenever the content changes. Never throws.
+  Future<void> syncProgress() async {
+    try {
+      final settings = _settings();
+      if (!settings.isOn) return;
+      final prefs = await SharedPreferences.getInstance();
+      if (await _applyReset(prefs, settings)) return; // it reported already
+      _report?.call(
+        prefs.getString(_kLastKey),
+        prefs.getStringList(_kPlayedKey) ?? const <String>[],
+      );
+    } catch (error) {
+      debugPrint('Voice progress not synced: $error');
+    }
+  }
+
+  /// He pressed "Reset played status": everything is waiting again. True
+  /// when this call did the reset (and told the server).
+  Future<bool> _applyReset(
+    SharedPreferences prefs,
+    VoiceInterludes settings,
+  ) async {
+    final restart = settings.restart;
+    if (restart == null || restart == prefs.getString(_kResetKey)) {
+      return false;
+    }
+    await prefs.setString(_kResetKey, restart);
+    await prefs.remove(_kLastKey);
+    await prefs.remove(_kPlayedKey);
+    _report?.call(null, const []);
+    return true;
+  }
+
   /// A song has just finished: the recording to play before the next one, or
   /// null for none.
   Future<File?> afterSong() async {
@@ -62,15 +99,7 @@ class VoiceInterludeService {
       final settings = _settings();
       if (!settings.isOn) return null;
       final prefs = await SharedPreferences.getInstance();
-
-      // He pressed "Reset played status": everything is waiting again.
-      final restart = settings.restart;
-      if (restart != null && restart != prefs.getString(_kResetKey)) {
-        await prefs.setString(_kResetKey, restart);
-        await prefs.remove(_kLastKey);
-        await prefs.remove(_kPlayedKey);
-        _report?.call(null, const []);
-      }
+      await _applyReset(prefs, settings);
 
       _songsSince++;
       final now = _clock();

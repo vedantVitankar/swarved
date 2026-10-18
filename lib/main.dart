@@ -145,6 +145,10 @@ Future<void> main() async {
     // The admin site marks each recording Played or Waiting from this.
     report: (last, played) => unawaited(voiceReporter.report(last, played)),
   );
+  // The admin site should show where this phone has got to as soon as the
+  // content is here, not only after the next voice has played.
+  contentService.addListener(() => unawaited(voiceService.syncProgress()));
+  unawaited(voiceService.syncProgress());
 
   final welcomeService = WelcomeService(songService: TutorialSongService());
   await welcomeService.load();

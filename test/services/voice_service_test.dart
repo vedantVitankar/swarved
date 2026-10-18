@@ -148,6 +148,44 @@ void main() {
     expect(await run(3), [_a, _b]);
   });
 
+  test('it tells the server where it got to without a voice playing',
+      () async {
+    settings = make(every: 1, files: const [_a, _b]);
+    await run(3); // _a, then _b, then nothing is left
+    reports.clear();
+
+    await service.syncProgress();
+    expect(reports, ['$_b:$_a,$_b'], reason: 'everything has played');
+  });
+
+  test('a phone that only kept which one played last reports that',
+      () async {
+    SharedPreferences.setMockInitialValues({'voice_last_v1': _b});
+    settings = make(every: 1, files: const [_a, _b]);
+
+    await service.syncProgress();
+    expect(reports, ['$_b:'], reason: 'the admin works out the rest');
+  });
+
+  test('syncing says nothing when there are no recordings', () async {
+    settings = make(files: const []);
+    await service.syncProgress();
+    expect(reports, isEmpty);
+  });
+
+  test('a reset is applied and reported as soon as the content has it',
+      () async {
+    settings = make(every: 1, files: const [_a, _b]);
+    expect(await run(3), [_a, _b]);
+    reports.clear();
+
+    settings = make(every: 1, files: const [_a, _b], reset: '100');
+    await service.syncProgress();
+    expect(reports, ['null:'], reason: 'one report, not two');
+
+    expect(await run(3), [_a, _b], reason: 'heard again from the top');
+  });
+
   test('quiet hours hold a voice back until they are over', () async {
     settings = VoiceInterludes.parse({
       'everySongs': 1,
