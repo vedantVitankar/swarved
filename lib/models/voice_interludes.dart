@@ -17,6 +17,7 @@ class VoiceInterludes {
     this.maxPerDay,
     this.quietFrom,
     this.quietTo,
+    this.restart,
     this.clips = const [],
   });
 
@@ -35,6 +36,10 @@ class VoiceInterludes {
   /// neither counts.
   final int? quietFrom;
   final int? quietTo;
+
+  /// Changes whenever he presses "Reset played status": every recording
+  /// then counts as not played yet. Null until he does.
+  final String? restart;
 
   final List<VoiceClip> clips;
 
@@ -84,8 +89,15 @@ class VoiceInterludes {
       maxPerDay: _count(raw['maxPerDay']),
       quietFrom: _minutes(raw['quietFrom']),
       quietTo: _minutes(raw['quietTo']),
+      restart: _token(raw['resetToken']),
       clips: List.unmodifiable(clips),
     );
+  }
+
+  static String? _token(Object? value) {
+    if (value is! String) return null;
+    final text = value.trim();
+    return text.isEmpty ? null : text;
   }
 
   static int? _count(Object? value) {

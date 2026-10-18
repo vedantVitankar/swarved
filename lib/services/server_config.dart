@@ -35,6 +35,10 @@ class ServerConfig {
   /// her other devices can merge them into their own.
   Uri get playlistsUri => _profiled('/api/playlists');
 
+  /// Where the app says which of his recordings have played, so the admin
+  /// site can mark each one.
+  Uri get voicesPlayedUri => _profiled('/api/voices/played');
+
   /// One uploaded photo or recording, by the name the server gave it.
   /// Photos and recordings belong to a profile on the server, so this names
   /// the profile like content does.

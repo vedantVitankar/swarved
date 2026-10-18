@@ -5,6 +5,7 @@ import 'package:swarved/utils/voice_planner.dart';
 const _a = '0123456789abcdef.mp3';
 const _b = 'fedcba9876543210.m4a';
 const _c = 'aaaaaaaaaaaaaaaa.ogg';
+const _d = 'bbbbbbbbbbbbbbbb.wav';
 
 VoiceInterludes _settings({
   int every = 3,
@@ -24,6 +25,8 @@ VoiceInterludes _settings({
   });
 }
 
+List<String> _files(List<VoiceClip> clips) => [for (final c in clips) c.file];
+
 void main() {
   const planner = VoicePlanner();
   final noon = DateTime(2026, 10, 15, 12);
@@ -33,8 +36,9 @@ void main() {
     int songs = 3,
     int today = 0,
     DateTime? now,
-    Set<String> onPhone = const {_a, _b, _c},
+    Set<String> onPhone = const {_a, _b, _c, _d},
     String? last,
+    Set<String> played = const {},
   }) {
     return planner.choose(
       settings: settings ?? _settings(),
@@ -42,66 +46,101 @@ void main() {
       playedToday: today,
       now: now ?? noon,
       onPhone: onPhone,
-      lastPlayed: last,
+      last: last,
+      played: played,
     );
   }
 
-  test('nothing until enough songs have finished', () {
-    expect(choose(songs: 1), isNull);
-    expect(choose(songs: 2), isNull);
-    expect(choose(songs: 3), isNotNull);
-    expect(choose(songs: 9), isNotNull);
+  group('when', () {
+    test('nothing until enough songs have finished', () {
+      expect(choose(songs: 1), isNull);
+      expect(choose(songs: 2), isNull);
+      expect(choose(songs: 3), isNotNull);
+      expect(choose(songs: 9), isNotNull);
+    });
+
+    test('never more than the daily limit', () {
+      final limited = _settings(max: 2);
+      expect(choose(settings: limited, today: 1), isNotNull);
+      expect(choose(settings: limited, today: 2), isNull);
+      expect(choose(settings: limited, today: 5), isNull);
+    });
+
+    test('never in quiet hours', () {
+      final quiet = _settings(from: '22:00', to: '07:00');
+      expect(choose(settings: quiet, now: DateTime(2026, 10, 15, 23)), isNull);
+      expect(choose(settings: quiet, now: DateTime(2026, 10, 15, 6)), isNull);
+      expect(choose(settings: quiet, now: noon), isNotNull);
+    });
   });
 
-  test('never more than the daily limit', () {
-    final limited = _settings(max: 2);
-    expect(choose(settings: limited, today: 1), isNotNull);
-    expect(choose(settings: limited, today: 2), isNull);
-    expect(choose(settings: limited, today: 5), isNull);
+  group('which', () {
+    test('the first time, the first in his list', () {
+      expect(choose()!.file, _a);
+    });
+
+    test('then the next one, in his order', () {
+      expect(choose(last: _a, played: {_a})!.file, _b);
+      expect(choose(last: _b, played: {_a, _b})!.file, _c);
+    });
+
+    test('after the last one nothing plays: it never starts over', () {
+      expect(choose(last: _c, played: {_a, _b, _c}), isNull);
+    });
+
+    test('a recording added at the end is heard next, not the old ones', () {
+      final grown = _settings(files: const [_a, _b, _c, _d]);
+      expect(choose(settings: grown, last: _c)!.file, _d);
+    });
+
+    test('a recording moved below the last played one is heard again', () {
+      // He moved _a to the end: [_b, _c, _a], and _c was played last.
+      final moved = _settings(files: const [_b, _c, _a]);
+      expect(choose(settings: moved, last: _c)!.file, _a);
+    });
+
+    test('one moved above the last played one stays played', () {
+      final moved = _settings(files: const [_c, _a, _b]);
+      expect(choose(settings: moved, last: _a)!.file, _b);
+    });
+
+    test('with no last one, the ones not yet played wait', () {
+      expect(choose(played: {_a, _b})!.file, _c);
+      expect(choose(played: {_a, _b, _c}), isNull);
+    });
+
+    test('a last one that was removed falls back to the played list', () {
+      final trimmed = _settings(files: const [_a, _c]);
+      expect(choose(settings: trimmed, last: _b, played: {_a, _b})!.file, _c);
+    });
+
+    test('a list of one plays once, then waits for something new', () {
+      final one = _settings(files: const [_a]);
+      expect(choose(settings: one)!.file, _a);
+      expect(choose(settings: one, last: _a, played: {_a}), isNull);
+    });
+
+    test('the next one in line is never skipped, even if it is not here', () {
+      expect(choose(onPhone: const {_b, _c}), isNull);
+      expect(choose(last: _a, onPhone: const {_a, _c}), isNull);
+      expect(choose(onPhone: const {}), isNull);
+    });
+
+    test('no recordings at all is never a voice', () {
+      expect(choose(settings: _settings(files: const [])), isNull);
+    });
   });
 
-  test('never in quiet hours', () {
-    final quiet = _settings(from: '22:00', to: '07:00');
-    expect(choose(settings: quiet, now: DateTime(2026, 10, 15, 23)), isNull);
-    expect(choose(settings: quiet, now: DateTime(2026, 10, 15, 6)), isNull);
-    expect(choose(settings: quiet, now: noon), isNotNull);
-  });
+  group('waiting', () {
+    final clips = _settings().clips;
 
-  test('the first time, the first recording in his list', () {
-    expect(choose()!.file, _a);
-  });
+    test('after the last played, in order', () {
+      expect(_files(VoicePlanner.waiting(clips, last: _a)), [_b, _c]);
+      expect(_files(VoicePlanner.waiting(clips, last: _c)), isEmpty);
+    });
 
-  test('then the next one, in his order, and round again from the top', () {
-    expect(choose(last: _a)!.file, _b);
-    expect(choose(last: _b)!.file, _c);
-    expect(choose(last: _c)!.file, _a);
-  });
-
-  test('a list of one plays that one every time', () {
-    final one = _settings(files: const [_a]);
-    expect(choose(settings: one)!.file, _a);
-    expect(choose(settings: one, last: _a)!.file, _a);
-  });
-
-  test('moving the recordings around changes what comes next', () {
-    final reordered = _settings(files: const [_c, _a, _b]);
-    expect(choose(settings: reordered, last: _a)!.file, _b);
-    expect(choose(settings: reordered, last: _b)!.file, _c);
-  });
-
-  test('a last one no longer in the list starts from the top', () {
-    final trimmed = _settings(files: const [_b, _c]);
-    expect(choose(settings: trimmed, last: _a)!.file, _b);
-  });
-
-  test('a recording not on the phone yet is skipped over, not waited for', () {
-    expect(choose(onPhone: const {_a, _c}, last: _a)!.file, _c);
-    expect(choose(onPhone: const {_b, _c})!.file, _b);
-    expect(choose(onPhone: const {_a}, last: _a)!.file, _a);
-    expect(choose(onPhone: const {}), isNull);
-  });
-
-  test('no recordings at all is never a voice', () {
-    expect(choose(settings: _settings(files: const [])), isNull);
+    test('everything when nothing has played', () {
+      expect(_files(VoicePlanner.waiting(clips)), [_a, _b, _c]);
+    });
   });
 }

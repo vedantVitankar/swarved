@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:swarved/models/voice_interludes.dart';
@@ -6,6 +7,7 @@ import 'package:swarved/services/voice_service.dart';
 
 const _a = '0123456789abcdef.mp3';
 const _b = 'fedcba9876543210.m4a';
+const _c = 'aaaaaaaaaaaaaaaa.ogg';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -13,28 +15,52 @@ void main() {
   late VoiceInterludes settings;
   late Set<String> onPhone;
   late DateTime now;
+  late List<String> downloads;
+  late List<String> reports;
   late VoiceInterludeService service;
 
-  VoiceInterludes make({int every = 2, int? max}) => VoiceInterludes.parse({
-        'everySongs': every,
-        if (max != null) 'maxPerDay': max,
-        'clips': [
-          {'file': _a},
-          {'file': _b},
-        ],
-      });
+  VoiceInterludes make({
+    int every = 2,
+    int? max,
+    List<String> files = const [_a, _b],
+    String? reset,
+  }) {
+    return VoiceInterludes.parse({
+      'everySongs': every,
+      if (max != null) 'maxPerDay': max,
+      if (reset != null) 'resetToken': reset,
+      'clips': [
+        for (final file in files) {'file': file},
+      ],
+    });
+  }
+
+  VoiceInterludeService build() => VoiceInterludeService(
+        settings: () => settings,
+        onPhone: (name) async => onPhone.contains(name) ? File(name) : null,
+        download: downloads.add,
+        report: (last, played) => reports.add('$last:${played.join(',')}'),
+        clock: () => now,
+      );
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     settings = make();
-    onPhone = {_a, _b};
+    onPhone = {_a, _b, _c};
     now = DateTime(2026, 10, 15, 12);
-    service = VoiceInterludeService(
-      settings: () => settings,
-      onPhone: (name) async => onPhone.contains(name) ? File(name) : null,
-      clock: () => now,
-    );
+    downloads = [];
+    reports = [];
+    service = build();
   });
+
+  Future<List<String>> run(int songs, [VoiceInterludeService? who]) async {
+    final names = <String>[];
+    for (var i = 0; i < songs; i++) {
+      final file = await (who ?? service).afterSong();
+      if (file != null) names.add(file.path);
+    }
+    return names;
+  }
 
   test('a voice every second song, counting from the last one', () async {
     expect(await service.afterSong(), isNull); // song 1
@@ -43,76 +69,83 @@ void main() {
     expect(await service.afterSong(), isNotNull); // song 4
   });
 
-  test('the recordings play in his order, and go round again', () async {
-    final names = <String>[];
-    for (var i = 0; i < 10; i++) {
-      final file = await service.afterSong();
-      if (file != null) names.add(file.path);
-    }
-    expect(names, [_a, _b, _a, _b, _a]);
+  test('they play in his order, then stop: it never starts over', () async {
+    settings = make(every: 1, files: const [_a, _b, _c]);
+    expect(await run(8), [_a, _b, _c]);
   });
 
-  test('reordering the list changes what comes next', () async {
-    await service.afterSong();
-    expect((await service.afterSong())!.path, _a);
+  test('a recording added later is heard next, not the old ones again',
+      () async {
+    settings = make(every: 1, files: const [_a, _b]);
+    expect(await run(5), [_a, _b]);
 
-    settings = VoiceInterludes.parse({
-      'everySongs': 2,
-      'clips': [
-        {'file': _b},
-        {'file': _a},
-      ],
-    });
-    await service.afterSong();
-    expect((await service.afterSong())!.path, _b, reason: 'after a: b is next');
-    await service.afterSong();
-    expect((await service.afterSong())!.path, _a, reason: 'in the new order');
+    settings = make(every: 1, files: const [_a, _b, _c]);
+    expect(await run(3), [_c]);
+  });
+
+  test('one moved below the last played one plays again', () async {
+    settings = make(every: 1, files: const [_a, _b]);
+    expect(await run(3), [_a, _b]);
+
+    settings = make(every: 1, files: const [_b, _a]); // _a moved to the end
+    expect(await run(3), [_a]);
+  });
+
+  test('each play is reported with everything played so far', () async {
+    settings = make(every: 1, files: const [_a, _b]);
+    await run(2);
+    expect(reports, ['$_a:$_a', '$_b:$_a,$_b']);
   });
 
   test('no recordings, no voice', () async {
     settings = VoiceInterludes.none;
-    for (var i = 0; i < 5; i++) {
-      expect(await service.afterSong(), isNull);
-    }
+    expect(await run(5), isEmpty);
+    expect(reports, isEmpty);
   });
 
-  test('a recording that is not on the phone yet is never waited for',
+  test('the next one in line that is not here is fetched, never skipped',
       () async {
-    onPhone = {};
-    for (var i = 0; i < 6; i++) {
-      expect(await service.afterSong(), isNull);
-    }
-    onPhone = {_a};
-    expect((await service.afterSong())!.path, _a, reason: 'it is due at once');
+    onPhone = {_b};
+    settings = make(every: 1);
+    expect(await run(3), isEmpty, reason: '_a is next, and not here yet');
+    expect(downloads, [_a, _a, _a]);
+
+    onPhone = {_a, _b};
+    expect(await run(1), [_a], reason: 'in order, as soon as it arrived');
   });
 
   test('the daily limit holds, and a new day starts again', () async {
-    settings = make(every: 1, max: 2);
-    expect(await service.afterSong(), isNotNull);
-    expect(await service.afterSong(), isNotNull);
-    expect(await service.afterSong(), isNull);
-    expect(await service.afterSong(), isNull);
+    settings = make(every: 1, max: 2, files: const [_a, _b, _c]);
+    expect(await run(4), [_a, _b]);
 
     now = DateTime(2026, 10, 16, 9);
-    expect(await service.afterSong(), isNotNull);
+    expect(await run(1), [_c]);
   });
 
-  test('the limit and the round survive the app being closed', () async {
-    settings = make(every: 1, max: 1);
-    final first = await service.afterSong();
-    expect(first, isNotNull);
+  test('where it got to survives the app being closed', () async {
+    settings = make(every: 1, max: 1, files: const [_a, _b]);
+    expect(await run(1), [_a]);
 
-    final again = VoiceInterludeService(
-      settings: () => settings,
-      onPhone: (name) async => File(name),
-      clock: () => now,
-    );
-    expect(await again.afterSong(), isNull, reason: 'already played today');
+    final again = build();
+    expect(await run(1, again), isEmpty, reason: 'already played today');
 
     now = DateTime(2026, 10, 16, 9);
-    final next = await again.afterSong();
-    expect(first!.path, _a);
-    expect(next!.path, _b, reason: 'the next one in his order is due');
+    expect(await run(1, again), [_b], reason: 'the next one in his order');
+  });
+
+  test('"reset played status" starts over from the top, once', () async {
+    settings = make(every: 1, files: const [_a, _b]);
+    expect(await run(3), [_a, _b]);
+
+    settings = make(every: 1, files: const [_a, _b], reset: '100');
+    reports.clear();
+    expect(await run(3), [_a, _b]);
+    expect(reports.first, 'null:', reason: 'the server is told');
+
+    expect(await run(3), isEmpty, reason: 'the same token does not reset again');
+
+    settings = make(every: 1, files: const [_a, _b], reset: '200');
+    expect(await run(3), [_a, _b]);
   });
 
   test('quiet hours hold a voice back until they are over', () async {
@@ -136,8 +169,6 @@ void main() {
       onPhone: (name) async => throw const FileSystemException('gone'),
       clock: () => now,
     );
-    for (var i = 0; i < 3; i++) {
-      expect(await broken.afterSong(), isNull);
-    }
+    expect(await run(3, broken), isEmpty);
   });
 }

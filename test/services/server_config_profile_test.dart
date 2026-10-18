@@ -14,6 +14,7 @@ void main() {
       expect(hers.playlistsReportUri.queryParameters, isEmpty);
       expect(hers.mediaUri('a.jpg').queryParameters, isEmpty);
       expect(hers.playlistsUri.queryParameters, isEmpty);
+      expect(hers.voicesPlayedUri.queryParameters, isEmpty);
     });
 
     test('the test profile names itself on content and playlists', () {
@@ -23,6 +24,7 @@ void main() {
         trial.playlistsReportUri,
         trial.mediaUri('a.jpg'),
         trial.playlistsUri,
+        trial.voicesPlayedUri,
       ]) {
         expect(uri.queryParameters, {'profile': 'test'});
       }
@@ -31,6 +33,7 @@ void main() {
       expect(trial.playlistsReportUri.path, '/api/playlists/report');
       expect(trial.mediaUri('a b.jpg').path, '/api/media/a%20b.jpg');
       expect(trial.playlistsUri.path, '/api/playlists');
+      expect(trial.voicesPlayedUri.path, '/api/voices/played');
     });
 
     test('songs, search and the rest do not depend on the profile', () {

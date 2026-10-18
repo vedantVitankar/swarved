@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -5,6 +6,7 @@ import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'app.dart';
 import 'services/library_service.dart';
 import 'services/playlist_puller.dart';
+import 'services/voice_progress_reporter.dart';
 import 'services/voice_service.dart';
 import 'services/playlist_reporter.dart';
 import 'services/playlist_service.dart';
@@ -131,9 +133,17 @@ Future<void> main() async {
 
   // His recordings, played between songs when the content says so. Only the
   // ones already on the phone are used, so music never waits on a download.
+  final voiceReporter = VoiceProgressReporter(
+    config: serverConfig,
+    tokenStore: tokenStore,
+  );
   final voiceService = VoiceInterludeService(
     settings: () => contentService.voices,
     onPhone: mediaCache.existing,
+    // One that is next in line but missing is fetched for next time.
+    download: (name) => unawaited(mediaCache.fileFor(name)),
+    // The admin site marks each recording Played or Waiting from this.
+    report: (last, played) => unawaited(voiceReporter.report(last, played)),
   );
 
   final welcomeService = WelcomeService(songService: TutorialSongService());

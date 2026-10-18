@@ -84,6 +84,18 @@ void main() {
     });
   });
 
+  group('the reset token', () {
+    test('is read, trimmed', () {
+      expect(VoiceInterludes.parse({'resetToken': ' 1760 '}).restart, '1760');
+    });
+
+    test('is none when missing, empty or not text', () {
+      expect(VoiceInterludes.parse({}).restart, isNull);
+      expect(VoiceInterludes.parse({'resetToken': ' '}).restart, isNull);
+      expect(VoiceInterludes.parse({'resetToken': 5}).restart, isNull);
+    });
+  });
+
   group('quiet hours', () {
     VoiceInterludes quiet(String from, String to) => VoiceInterludes.parse({
           'quietFrom': from,

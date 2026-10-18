@@ -29,7 +29,8 @@ class MediaCache {
   static final _validName =
       RegExp(r'^[a-f0-9]{16}\.(jpg|png|webp|mp3|m4a|ogg|wav)$');
 
-  static const _timeout = Duration(seconds: 30);
+  /// Long enough for a recording of a few megabytes over a slow connection.
+  static const _timeout = Duration(minutes: 3);
 
   final ServerConfig _config;
   final TokenStore _tokenStore;
