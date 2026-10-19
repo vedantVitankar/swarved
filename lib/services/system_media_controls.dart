@@ -101,6 +101,7 @@ class SystemMediaControls {
   void attach(MediaSessionPlayer player) {
     if (_player != null) return;
     _player = player;
+    if (kDebugMode) debugPrint('[overlay] attached to the player');
     _buttons = _session.buttons.listen(_pressed, onError: (Object error) {
       debugPrint('Media button ignored: $error');
     });
