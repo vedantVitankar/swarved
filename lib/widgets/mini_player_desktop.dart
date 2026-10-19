@@ -84,7 +84,7 @@ class _SongZone extends StatelessWidget {
               child: Row(
                 children: [
                   interlude
-                      ? VoiceBreakArt(
+                      ? const VoiceBreakArt(
                           size: 56,
                           iconSize: 22,
                           radius: AppShape.thumbnail,

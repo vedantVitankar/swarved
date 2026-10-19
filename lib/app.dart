@@ -4,9 +4,11 @@ import 'root_shell.dart';
 import 'screens/welcome/welcome_gate.dart';
 import 'services/library_service.dart';
 import 'services/playlist_service.dart';
+import 'services/player_media_session.dart';
 import 'services/player_service.dart';
 import 'services/search_service.dart';
 import 'services/stats_service.dart';
+import 'services/system_media_controls.dart';
 import 'services/server_api.dart';
 import 'services/server_config.dart';
 import 'theme/app_theme.dart';
@@ -41,6 +43,10 @@ class SwarVedApp extends StatelessWidget {
   /// without it.
   final VoiceInterludeService? voiceService;
 
+  /// Shows the song and its buttons in the operating system's media overlay
+  /// (Windows). Optional, so the app also runs without it.
+  final SystemMediaControls? systemControls;
+
   const SwarVedApp({
     super.key,
     required this.statsService,
@@ -56,6 +62,7 @@ class SwarVedApp extends StatelessWidget {
     required this.welcomeService,
     required this.mediaCache,
     this.voiceService,
+    this.systemControls,
   });
 
   @override
@@ -65,12 +72,16 @@ class SwarVedApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: statsService),
         ChangeNotifierProvider.value(value: libraryService),
         ChangeNotifierProvider(
-          create: (_) => PlayerService(
-            statsService,
-            streamEndpoint,
-            prefetcher: QueuePrefetcher(api: serverApi),
-            voices: voiceService,
-          ),
+          create: (_) {
+            final player = PlayerService(
+              statsService,
+              streamEndpoint,
+              prefetcher: QueuePrefetcher(api: serverApi),
+              voices: voiceService,
+            );
+            systemControls?.attach(PlayerMediaSession(player));
+            return player;
+          },
         ),
         ChangeNotifierProvider.value(value: playlistService),
         ChangeNotifierProvider.value(value: contentService),

@@ -21,6 +21,7 @@ dependencies:
   just_audio: ^0.9.36
   just_audio_background: ^0.0.1-beta.11   # Android/iOS/macOS only — see main.dart
   just_audio_media_kit: ^2.1.0             # Windows/Linux backend for just_audio
+  smtc_windows: ^1.1.0                     # Windows media overlay (needs rustup to build)
   media_kit_libs_windows_audio: any
   audio_session: ^0.1.18
 

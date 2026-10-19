@@ -77,7 +77,7 @@ class MiniPlayerCompact extends StatelessWidget {
                     child: Row(
                       children: [
                         interlude
-                            ? VoiceBreakArt(
+                            ? const VoiceBreakArt(
                                 size: _button,
                                 iconSize: 18,
                                 radius: AppShape.thumbnail,

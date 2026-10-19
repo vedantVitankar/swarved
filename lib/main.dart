@@ -5,7 +5,10 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'app.dart';
 import 'services/library_service.dart';
+import 'services/overlay_artwork.dart';
 import 'services/playlist_puller.dart';
+import 'services/smtc_windows_session.dart';
+import 'services/system_media_controls.dart';
 import 'services/voice_progress_reporter.dart';
 import 'services/voice_service.dart';
 import 'services/playlist_reporter.dart';
@@ -49,6 +52,20 @@ Future<void> main() async {
       androidNotificationChannelName: 'SwarVed playback',
       androidNotificationOngoing: true,
     );
+  }
+
+  // Windows has its own media overlay (the panel the keyboard's media keys
+  // bring up). just_audio_background does not reach it, so this does. If it
+  // cannot start, the app simply goes without it.
+  SystemMediaControls? systemControls;
+  if (Platform.isWindows) {
+    final session = await SmtcWindowsSession.start();
+    if (session != null) {
+      systemControls = SystemMediaControls(
+        session: session,
+        localArtwork: overlayArtworkFor,
+      );
+    }
   }
 
   final statsService = StatsService();
@@ -167,6 +184,7 @@ Future<void> main() async {
     welcomeService: welcomeService,
     mediaCache: mediaCache,
     voiceService: voiceService,
+    systemControls: systemControls,
   ));
 
   // While the app is open it hears about each publish at once. In the
