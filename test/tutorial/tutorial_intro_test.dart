@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:swarved/content/words.dart';
-import 'package:swarved/models/track.dart';
-import 'package:swarved/models/tutorial_song.dart';
 import 'package:swarved/tutorial/tutorial_controller.dart';
 import 'package:swarved/tutorial/tutorial_intro.dart';
 import 'package:swarved/tutorial/tutorial_step.dart';
@@ -134,28 +132,19 @@ void main() {
       ]);
     });
 
-    testWidgets('with the song first the opening ends as soon as it appears',
+    testWidgets('with a song on the opening is no shorter and no longer',
         (tester) async {
-      final song = TutorialSong(
-        track: Track(
-          filePath: '/cache/song.mp3',
-          title: 'How Bad',
-          artist: 'Asal',
-          album: '',
-          duration: Duration.zero,
-          folder: 'Our first song',
-        ),
-      );
       final c = TutorialController(stage: TutorialStage.blank, tour: true);
       await tester.pumpWidget(_host(c));
 
-      c.start(song: song);
+      c.start(withSong: true);
       await tester.pump();
-      // Long enough for the song alone to fade in, not for every block.
-      await tester.pump(TutorialTimeline.end(letters, blocks: 1));
+      // Every block fades in, however the welcome went, and then the tour
+      // begins on its first stop.
+      await tester.pump(TutorialTimeline.end(letters));
 
       expect(c.stage, TutorialStage.touring);
-      expect(c.step, TutorialStep.play);
+      expect(c.step, TutorialStep.folders);
     });
 
     testWidgets('takes every tap while it plays', (tester) async {

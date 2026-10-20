@@ -13,6 +13,23 @@ void main() {
       expect(settings.signature, 'Yours, Ved');
     });
 
+    test('reads his words for the song step', () {
+      final settings = WelcomeSettings.parse({
+        'songLine': '  Press play, my love.  ',
+        'songText': ' Hold on to this one. ',
+      });
+
+      expect(settings.songLine, 'Press play, my love.');
+      expect(settings.songText, 'Hold on to this one.');
+    });
+
+    test('blank or wrongly typed song words fall back to the default', () {
+      final settings = WelcomeSettings.parse({'songLine': ' ', 'songText': 3});
+
+      expect(settings.songLine, isNull);
+      expect(settings.songText, isNull);
+    });
+
     test('a bare string is the line', () {
       final settings = WelcomeSettings.parse('  Hello, you.  ');
 
@@ -32,6 +49,8 @@ void main() {
         final settings = WelcomeSettings.parse(json);
         expect(settings.line, isNull);
         expect(settings.signature, isNull);
+        expect(settings.songLine, isNull);
+        expect(settings.songText, isNull);
         expect(settings.story, isEmpty);
         expect(settings.notes, isEmpty);
       }

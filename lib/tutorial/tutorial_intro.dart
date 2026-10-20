@@ -86,11 +86,7 @@ class _TutorialIntroState extends State<TutorialIntro>
         ..finish();
       return;
     }
-    // With the song first, only the song fades in at the end of the
-    // opening, so it is over sooner. Known now that the opening has begun.
-    final blocks =
-        widget.controller.songFirst ? 1 : TutorialTimeline.revealBlocks;
-    _endMs = TutorialTimeline.end(_text.length, blocks: blocks).inMilliseconds;
+    _endMs = TutorialTimeline.end(_text.length).inMilliseconds;
     _master.duration = Duration(milliseconds: _endMs);
     _master.forward();
   }

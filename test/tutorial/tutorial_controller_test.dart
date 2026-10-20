@@ -1,6 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:swarved/models/track.dart';
-import 'package:swarved/models/tutorial_song.dart';
 import 'package:swarved/tutorial/tutorial_controller.dart';
 import 'package:swarved/tutorial/tutorial_step.dart';
 
@@ -157,20 +155,9 @@ void main() {
   });
 
   group('TutorialController tour', () {
-    final song = TutorialSong(
-      track: Track(
-        filePath: '/cache/song.mp3',
-        title: 'How Bad',
-        artist: 'Asal',
-        album: '',
-        duration: Duration.zero,
-        folder: 'Our first song',
-      ),
-    );
-
-    TutorialController touring({TutorialSong? withSong, bool addFolder = false}) {
+    TutorialController touring({bool withSong = false, bool addFolder = false}) {
       final c = TutorialController(stage: TutorialStage.blank, tour: true)
-        ..start(song: withSong, addFolder: addFolder)
+        ..start(withSong: withSong, addFolder: addFolder)
         ..glide()
         ..reveal()
         ..finish();
@@ -187,7 +174,7 @@ void main() {
     });
 
     test('with the tour the opening leads into it', () {
-      final c = touring(withSong: song);
+      final c = touring();
 
       expect(c.stage, TutorialStage.touring);
       expect(c.touring, isTrue);
@@ -196,26 +183,24 @@ void main() {
       expect(c.noteVisible, isFalse);
     });
 
-    test('with a song the tour starts by asking her to press play', () {
-      final c = touring(withSong: song);
+    test('with a song on the tour includes the mini player', () {
+      final c = touring(withSong: true);
 
-      expect(c.step, TutorialStep.play);
+      // Pressing play is not part of the tour: that was in the welcome.
+      expect(c.step, TutorialStep.folders);
       expect(c.steps, tutorialSteps(withSong: true));
-      expect(c.songOnHome, isTrue);
-      expect(c.song, same(song));
+      expect(c.steps, contains(TutorialStep.player));
     });
 
-    test('without a song the tour leaves out play and the mini player', () {
+    test('without a song the tour leaves out the mini player', () {
       final c = touring();
 
       expect(c.step, TutorialStep.folders);
-      expect(c.steps, isNot(contains(TutorialStep.play)));
       expect(c.steps, isNot(contains(TutorialStep.player)));
-      expect(c.songOnHome, isFalse);
     });
 
     test('advance walks the steps in order, then finishes', () {
-      final c = touring(withSong: song, addFolder: true);
+      final c = touring(withSong: true, addFolder: true);
       final seen = <TutorialStep?>[c.step];
 
       while (c.touring) {
@@ -229,7 +214,7 @@ void main() {
     });
 
     test('skip leaves the tour from any step and brings the note', () {
-      final c = touring(withSong: song);
+      final c = touring(withSong: true);
       c.advance();
       c.advance();
 
@@ -238,7 +223,6 @@ void main() {
       expect(c.stage, TutorialStage.finished);
       expect(c.step, isNull);
       expect(c.active, isFalse);
-      expect(c.songOnHome, isFalse);
       expect(c.noteVisible, isTrue);
     });
 
@@ -255,7 +239,7 @@ void main() {
     });
 
     test('the note waits for Home if the tour ends elsewhere', () {
-      final c = touring(withSong: song);
+      final c = touring();
       c.setHomeVisible(false);
 
       c.skip();
@@ -279,86 +263,60 @@ void main() {
     });
   });
 
-  group('TutorialController song first', () {
-    final song = TutorialSong(
-      track: Track(
-        filePath: '/cache/song.mp3',
-        title: 'How Bad',
-        artist: 'Asal',
-        album: '',
-        duration: Duration.zero,
-        folder: 'Our first song',
-      ),
-    );
-
-    TutorialController touring({TutorialSong? withSong, bool tour = true}) {
-      return TutorialController(stage: TutorialStage.blank, tour: tour)
-        ..start(song: withSong)
+  group('TutorialController what shows when', () {
+    TutorialController touring({bool withSong = false}) {
+      return TutorialController(stage: TutorialStage.blank, tour: true)
+        ..start(withSong: withSong)
         ..glide()
         ..reveal()
         ..finish();
     }
 
-    test('only a tour with a song puts the song first', () {
-      expect(touring(withSong: song).songFirst, isTrue);
-      expect(touring().songFirst, isFalse);
-      expect(touring(withSong: song, tour: false).songFirst, isFalse);
-    });
-
     test('before the opening nothing of Home may show', () {
       final c = _blank();
 
-      expect(c.songVisible, isFalse);
       expect(c.restVisible, isFalse);
+      expect(c.noteVisible, isFalse);
     });
 
-    test('the song comes with the reveal, the rest waits for play', () {
-      final c = TutorialController(stage: TutorialStage.blank, tour: true)
-        ..start(song: song)
-        ..glide()
-        ..reveal();
+    test('the rest of Home comes with the reveal, whatever is playing', () {
+      for (final withSong in [false, true]) {
+        final c = TutorialController(stage: TutorialStage.blank, tour: true)
+          ..start(withSong: withSong)
+          ..glide()
+          ..reveal();
 
-      expect(c.songVisible, isTrue);
-      expect(c.restVisible, isFalse);
-
-      c.finish();
-      expect(c.step, TutorialStep.play);
-      expect(c.songVisible, isTrue);
-      expect(c.restVisible, isFalse);
+        expect(c.restVisible, isTrue, reason: 'withSong: $withSong');
+        expect(c.noteVisible, isFalse, reason: 'withSong: $withSong');
+      }
     });
 
-    test('pressing play lets the rest of Home appear', () {
-      final c = touring(withSong: song);
+    test('the rest stays on through the tour', () {
+      final c = touring(withSong: true);
 
+      expect(c.touring, isTrue);
+      expect(c.restVisible, isTrue);
       c.advance();
-
-      expect(c.step, TutorialStep.folders);
       expect(c.restVisible, isTrue);
     });
 
-    test('skipping on the play step shows the rest too', () {
-      final c = touring(withSong: song);
+    test('the song of the day and the note wait for the end of the tour',
+        () {
+      final c = touring(withSong: true);
+
+      expect(c.noteVisible, isFalse);
+      c.advance();
+      expect(c.noteVisible, isFalse);
 
       c.skip();
-
-      expect(c.restVisible, isTrue);
-    });
-
-    test('without a song everything comes with the reveal, as before', () {
-      final c = TutorialController(stage: TutorialStage.blank, tour: true)
-        ..start()
-        ..glide()
-        ..reveal();
-
-      expect(c.songVisible, isTrue);
-      expect(c.restVisible, isTrue);
+      expect(c.noteVisible, isTrue);
     });
 
     test('with no tutorial at all everything shows', () {
       final c = TutorialController();
 
-      expect(c.songVisible, isTrue);
       expect(c.restVisible, isTrue);
+      expect(c.noteVisible, isTrue);
     });
   });
 

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../content/labels.dart';
@@ -14,10 +13,9 @@ import 'tutorial_controller.dart';
 import 'tutorial_step.dart';
 
 /// The tour: Home dims, and one part of it at a time stays lit while a few
-/// handwritten words say what it is. The first stop asks her to press play
-/// on the tutorial song; from then on the song plays under the rest of the
-/// tour. Nothing under the dimmed screen answers a tap, except the song's
-/// card on that first stop.
+/// handwritten words say what it is. If she started the song in the welcome
+/// it keeps playing under the tour. Nothing under the dimmed screen answers
+/// a tap, except the folder button on the stop that asks her to use it.
 ///
 /// It walks the [TutorialController] through its steps, and fades out
 /// before the controller says the tutorial is over.
@@ -26,11 +24,6 @@ class TutorialSpotlight extends StatefulWidget {
 
   /// His own captions by step name; a step without one uses the default.
   final Map<String, String> captions;
-
-  /// Fires when playback changes, and says whether the tutorial's song is
-  /// playing. Both null when there is no song.
-  final Listenable? playback;
-  final bool Function()? songIsPlaying;
 
   /// Whether Home has no folders yet, so that step can say where they will
   /// appear. Null counts as folders present.
@@ -46,8 +39,6 @@ class TutorialSpotlight extends StatefulWidget {
     super.key,
     required this.controller,
     this.captions = const {},
-    this.playback,
-    this.songIsPlaying,
     this.foldersEmpty,
     this.library,
     this.folderPath,
@@ -62,20 +53,12 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
   static const Duration _fadeTime = Duration(milliseconds: 500);
   static const Duration _moveTime = Duration(milliseconds: 650);
 
-  /// How long she is given to press play before "Continue" appears, in
-  /// case the song can't start.
-  static const Duration _patience = Duration(seconds: 8);
-
   static const double _captionMargin = 24;
   static const double _captionMaxWidth = 360;
   static const double _holeRadius = 14;
 
   late final AnimationController _fade;
   late final AnimationController _move;
-  Timer? _patienceTimer;
-
-  /// The song has had its chance to start, so "Continue" may show.
-  bool _canContinue = false;
 
   TutorialStep? _shown;
   String? _folderAtEntry;
@@ -98,7 +81,6 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
     _move = AnimationController(vsync: this, duration: _moveTime);
 
     widget.controller.addListener(_onController);
-    widget.playback?.addListener(_onPlayback);
     widget.library?.addListener(_onLibrary);
 
     _shown = widget.controller.step;
@@ -110,32 +92,20 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
   @override
   void dispose() {
     widget.controller.removeListener(_onController);
-    widget.playback?.removeListener(_onPlayback);
     widget.library?.removeListener(_onLibrary);
     _fade.dispose();
     _move.dispose();
-    _patienceTimer?.cancel();
     super.dispose();
   }
 
   /// A step has come up: lit parts that are scrolled out of sight are
-  /// brought into view, the hole starts its move, and the patience clock for
-  /// the play step starts.
+  /// brought into view and the hole starts its move.
   void _enter(TutorialStep? step) {
     if (step == null) return;
     if (step == TutorialStep.addFolder) {
       _folderAtEntry = widget.folderPath?.call();
     }
     _move.forward(from: 0);
-    // A timer, not an animation: nothing changes on screen while she
-    // waits, so nothing should be redrawn every frame.
-    _patienceTimer?.cancel();
-    if (step == TutorialStep.play) {
-      _canContinue = false;
-      _patienceTimer = Timer(_patience, () {
-        if (mounted) setState(() => _canContinue = true);
-      });
-    }
     // Two frames on: a step that changes the tab needs the new tab on
     // screen first.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -164,12 +134,6 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
     _shown = step;
     _shownIndex = widget.controller.stepIndex;
     _enter(step);
-  }
-
-  /// Pressing play on the tutorial song is what moves the first stop on.
-  void _onPlayback() {
-    if (widget.controller.step != TutorialStep.play) return;
-    if (widget.songIsPlaying?.call() ?? false) widget.controller.advance();
   }
 
   /// Choosing a folder is what moves the folder step on.
@@ -264,8 +228,9 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
     );
   }
 
-  /// Everything under the dimming takes no taps. On the play step the lit
-  /// card is left open, which the four blocks around the hole make room for.
+  /// Everything under the dimming takes no taps. On the folder step the lit
+  /// button is left open, which the four blocks around the hole make room
+  /// for.
   List<Widget> _blockers(TutorialStep step, Rect? hole, Size screen) {
     const block = AbsorbPointer(child: SizedBox.expand());
     if (!step.isInteractive || hole == null) {
@@ -375,12 +340,8 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
           (widget.foldersEmpty?.call() ?? false),
     );
     final isLast = index + 1 >= controller.steps.length;
-    final isPlay = step == TutorialStep.play;
-    // Pressing play is the only way on, unless the song never starts. The
-    // folder can always be left for later.
-    final showNext = !isPlay || _canContinue;
+    // The folder can always be left for later.
     final nextLabel = switch (step) {
-      TutorialStep.play => Words.tutorialContinue,
       TutorialStep.addFolder => Words.tutorialNotNow,
       _ => isLast ? Words.tutorialDone : Labels.welcomeNext,
     };
@@ -420,11 +381,7 @@ class _TutorialSpotlightState extends State<TutorialSpotlight>
                     child: Text(Labels.welcomeSkip, style: AppType.caption),
                   ),
                   const Spacer(),
-                  if (showNext)
-                    SwarOutlinedButton(
-                      label: nextLabel,
-                      onPressed: isPlay ? controller.advance : _next,
-                    ),
+                  SwarOutlinedButton(label: nextLabel, onPressed: _next),
                 ],
               ),
             ],

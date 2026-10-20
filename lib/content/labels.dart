@@ -28,6 +28,8 @@ class Labels {
   static const welcomeNext = 'Next';
   static const welcomeBack = 'Back';
   static const welcomeSkip = 'Skip';
+  static const welcomeNotePrevious = 'Previous note';
+  static const welcomeNoteNext = 'Next note';
   static String welcomeStep(int step, int count) => 'Step $step of $count';
 
   static String playingFrom(String folder) => 'Playing from $folder';

@@ -37,9 +37,9 @@ class _RootShellState extends State<RootShell> {
         Responsive.of(MediaQuery.sizeOf(context).width) == ScreenClass.expanded;
 
     // The mini player and navigation bar fade in with the rest of Home: last
-    // of the blocks, or right after the song when the song comes first.
+    // of the blocks, after the folders.
     final tutorial = TutorialScope.maybeOf(context);
-    final barOrder = tutorial != null && tutorial.songFirst ? 3 : 4;
+    const barOrder = 3;
 
     // The tour takes her to the Library to pick a folder, and brings her
     // back to Home afterwards.

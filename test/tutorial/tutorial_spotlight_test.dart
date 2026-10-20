@@ -3,22 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:swarved/content/labels.dart';
 import 'package:swarved/content/words.dart';
-import 'package:swarved/models/track.dart';
-import 'package:swarved/models/tutorial_song.dart';
 import 'package:swarved/tutorial/tutorial_controller.dart';
 import 'package:swarved/tutorial/tutorial_spotlight.dart';
 import 'package:swarved/tutorial/tutorial_step.dart';
-
-final _song = TutorialSong(
-  track: Track(
-    filePath: '/cache/song.mp3',
-    title: 'How Bad',
-    artist: 'Asal',
-    album: '',
-    duration: Duration.zero,
-    folder: 'Our first song',
-  ),
-);
 
 void _phoneScreen(WidgetTester tester) {
   tester.view.physicalSize = const Size(400, 800);
@@ -27,9 +14,9 @@ void _phoneScreen(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
-TutorialController _touring({TutorialSong? song, bool addFolder = false}) {
+TutorialController _touring({bool withSong = false, bool addFolder = false}) {
   return TutorialController(stage: TutorialStage.blank, tour: true)
-    ..start(song: song, addFolder: addFolder)
+    ..start(withSong: withSong, addFolder: addFolder)
     ..glide()
     ..reveal()
     ..finish();
@@ -40,8 +27,6 @@ TutorialController _touring({TutorialSong? song, bool addFolder = false}) {
 Widget _host(
   TutorialController controller, {
   Map<String, String> captions = const {},
-  Listenable? playback,
-  bool Function()? songIsPlaying,
   bool Function()? foldersEmpty,
   Listenable? library,
   String? Function()? folderPath,
@@ -64,7 +49,7 @@ Widget _host(
               child: GestureDetector(
                 onTap: onTargetTap,
                 child: Container(
-                  key: controller.keyFor(TutorialStep.play),
+                  key: controller.keyFor(TutorialStep.player),
                   color: Colors.pink,
                 ),
               ),
@@ -105,8 +90,6 @@ Widget _host(
             TutorialSpotlight(
               controller: controller,
               captions: captions,
-              playback: playback,
-              songIsPlaying: songIsPlaying,
               foldersEmpty: foldersEmpty,
               library: library,
               folderPath: folderPath,
@@ -261,94 +244,73 @@ void main() {
     });
   });
 
-  group('TutorialSpotlight with the song', () {
-    testWidgets('asks her to press play, with no Next to press',
+  group('TutorialSpotlight with a song on', () {
+    /// Steps along to the mini player: folders, chips, then the player.
+    Future<TutorialController> atThePlayer(WidgetTester tester,
+        {VoidCallback? onTargetTap, VoidCallback? onUnderneathTap}) async {
+      _phoneScreen(tester);
+      final c = _touring(withSong: true);
+      await tester.pumpWidget(_host(
+        c,
+        onTargetTap: onTargetTap,
+        onUnderneathTap: onUnderneathTap,
+      ));
+      await _settle(tester);
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.text(Labels.welcomeNext));
+        await tester.pump();
+        await _settle(tester);
+      }
+      return c;
+    }
+
+    testWidgets('opens on the folders: pressing play is not part of the tour',
         (tester) async {
       _phoneScreen(tester);
-      final c = _touring(song: _song);
+      final c = _touring(withSong: true);
       await tester.pumpWidget(_host(c));
-      await _settle(tester);
-
-      expect(find.text(Words.tutorialPlay), findsOneWidget);
-      expect(find.text(Labels.welcomeNext), findsNothing);
-      expect(find.text(Words.tutorialContinue), findsNothing);
-    });
-
-    testWidgets('only the lit card takes taps on the play step',
-        (tester) async {
-      _phoneScreen(tester);
-      var card = 0;
-      var underneath = 0;
-      final c = _touring(song: _song);
-      await tester.pumpWidget(_host(
-        c,
-        onTargetTap: () => card++,
-        onUnderneathTap: () => underneath++,
-      ));
-      await _settle(tester);
-
-      await tester.tapAt(const Offset(120, 130));
-      await tester.tap(find.text('underneath'), warnIfMissed: false);
-
-      expect(card, 1);
-      expect(underneath, 0);
-    });
-
-    testWidgets('the song starting moves the tour on', (tester) async {
-      _phoneScreen(tester);
-      final playing = ValueNotifier<bool>(false);
-      addTearDown(playing.dispose);
-      final c = _touring(song: _song);
-      await tester.pumpWidget(_host(
-        c,
-        playback: playing,
-        songIsPlaying: () => playing.value,
-      ));
-      await _settle(tester);
-      expect(c.step, TutorialStep.play);
-
-      playing.value = true;
-      await tester.pump();
       await _settle(tester);
 
       expect(c.step, TutorialStep.folders);
       expect(find.text(Words.tutorialFolders), findsOneWidget);
+      expect(find.text(Labels.welcomeNext), findsOneWidget);
     });
 
-    testWidgets('a song that is not playing does not move it on',
+    testWidgets('stops at the mini player, with its words and a Next',
         (tester) async {
-      _phoneScreen(tester);
-      final playback = ValueNotifier<int>(0);
-      addTearDown(playback.dispose);
-      final c = _touring(song: _song);
-      await tester.pumpWidget(_host(
-        c,
-        playback: playback,
-        songIsPlaying: () => false,
-      ));
-      await _settle(tester);
+      final c = await atThePlayer(tester);
 
-      playback.value++;
-      await tester.pump();
-
-      expect(c.step, TutorialStep.play);
+      expect(c.step, TutorialStep.player);
+      expect(find.text(Words.tutorialPlayer), findsOneWidget);
+      expect(find.text(Labels.welcomeNext), findsOneWidget);
     });
 
-    testWidgets('Continue appears if the song never starts', (tester) async {
-      _phoneScreen(tester);
-      final c = _touring(song: _song);
-      await tester.pumpWidget(_host(c));
-      await _settle(tester);
-      expect(find.text(Words.tutorialContinue), findsNothing);
+    testWidgets('takes every tap there, the lit part included',
+        (tester) async {
+      var target = 0;
+      var underneath = 0;
+      await atThePlayer(
+        tester,
+        onTargetTap: () => target++,
+        onUnderneathTap: () => underneath++,
+      );
 
-      await tester.pump(const Duration(seconds: 9));
-      expect(find.text(Words.tutorialContinue), findsOneWidget);
+      await tester.tapAt(const Offset(120, 130));
+      await tester.tap(find.text('underneath'), warnIfMissed: false);
 
-      await tester.tap(find.text(Words.tutorialContinue));
+      expect(target, 0);
+      expect(underneath, 0);
+    });
+
+    testWidgets('Next goes on past the mini player', (tester) async {
+      final c = await atThePlayer(tester);
+
+      await tester.tap(find.text(Labels.welcomeNext));
       await tester.pump();
       await _settle(tester);
 
-      expect(c.step, TutorialStep.folders);
+      expect(c.step, TutorialStep.search);
+      expect(find.text(Words.tutorialSearch), findsOneWidget);
     });
   });
 
@@ -570,10 +532,9 @@ void main() {
       expect(c.step, TutorialStep.search);
     });
 
-    testWidgets('waiting for her to press play redraws nothing',
-        (tester) async {
+    testWidgets('a step she is reading redraws nothing', (tester) async {
       _phoneScreen(tester);
-      final c = _touring(song: _song);
+      final c = _touring();
       await tester.pumpWidget(_host(c));
       await _settle(tester);
 

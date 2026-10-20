@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/tutorial_song.dart';
 import 'tutorial_step.dart';
 
 /// Where the first-time tutorial on Home has got to. A new stage only ever
 /// follows the one before; [off] is a Home with no tutorial at all.
 ///
 /// blank, typing, gliding and revealing are the opening; touring is the
-/// spotlight tour over the song; finished is Home as it always is.
+/// spotlight tour; finished is Home as it always is.
 enum TutorialStage { off, blank, typing, gliding, revealing, touring, finished }
 
 /// The state of the tutorial on Home. It only says what stage it is in,
@@ -15,7 +14,6 @@ class TutorialController extends ChangeNotifier {
   TutorialStage _stage;
   bool _homeVisible = true;
   bool _noteShown;
-  TutorialSong? _song;
   List<TutorialStep> _steps = tutorialSteps(withSong: false);
   int _stepIndex = 0;
   final Map<TutorialStep, GlobalKey> _keys = {};
@@ -57,34 +55,16 @@ class TutorialController extends ChangeNotifier {
 
   bool get greetingVisible => blocksVisible;
 
-  /// With a tutorial song the song comes first, alone: she presses play, and
-  /// only then does the rest of Home appear.
-  bool get songFirst => _song != null && tour;
-
-  /// The song's card may show. It comes with the greeting.
-  bool get songVisible => blocksVisible;
-
   /// The rest of Home (subline, chips, folders, mini player and navigation
-  /// bar) may show. With the song first, that is once she has pressed play.
-  bool get restVisible => switch (_stage) {
-        TutorialStage.off || TutorialStage.finished => true,
-        TutorialStage.revealing => !songFirst,
-        TutorialStage.touring => !songFirst || _stepIndex > 0,
-        _ => false,
-      };
+  /// bar) may show. It comes with the greeting.
+  bool get restVisible => blocksVisible;
 
-  /// The home note stays out of the tutorial. It fades in once the tutorial
-  /// is over and Home is on screen, and after that it is always there.
+  /// The home note and the song of the day stay out of the tutorial. They
+  /// fade in together once the tutorial is over and Home is on screen, and
+  /// after that they are always there.
   bool get noteVisible => _noteShown;
 
   bool get homeVisible => _homeVisible;
-
-  /// The song the tutorial plays, or null when there is none.
-  TutorialSong? get song => _song;
-
-  /// Home shows the tutorial's song on its card, not the song of the day,
-  /// while the tutorial runs.
-  bool get songOnHome => _song != null && active;
 
   List<TutorialStep> get steps => _steps;
 
@@ -114,13 +94,13 @@ class TutorialController extends ChangeNotifier {
   static const int homeTab = 0;
   static const int libraryTab = 2;
 
-  /// The welcome has gone: begin typing. With a [song] the tour includes
-  /// pressing play and the mini player; without one it carries on silent.
-  /// With [addFolder] it also takes her to the Library to choose a folder.
-  void start({TutorialSong? song, bool addFolder = false}) {
+  /// The welcome has gone: begin typing. With a song on ([withSong], the one
+  /// she started in the welcome) the tour includes the mini player; without
+  /// one it leaves that stop out. With [addFolder] it also takes her to the
+  /// Library to choose a folder.
+  void start({bool withSong = false, bool addFolder = false}) {
     if (_stage != TutorialStage.blank) return;
-    _song = song;
-    _steps = tutorialSteps(withSong: song != null, addFolder: addFolder);
+    _steps = tutorialSteps(withSong: withSong, addFolder: addFolder);
     _stepIndex = 0;
     _go(TutorialStage.typing);
   }

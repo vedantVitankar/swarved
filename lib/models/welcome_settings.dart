@@ -10,6 +10,12 @@ class WelcomeSettings {
   /// How he signs it. Null uses the default.
   final String? signature;
 
+  /// The line above the song she is asked to play. Null uses the default.
+  final String? songLine;
+
+  /// The few words under the song. Null uses the default.
+  final String? songText;
+
   /// Why he made it, one short paragraph each. Empty uses the default.
   final List<String> story;
 
@@ -22,13 +28,15 @@ class WelcomeSettings {
   const WelcomeSettings({
     this.line,
     this.signature,
+    this.songLine,
+    this.songText,
     this.story = const [],
     this.notes = const [],
     this.tutorial = const TutorialSettings(),
   });
 
-  /// Accepts an object with "line", "signature", "story" and "notes", or
-  /// just a string, which is taken as the line. Anything wrong falls back to
+  /// Accepts an object with "line", "signature", "songLine", "songText",
+  /// "story" and "notes", or just a string, which is taken as the line. Anything wrong falls back to
   /// the default for that part, and one bad entry never spoils the rest.
   static WelcomeSettings parse(Object? json) {
     if (json is String) return WelcomeSettings(line: _clean(json));
@@ -37,6 +45,8 @@ class WelcomeSettings {
     return WelcomeSettings(
       line: _clean(map['line']),
       signature: _clean(map['signature']),
+      songLine: _clean(map['songLine']),
+      songText: _clean(map['songText']),
       story: _parseStory(map['story']),
       notes: _parseNotes(map['notes']),
       tutorial: TutorialSettings.parse(map['tutorial']),

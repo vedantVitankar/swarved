@@ -6,7 +6,6 @@ void main() {
   group('tutorialSteps', () {
     test('with a song every step is there, in order, bar the folder', () {
       expect(tutorialSteps(withSong: true), [
-        TutorialStep.play,
         TutorialStep.folders,
         TutorialStep.chips,
         TutorialStep.player,
@@ -30,7 +29,7 @@ void main() {
       expect(tutorialSteps(withSong: false, addFolder: true).length, 6);
     });
 
-    test('without a song play and the mini player are left out', () {
+    test('without a song the mini player is left out', () {
       expect(tutorialSteps(withSong: false), [
         TutorialStep.folders,
         TutorialStep.chips,
@@ -40,22 +39,29 @@ void main() {
       ]);
     });
 
-    test('she acts herself on play and on the folder step only', () {
+    test('she acts herself on the folder step only', () {
       final interactive = [
         for (final step in TutorialStep.values)
           if (step.isInteractive) step,
       ];
 
-      expect(interactive, [TutorialStep.play, TutorialStep.addFolder]);
+      expect(interactive, [TutorialStep.addFolder]);
     });
 
-    test('only play and the player need the song', () {
+    test('only the mini player needs a song', () {
       final needing = [
         for (final step in TutorialStep.values)
           if (step.needsSong) step,
       ];
 
-      expect(needing, [TutorialStep.play, TutorialStep.player]);
+      expect(needing, [TutorialStep.player]);
+    });
+
+    test('there is no step that asks her to press play', () {
+      // That moved to the welcome.
+      final names = TutorialStep.values.map((step) => step.name);
+
+      expect(names, isNot(contains('play')));
     });
   });
 
@@ -68,7 +74,7 @@ void main() {
 
     test('his own caption wins', () {
       expect(
-        tutorialCaption(TutorialStep.play, own: {'play': 'Go on, baby.'}),
+        tutorialCaption(TutorialStep.player, own: {'player': 'Go on, baby.'}),
         'Go on, baby.',
       );
     });

@@ -4,14 +4,11 @@ import 'tutorial_controller.dart';
 
 /// Which moment of the tutorial lets a block appear.
 enum TutorialPart {
-  /// The song of the day's card, which comes first when there is a
-  /// tutorial song.
-  song,
-
-  /// Everything else on Home, which follows once she has pressed play.
+  /// Everything on Home that comes with the greeting.
   rest,
 
-  /// The home note, which waits for the end of the tutorial.
+  /// The song of the day and the home note, which wait for the end of the
+  /// tutorial.
   note,
 }
 
@@ -55,7 +52,6 @@ class _TutorialRevealState extends State<TutorialReveal>
   }
 
   bool _mayShow(TutorialController tutorial) => switch (widget.part) {
-        TutorialPart.song => tutorial.songVisible,
         TutorialPart.rest => tutorial.restVisible,
         TutorialPart.note => tutorial.noteVisible,
       };

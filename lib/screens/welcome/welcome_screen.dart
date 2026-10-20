@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../content/labels.dart';
 import '../../content/words.dart';
 import '../../models/note_line.dart';
+import '../../models/track.dart';
 import '../../models/welcome_settings.dart';
+import '../../services/song_playback.dart';
 import '../../services/welcome_service.dart';
 import '../../theme/colors.dart';
 import '../../theme/shape.dart';
@@ -19,10 +21,17 @@ import 'welcome_pages.dart';
 import 'welcome_sky.dart';
 import 'welcome_sun.dart';
 
-/// The first thing she sees, in four steps: the sun rises and his line
-/// appears, then why he made it, then a few notes to swipe through, then a
-/// short tour of the app. "Come in" on the last step swells the sun and
-/// fades the screen away to the app behind it, then calls [onDone].
+/// The first thing she sees, in five steps: the sun rises and his line
+/// appears, then a song she is asked to start, then why he made it, then a
+/// few notes to go through, then a short tour of the app. The song carries
+/// on playing under the steps that follow. "Come in" on the last step
+/// swells the sun and fades the screen away to the app behind it, then
+/// calls [onDone].
+///
+/// The song step is only there when the welcome has a song ready and
+/// [playback] can play it; without either, the welcome is the other four.
+/// On that step Next stays locked until she has pressed play (Skip and Back
+/// never are).
 ///
 /// A tap while the first step is still playing skips ahead to its end.
 /// "Skip" leaves from any step but the last. With reduced motion everything
@@ -31,7 +40,10 @@ class WelcomeScreen extends StatefulWidget {
   /// Called once the screen has faded away completely.
   final VoidCallback onDone;
 
-  const WelcomeScreen({super.key, required this.onDone});
+  /// Starts and pauses the welcome's song. Null leaves the song step out.
+  final SongPlayback? playback;
+
+  const WelcomeScreen({super.key, required this.onDone, this.playback});
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -57,12 +69,38 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   bool _leaving = false;
   int _step = 0;
 
-  static const int _steps = 4;
+  /// Whether the song step is part of the journey. Until she leaves the
+  /// first step it follows whether the song is ready; from then on it is
+  /// fixed, so the steps can never shift while she is on one.
+  bool? _songStep;
+
+  /// She has pressed play on the song step. It unlocks Next for good: it is
+  /// her press that counts, not whether the song managed to start, so a
+  /// broken song can never keep her from going on.
+  bool _songPlayed = false;
+
   static const double _titleSize = 46;
   static const double _lineSize = 28;
   static const double _signatureSize = 24;
 
-  bool get _isLast => _step == _steps - 1;
+  /// The welcome's song, when it can be offered: it is ready and there is a
+  /// player to start it.
+  Track? get _song => widget.playback == null
+      ? null
+      : context.read<WelcomeService>().tutorialSong?.track;
+
+  List<_WelcomePage> get _pages => [
+        _WelcomePage.intro,
+        if (_songStep ?? (_song != null)) _WelcomePage.song,
+        _WelcomePage.story,
+        _WelcomePage.notes,
+        _WelcomePage.tour,
+      ];
+
+  bool get _isLast => _step == _pages.length - 1;
+
+  /// Next waits for her to press play on the song step.
+  bool get _locked => _pages[_step] == _WelcomePage.song && !_songPlayed;
 
   @override
   void initState() {
@@ -100,10 +138,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 
   void _next() {
-    if (_leaving) return;
+    if (_leaving || _locked) return;
     if (_isLast) {
       _enter();
     } else {
+      // Decided once: the song may become ready later, but not mid-way.
+      if (_step == 0) _songStep ??= _song != null;
       setState(() => _step++);
     }
   }
@@ -122,8 +162,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Read once: the welcome file never changes while the app runs.
-    final settings = context.read<WelcomeService>().settings;
+    // Watched, not just read: the welcome file never changes while the app
+    // runs, but the song may become ready while she is on the first step,
+    // and that adds a step.
+    final settings = context.watch<WelcomeService>().settings;
 
     return AnimatedBuilder(
       animation: _exit,
@@ -203,21 +245,22 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   /// The sun, then the words of the current step. The sun stays put when
   /// she comes in; only the words leave.
   Widget _page(WelcomeSettings settings) {
-    final Widget words = switch (_step) {
-      0 => _firstWords(settings),
-      1 => WelcomeStoryPage(
+    final Widget words = switch (_pages[_step]) {
+      _WelcomePage.intro => _firstWords(settings),
+      _WelcomePage.song => _songWords(settings),
+      _WelcomePage.story => WelcomeStoryPage(
           paragraphs:
               settings.story.isEmpty ? Words.welcomeStory : settings.story,
           signature: settings.signature ?? Words.welcomeSignature,
           instant: _reduceMotion,
         ),
-      2 => WelcomeNotesPage(
+      _WelcomePage.notes => WelcomeNotesPage(
           notes: settings.notes.isEmpty
               ? [for (final note in Words.welcomeNotes) NoteLine(note: note)]
               : settings.notes,
           instant: _reduceMotion,
         ),
-      _ => WelcomeTourPage(instant: _reduceMotion),
+      _WelcomePage.tour => WelcomeTourPage(instant: _reduceMotion),
     };
 
     return Column(
@@ -233,6 +276,24 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         ),
         _leavingWithTheWords(words),
       ],
+    );
+  }
+
+  /// The song she is asked to start: his line, the song in its box, and a
+  /// few words.
+  Widget _songWords(WelcomeSettings settings) {
+    final track = _song;
+    final playback = widget.playback;
+    if (track == null || playback == null) return const SizedBox.shrink();
+    return WelcomeSongPage(
+      line: settings.songLine ?? Words.welcomeSongLine,
+      text: settings.songText ?? Words.welcomeSongText,
+      track: track,
+      playback: playback,
+      onPlayed: () {
+        if (!_songPlayed) setState(() => _songPlayed = true);
+      },
+      instant: _reduceMotion,
     );
   }
 
@@ -324,15 +385,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              WelcomeDots(count: _steps, index: _step),
+              WelcomeDots(count: _pages.length, index: _step),
               const SizedBox(height: 20),
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  Positioned.fill(child: _glow()),
+                  // No glow while Next is locked: it comes on when it opens.
+                  if (!_locked) Positioned.fill(child: _glow()),
                   SwarOutlinedButton(
                     label: _isLast ? Labels.welcomeEnter : Labels.welcomeNext,
-                    onPressed: _next,
+                    onPressed: _locked ? null : _next,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 36,
                       vertical: 14,
@@ -406,6 +468,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 }
+
+/// The steps of the welcome, in order. The song step is left out when there
+/// is no song to offer.
+enum _WelcomePage { intro, song, story, notes, tour }
 
 /// The halo around the button: rings that fade outwards, breathing with the
 /// ambient loop. It paints beyond the box it is given.

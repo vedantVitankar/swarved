@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/library_service.dart';
 import '../../services/player_service.dart';
+import '../../services/song_playback.dart';
 import '../../services/welcome_service.dart';
 import '../../tutorial/tutorial_controller.dart';
 import '../../tutorial/tutorial_intro.dart';
@@ -15,8 +16,9 @@ import 'welcome_screen.dart';
 /// Behind the welcome, Home waits blank. When the welcome is done the
 /// greeting types itself in the middle of the screen, glides up to its
 /// place, and the rest of Home fades in around it. Then the tour begins:
-/// Home dims, she presses play on the tutorial's song, and each part of
-/// Home lights up in turn while it plays.
+/// Home dims and each part of it lights up in turn, with the welcome's song
+/// still playing if she started it. When the tour is over the song of the
+/// day and the home note fade in.
 ///
 /// For now the welcome shows on every launch, while it is being perfected.
 /// Remembering that she has seen it goes in [_welcoming]: start it false
@@ -25,7 +27,11 @@ import 'welcome_screen.dart';
 class WelcomeGate extends StatefulWidget {
   final Widget child;
 
-  const WelcomeGate({super.key, required this.child});
+  /// What starts the welcome's song. Null asks the app's player; tests give
+  /// a stand-in, because the real one needs audio hardware.
+  final SongPlayback? playback;
+
+  const WelcomeGate({super.key, required this.child, this.playback});
 
   @override
   State<WelcomeGate> createState() => _WelcomeGateState();
@@ -46,14 +52,28 @@ class _WelcomeGateState extends State<WelcomeGate> {
 
   void _welcomeDone() {
     setState(() => _welcoming = false);
-    // The song was prepared while she read the welcome. If it isn't ready
-    // or isn't there, the tour carries on without it. A fresh app has no
+    // If she started the welcome's song it is still on, and the tour points
+    // at the mini player; if not, that stop is left out. A fresh app has no
     // music folder, so the tour also takes her to the Library to choose one.
     final welcome = context.read<WelcomeService>();
     _tutorial.start(
-      song: welcome.tutorialSong,
+      withSong: _playback?.hasSong ?? false,
       addFolder: welcome.settings.tutorial.alwaysAskForFolder || _noFolder(),
     );
+  }
+
+  /// The player the welcome's song step starts the song on. Where there is
+  /// no player to ask, the welcome has no song step.
+  late final SongPlayback? _playback = _songPlayback();
+
+  SongPlayback? _songPlayback() {
+    final given = widget.playback;
+    if (given != null) return given;
+    try {
+      return PlayerSongPlayback(context.read<PlayerService>());
+    } on ProviderNotFoundException {
+      return null;
+    }
   }
 
   LibraryService? _library() {
@@ -76,15 +96,9 @@ class _WelcomeGateState extends State<WelcomeGate> {
   bool _foldersEmpty() => _library()?.byFolder.isEmpty ?? false;
 
   Widget _tour() {
-    final song = _tutorial.song;
-    final player = song == null ? null : context.read<PlayerService>();
     return TutorialSpotlight(
       controller: _tutorial,
       captions: context.read<WelcomeService>().settings.tutorial.captions,
-      playback: player,
-      songIsPlaying: song == null
-          ? null
-          : () => player!.current?.id == song.track.id && player.isPlaying,
       foldersEmpty: _foldersEmpty,
       library: _library(),
       folderPath: () => _library()?.rootPath,
@@ -114,7 +128,8 @@ class _WelcomeGateState extends State<WelcomeGate> {
               ),
               if (_tutorial.opening) TutorialIntro(controller: _tutorial),
               if (_tutorial.touring) _tour(),
-              if (_welcoming) WelcomeScreen(onDone: _welcomeDone),
+              if (_welcoming)
+                WelcomeScreen(onDone: _welcomeDone, playback: _playback),
             ],
           );
         },

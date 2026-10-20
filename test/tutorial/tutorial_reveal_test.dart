@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:swarved/models/track.dart';
-import 'package:swarved/models/tutorial_song.dart';
 import 'package:swarved/tutorial/tutorial_controller.dart';
 import 'package:swarved/tutorial/tutorial_reveal.dart';
 
@@ -149,34 +147,23 @@ void main() {
     });
   });
 
-  group('TutorialReveal when the song comes first', () {
-    final song = TutorialSong(
-      track: Track(
-        filePath: '/cache/song.mp3',
-        title: 'How Bad',
-        artist: 'Asal',
-        album: '',
-        duration: Duration.zero,
-        folder: 'Our first song',
-      ),
-    );
-
+  group('TutorialReveal for the song of the day after the tour', () {
     TutorialController touring() => TutorialController(
           stage: TutorialStage.blank,
           tour: true,
         )
-          ..start(song: song)
+          ..start(withSong: true)
           ..glide()
           ..reveal()
           ..finish();
 
-    testWidgets('the song shows but the rest waits for her to press play',
+    testWidgets('the rest of Home shows but the song of the day waits',
         (tester) async {
       final c = touring();
       await tester.pumpWidget(Column(
         children: [
-          _host(c, part: TutorialPart.song),
           _host(c, part: TutorialPart.rest),
+          _host(c, part: TutorialPart.note),
         ],
       ));
       await tester.pump();
@@ -189,41 +176,20 @@ void main() {
       expect(fades, [1.0, 0.0]);
     });
 
-    testWidgets('the rest fades in once play has been pressed',
+    testWidgets('it stays hidden through the tour, then fades in',
         (tester) async {
-      final c = TutorialController(stage: TutorialStage.blank, tour: true);
-      await tester.pumpWidget(_host(c, part: TutorialPart.rest));
-      c
-        ..start(song: song)
-        ..glide()
-        ..reveal()
-        ..finish();
+      final c = touring();
+      await tester.pumpWidget(_host(c, part: TutorialPart.note));
       await tester.pump();
-      await tester.pump(const Duration(seconds: 2));
-      expect(_opacity(tester), 0);
 
       c.advance();
       await tester.pump();
       await tester.pump(const Duration(seconds: 2));
-
-      expect(_opacity(tester), 1);
-    });
-
-    testWidgets('skipping on the play step brings the rest in too',
-        (tester) async {
-      final c = TutorialController(stage: TutorialStage.blank, tour: true);
-      await tester.pumpWidget(_host(c, part: TutorialPart.rest));
-      c
-        ..start(song: song)
-        ..glide()
-        ..reveal()
-        ..finish();
-      await tester.pump();
+      expect(_opacity(tester), 0);
 
       c.skip();
       await tester.pump();
       await tester.pump(const Duration(seconds: 2));
-
       expect(_opacity(tester), 1);
     });
   });

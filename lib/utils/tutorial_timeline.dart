@@ -24,11 +24,10 @@ class TutorialTimeline {
   /// A moment to rest before the intro hands over.
   static const Duration settle = Duration(milliseconds: 400);
 
-  /// What fades in without a tutorial song, in order: 0 the subline, 1 the
-  /// filter chips, 2 the folders, 3 the song of the day, 4 the mini player
-  /// and navigation bar. With a tutorial song only the song comes first, and
-  /// the rest follows once she has pressed play. The home note comes last.
-  static const int revealBlocks = 5;
+  /// What fades in at the end of the opening, in order: 0 the subline, 1 the
+  /// filter chips, 2 the folders, 3 the mini player and navigation bar. The
+  /// song of the day and the home note come last, after the tour.
+  static const int revealBlocks = 4;
 
   /// How long the typing takes for a greeting of [letters] characters.
   static Duration typing(int letters) {

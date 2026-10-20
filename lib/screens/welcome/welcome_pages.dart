@@ -2,12 +2,138 @@ import 'package:flutter/material.dart';
 import '../../content/labels.dart';
 import '../../content/words.dart';
 import '../../models/note_line.dart';
+import '../../models/track.dart';
+import '../../services/song_playback.dart';
 import '../../theme/colors.dart';
 import '../../theme/shape.dart';
 import '../../theme/swar_glyphs.dart';
 import '../../theme/typography.dart';
+import '../../widgets/compact_icon_button.dart';
 import '../../widgets/stagger_column.dart';
 import '../../widgets/swar_icon.dart';
+
+/// The song she is asked to start: a line from him, then a box with the
+/// song's title and artist on the left and the play button on the right,
+/// then a few words. The song carries on under every step that follows.
+///
+/// [onPlayed] is told as soon as she presses play, whether or not the song
+/// manages to start, so the welcome can let her go on.
+class WelcomeSongPage extends StatelessWidget {
+  final String line;
+  final String text;
+  final Track track;
+  final SongPlayback playback;
+  final VoidCallback? onPlayed;
+  final bool instant;
+
+  const WelcomeSongPage({
+    super.key,
+    required this.line,
+    required this.text,
+    required this.track,
+    required this.playback,
+    this.onPlayed,
+    this.instant = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StaggerColumn(
+      instant: instant,
+      children: [
+        Text(
+          line,
+          textAlign: TextAlign.center,
+          style: AppType.display.copyWith(fontSize: 30),
+        ),
+        const SizedBox(height: 22),
+        _SongBox(track: track, playback: playback, onPlayed: onPlayed),
+        const SizedBox(height: 22),
+        Text(
+          text,
+          textAlign: TextAlign.center,
+          style: AppType.note.copyWith(
+            fontSize: 24,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The song in its box: title over artist on the left, play on the right.
+class _SongBox extends StatelessWidget {
+  final Track track;
+  final SongPlayback playback;
+  final VoidCallback? onPlayed;
+
+  const _SongBox({
+    required this.track,
+    required this.playback,
+    required this.onPlayed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final artist = track.artist;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppShape.card),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  track.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppType.display.copyWith(fontSize: 22),
+                ),
+                if (artist.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      artist,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppType.note.copyWith(fontSize: 22),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          ListenableBuilder(
+            listenable: playback,
+            builder: (context, _) {
+              final playing = playback.isPlaying(track);
+              return CompactIconButton(
+                icon: playing ? SwarGlyph.pause : SwarGlyph.play,
+                tooltip: playing ? Labels.pause : Labels.play,
+                boxSize: 56,
+                iconSize: 26,
+                color: AppColors.onAccent,
+                background: AppColors.accent,
+                onPressed: () {
+                  playback.toggle(track);
+                  onPlayed?.call();
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Why he made it: a title, a few short paragraphs in his hand, and his
 /// signature. The pages below the sun on the welcome journey.
@@ -83,6 +209,21 @@ class _WelcomeNotesPageState extends State<WelcomeNotesPage> {
     super.dispose();
   }
 
+  /// Moves to [page], the way a swipe would. With reduced motion it simply
+  /// is there. Does nothing past either end.
+  void _go(int page) {
+    if (page < 0 || page >= widget.notes.length) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.jumpToPage(page);
+    } else {
+      _controller.animateToPage(
+        page,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final notes = widget.notes;
@@ -105,13 +246,62 @@ class _WelcomeNotesPageState extends State<WelcomeNotesPage> {
                 _NoteSlide(note: notes[page], active: page == _index),
           ),
         ),
-        const SizedBox(height: 12),
-        Text(
-          '${_index + 1} / ${notes.length}',
-          textAlign: TextAlign.center,
-          style: AppType.caption,
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _NoteArrow(
+              label: Labels.welcomeNotePrevious,
+              onPressed: _index > 0 ? () => _go(_index - 1) : null,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                '${_index + 1} / ${notes.length}',
+                textAlign: TextAlign.center,
+                style: AppType.caption,
+              ),
+            ),
+            _NoteArrow(
+              label: Labels.welcomeNoteNext,
+              pointsRight: true,
+              onPressed: _index < notes.length - 1
+                  ? () => _go(_index + 1)
+                  : null,
+            ),
+          ],
         ),
       ],
+    );
+  }
+}
+
+/// An arrow either side of the note counter, for moving between notes
+/// without swiping. Dimmed and dead at the first and last note, where there
+/// is nowhere to go.
+class _NoteArrow extends StatelessWidget {
+  final String label;
+  final bool pointsRight;
+  final VoidCallback? onPressed;
+
+  const _NoteArrow({
+    required this.label,
+    required this.onPressed,
+    this.pointsRight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = SwarIcon(
+      glyph: SwarGlyph.back,
+      size: 24,
+      color: onPressed == null ? AppColors.hairline : AppColors.textSecondary,
+    );
+    return IconButton(
+      tooltip: label,
+      onPressed: onPressed,
+      // The glyph points left; the right-hand arrow is the same one flipped.
+      icon: pointsRight ? Transform.flip(flipX: true, child: icon) : icon,
     );
   }
 }

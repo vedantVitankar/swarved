@@ -11,7 +11,6 @@ import '../../services/stats_service.dart';
 import '../../theme/typography.dart';
 import '../../tutorial/tutorial_controller.dart';
 import '../../tutorial/tutorial_reveal.dart';
-import '../../tutorial/tutorial_song_card.dart';
 import '../../tutorial/tutorial_step.dart';
 import '../../utils/home_tiles.dart';
 import '../../utils/recent_folders.dart';
@@ -119,7 +118,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // intro, tutorial is null or off and everything simply shows.
     final tutorial = TutorialScope.maybeOf(context);
     final greetingShown = tutorial == null || tutorial.greetingVisible;
-    final songFirst = tutorial != null && tutorial.songFirst;
 
     return PageBody(
       child: Column(
@@ -169,23 +167,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ],
           if (showNote) ...[
             // Brings its own gap above, and nothing when there is no pick.
-            // While the tutorial runs the card holds the tutorial's own
-            // song, never the song of the day from the content file.
-            TutorialReveal(
-              part: TutorialPart.song,
-              // First when the song comes alone, otherwise in its old place
-              // among the blocks.
-              order: songFirst ? 0 : 3,
-              child: tutorial != null && tutorial.songOnHome
-                  ? TutorialSongCard(
-                      song: tutorial.song!,
-                      cardKey: tutorial.keyFor(TutorialStep.play),
-                    )
-                  : const HomeSongOfTheDay(),
+            // Left out of the tutorial, like the note below it: the two
+            // fade in together once the tutorial is over and Home is on
+            // screen.
+            const TutorialReveal(
+              part: TutorialPart.note,
+              child: HomeSongOfTheDay(),
             ),
             const SizedBox(height: 14),
-            // Left out of the intro: it fades in once the intro is over
-            // and Home is on screen.
             const TutorialReveal(
               part: TutorialPart.note,
               child: SlotNoteCard(

@@ -4,6 +4,7 @@ import '../theme/shape.dart';
 import '../theme/typography.dart';
 
 /// The app's outlined button: sharp corners, a rose outline, rose words.
+/// With no [onPressed] it is dimmed, so it looks as dead as it is.
 class SwarOutlinedButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -18,10 +19,13 @@ class SwarOutlinedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onPressed != null;
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: AppColors.accent),
+        side: BorderSide(
+          color: enabled ? AppColors.accent : AppColors.hairline,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppShape.button),
         ),
@@ -29,7 +33,9 @@ class SwarOutlinedButton extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppType.bodyMuted.copyWith(color: AppColors.accent),
+        style: AppType.bodyMuted.copyWith(
+          color: enabled ? AppColors.accent : AppColors.textFaint,
+        ),
       ),
     );
   }

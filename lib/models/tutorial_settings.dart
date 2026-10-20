@@ -2,14 +2,17 @@
 ///
 ///   "tutorial": {
 ///     "song": { "asset": "assets/welcome/song.mp3", "title": "...",
-///               "artist": "...", "label": "...", "note": "..." },
-///     "captions": { "play": "...", "folders": "...", ... },
+///               "artist": "..." },
+///     "captions": { "folders": "...", "chips": "...", ... },
 ///     "alwaysAskForFolder": false
 ///   }
 ///
-/// Every part is optional. With nothing written, the tutorial plays
+/// Every part is optional. With nothing written, the welcome offers
 /// assets/welcome/song.mp3 if that file exists, with the title and artist
-/// from its tags, and uses its built-in captions.
+/// from its tags, and the tour uses its built-in captions.
+///
+/// The song's "label" and "note" are still read, but nothing shows them
+/// any more: the song is no longer on a card in the tour.
 class TutorialSettings {
   static const defaultAsset = 'assets/welcome/song.mp3';
 
@@ -20,13 +23,13 @@ class TutorialSettings {
   final String? title;
   final String? artist;
 
-  /// The gold line and handwritten note on the song's card.
+  /// Once the gold line and handwritten note on the song's card, which the
+  /// tour no longer has. Read, but not shown.
   final String? label;
   final String? note;
 
-  /// His own captions for the steps, by step name: play, folders, chips,
-  /// player, search, library, addFolder, us. A step he leaves out uses the
-  /// default.
+  /// His own captions for the steps, by step name: folders, chips, player,
+  /// search, library, addFolder, us. A step he leaves out uses the default.
   final Map<String, String> captions;
 
   /// The tour takes her to the Library to choose a folder, but only if she
