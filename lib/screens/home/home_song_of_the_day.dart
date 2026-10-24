@@ -12,7 +12,10 @@ import '../../widgets/song_of_the_day_card.dart';
 /// the library doesn't have it. Brings its own gap above, so when it is
 /// hidden Home looks exactly as it did before.
 class HomeSongOfTheDay extends StatelessWidget {
-  const HomeSongOfTheDay({super.key});
+  /// The gap above it. Side by side with the note, Home sets its own.
+  final double topGap;
+
+  const HomeSongOfTheDay({super.key, this.topGap = 14});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +37,7 @@ class HomeSongOfTheDay extends StatelessWidget {
         final isCurrent = currentId == track.id;
 
         return Padding(
-          padding: const EdgeInsets.only(top: 14),
+          padding: EdgeInsets.only(top: topGap),
           child: SongOfTheDayCard(
             track: track,
             label: pick.label ?? Words.songOfTheDayLabel,

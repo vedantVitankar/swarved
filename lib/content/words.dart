@@ -20,12 +20,22 @@ class Words {
   /// Greeting at the top of Home, by the hour of the day.
   /// The line breaks after the comma, as in the preview.
   /// Pass a local time (DateTime.now()), not UTC.
-  static String greeting(DateTime now) {
+  ///
+  /// With [oneLine] the break becomes a space, for windows wide enough to
+  /// hold the whole greeting on one line.
+  static String greeting(DateTime now, {bool oneLine = false}) {
     final hour = now.hour;
-    if (hour >= 5 && hour < 12) return 'Good morning,\n$swarnima';
-    if (hour >= 12 && hour < 17) return 'Hey,\n$swara';
-    if (hour >= 17 && hour < 22) return 'Good evening,\n$swara';
-    return 'Still up,\n$baby?';
+    final String text;
+    if (hour >= 5 && hour < 12) {
+      text = 'Good morning,\n$swarnima';
+    } else if (hour >= 12 && hour < 17) {
+      text = 'Hey,\n$swara';
+    } else if (hour >= 17 && hour < 22) {
+      text = 'Good evening,\n$swara';
+    } else {
+      text = 'Still up,\n$baby?';
+    }
+    return oneLine ? text.replaceFirst('\n', ' ') : text;
   }
 
   // The welcome screen, unless he writes his own in assets/welcome/welcome.json
@@ -198,4 +208,14 @@ class Words {
   static const updateOpening = 'Opening it now...';
   static const updateFailed =
       'That did not work this time. Try again in a moment?';
+
+  // The right section on wide windows.
+  static const photoNotesTitle = 'Photo notes';
+  static const photoNotesEmpty =
+      'The pictures I keep for you will gather here.';
+  static const onThisDayLabel = 'On this day';
+  static String onThisDayWhen(int yearsAgo) =>
+      yearsAgo == 1 ? 'A year ago today' : '$yearsAgo years ago today';
+  static String onThisDaySong(String title, String artist) =>
+      artist.isEmpty ? 'You played $title.' : 'You played $title, $artist.';
 }

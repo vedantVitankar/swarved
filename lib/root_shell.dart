@@ -8,6 +8,7 @@ import 'theme/responsive.dart';
 import 'tutorial/tutorial_controller.dart';
 import 'tutorial/tutorial_reveal.dart';
 import 'widgets/mini_player_bar.dart';
+import 'widgets/right_panel.dart';
 import 'widgets/swar_nav_bar.dart';
 import 'widgets/swar_nav_rail.dart';
 
@@ -33,8 +34,10 @@ class _RootShellState extends State<RootShell> {
 
   @override
   Widget build(BuildContext context) {
-    final wide =
-        Responsive.of(MediaQuery.sizeOf(context).width) == ScreenClass.expanded;
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = Responsive.of(width) == ScreenClass.expanded;
+    // Room for a third section: navigation, page, then her photo notes.
+    final rightPanel = Responsive.hasRightPanel(width);
 
     // The mini player and navigation bar fade in with the rest of Home: last
     // of the blocks, after the folders.
@@ -89,6 +92,13 @@ class _RootShellState extends State<RootShell> {
                       ],
                     ),
                   ),
+                  // Like the notes on Home, it stays out of the first-time
+                  // intro and fades in once the intro is over.
+                  if (rightPanel)
+                    const TutorialReveal(
+                      part: TutorialPart.note,
+                      child: RightPanel(),
+                    ),
                 ],
               )
             : tabs,

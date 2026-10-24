@@ -9,11 +9,18 @@ class Responsive {
   static const double expandedFrom = 840;
 
   /// The widest a page's content gets, so wide windows don't stretch it.
-  static const double contentMaxWidth = 720;
+  static const double contentMaxWidth = 860;
 
-  /// The widest the floating player gets on wide windows. It has three
-  /// zones, so it needs more room than a page does.
-  static const double desktopPlayerMaxWidth = 1040;
+  /// The widest the floating player gets on wide windows. The same as a
+  /// page, so the player and the page above it share one edge.
+  static const double desktopPlayerMaxWidth = contentMaxWidth;
+
+  /// From this window width a third section opens on the right: her photo
+  /// notes and "on this day". Below it the page has the whole width.
+  static const double rightPanelFrom = 1280;
+  static const double rightPanelWidth = 340;
+
+  static bool hasRightPanel(double width) => width >= rightPanelFrom;
 
   static ScreenClass of(double width) {
     if (width >= expandedFrom) return ScreenClass.expanded;

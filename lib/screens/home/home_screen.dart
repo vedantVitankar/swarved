@@ -4,10 +4,13 @@ import '../../content/labels.dart';
 import '../../content/words.dart';
 import '../../models/note_slot.dart';
 import '../../models/playlist.dart';
+import '../../models/song_of_the_day.dart';
 import '../../models/track.dart';
+import '../../services/content_service.dart';
 import '../../services/library_service.dart';
 import '../../services/playlist_service.dart';
 import '../../services/stats_service.dart';
+import '../../theme/responsive.dart';
 import '../../theme/typography.dart';
 import '../../tutorial/tutorial_controller.dart';
 import '../../tutorial/tutorial_reveal.dart';
@@ -26,6 +29,20 @@ import 'home_song_of_the_day.dart';
 import 'home_update_card.dart';
 
 enum _HomeFilter { all, folders, notes }
+
+/// The note on Home: his own, or the default one.
+class _HomeNote extends StatelessWidget {
+  const _HomeNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SlotNoteCard(
+      slot: NoteSlot.homeNote,
+      defaultLabel: Words.noteForYouLabel,
+      fallbackNote: Words.noteForYou,
+    );
+  }
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -66,8 +83,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget _tiles(
     LibraryService library,
     List<Playlist> playlists,
-    StatsService stats,
-  ) {
+    StatsService stats, {
+    required int columns,
+  }) {
     final byFolder = library.byFolder;
     final tiles = pickHomeTiles(
       playlists: playlists,
@@ -84,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       children: [
         HomeTileGrid(
           tiles: tiles,
+          columns: columns,
           onOpen: (tile) => _open(tile, byFolder),
         ),
         // Liked songs is always there, so say where folders will gather.
@@ -120,6 +139,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final tutorial = TutorialScope.maybeOf(context);
     final greetingShown = tutorial == null || tutorial.greetingVisible;
 
+    // A wide window has room for the whole greeting on one line, three
+    // folders across, and the song of the day beside the note.
+    final wide =
+        Responsive.of(MediaQuery.sizeOf(context).width) == ScreenClass.expanded;
+    final pick =
+        context.select<ContentService, SongOfTheDay?>((c) => c.songOfTheDay);
+    final hasSong = pick?.resolve(library.tracks) != null;
+
     return PageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Opacity(
             opacity: greetingShown ? 1 : 0,
             child: Text(
-              Words.greeting(DateTime.now()),
+              Words.greeting(DateTime.now(), oneLine: wide),
               key: tutorial?.greetingKey,
               style: AppType.display,
             ),
@@ -168,7 +195,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               order: 2,
               child: KeyedSubtree(
                 key: tutorial?.keyFor(TutorialStep.folders),
-                child: _tiles(library, playlists, stats),
+                child: _tiles(
+                  library,
+                  playlists,
+                  stats,
+                  columns: wide ? 3 : 2,
+                ),
               ),
             ),
           ],
@@ -177,19 +209,43 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             // Left out of the tutorial, like the note below it: the two
             // fade in together once the tutorial is over and Home is on
             // screen.
-            const TutorialReveal(
-              part: TutorialPart.note,
-              child: HomeSongOfTheDay(),
-            ),
-            const SizedBox(height: 14),
-            const TutorialReveal(
-              part: TutorialPart.note,
-              child: SlotNoteCard(
-                slot: NoteSlot.homeNote,
-                defaultLabel: Words.noteForYouLabel,
-                fallbackNote: Words.noteForYou,
+            if (wide && hasSong)
+              const Padding(
+                padding: EdgeInsets.only(top: 14),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: TutorialReveal(
+                          part: TutorialPart.note,
+                          child: HomeSongOfTheDay(topGap: 0),
+                        ),
+                      ),
+                      SizedBox(width: 14),
+                      Expanded(
+                        flex: 2,
+                        child: TutorialReveal(
+                          part: TutorialPart.note,
+                          child: _HomeNote(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else ...[
+              const TutorialReveal(
+                part: TutorialPart.note,
+                child: HomeSongOfTheDay(),
               ),
-            ),
+              const SizedBox(height: 14),
+              const TutorialReveal(
+                part: TutorialPart.note,
+                child: _HomeNote(),
+              ),
+            ],
           ],
           // Last on Home, below the note, and like the note it stays out of
           // the first-time intro and fades in once the intro is over. Brings
