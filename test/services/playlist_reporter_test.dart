@@ -120,8 +120,7 @@ void main() {
     r.dispose();
   });
 
-  test('a refused token is not retried by itself, a server error is',
-      () async {
+  test('a refused token is not retried by itself, a server error is', () async {
     final r = reporter();
     status = 401;
     expect(await r.reportNow(), isFalse);

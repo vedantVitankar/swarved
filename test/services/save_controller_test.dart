@@ -307,8 +307,7 @@ void main() {
       expect(setup.asked, 1);
     });
 
-    test('answers null when the picker is closed without a folder',
-        () async {
+    test('answers null when the picker is closed without a folder', () async {
       final setup = _Setup(folder: null, onChoose: (_) async => null);
 
       expect(await setup.controller.ensureFolder(), isNull);

@@ -20,8 +20,7 @@ void main() {
 
     test('alwaysAskForFolder is on only for a real true', () {
       expect(
-        TutorialSettings.parse({'alwaysAskForFolder': true})
-            .alwaysAskForFolder,
+        TutorialSettings.parse({'alwaysAskForFolder': true}).alwaysAskForFolder,
         isTrue,
       );
       for (final value in <Object?>[false, 'true', 1, null]) {

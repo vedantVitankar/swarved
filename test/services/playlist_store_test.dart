@@ -48,15 +48,18 @@ void main() {
   File mainFile() => File(p.join(dir.path, FilePlaylistStore.fileName));
 
   group('FilePlaylistStore', () {
-    test('each profile keeps its own file, hers keeps the old name',
-        () async {
+    test('each profile keeps its own file, hers keeps the old name', () async {
       final hers = FilePlaylistStore(directory: () async => dir);
       final trial = FilePlaylistStore(
         directory: () async => dir,
         profile: AppProfile.test,
       );
-      await hers.write([_playlist('a', 'Hers', ['yt:aaaaaaaaaaa'])]);
-      await trial.write([_playlist('b', 'Test', ['yt:bbbbbbbbbbb'])]);
+      await hers.write([
+        _playlist('a', 'Hers', ['yt:aaaaaaaaaaa'])
+      ]);
+      await trial.write([
+        _playlist('b', 'Test', ['yt:bbbbbbbbbbb'])
+      ]);
 
       expect(files(), contains('playlists_v1.json'));
       expect(files(), contains('playlists_test_v1.json'));
@@ -92,7 +95,9 @@ void main() {
 
     test('leaves no temporary file behind', () async {
       await store().write([_playlist('pl_1', 'One', [])]);
-      await store().write([_playlist('pl_1', 'One', ['yt:a'])]);
+      await store().write([
+        _playlist('pl_1', 'One', ['yt:a'])
+      ]);
 
       expect(files(), isNot(contains('${FilePlaylistStore.fileName}.tmp')));
     });

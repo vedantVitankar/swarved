@@ -130,8 +130,8 @@ void main() {
       var told = 0;
       service.addListener(() => told++);
 
-      final applied = service
-          .apply('{"notes":[{"title":"Kesariya","note":"Ours, now."}]}');
+      final applied =
+          service.apply('{"notes":[{"title":"Kesariya","note":"Ours, now."}]}');
 
       expect(applied, isTrue);
       expect(service.noteFor(_track)?.note, 'Ours, now.');

@@ -35,8 +35,7 @@ void main() {
       expect(find.text('hello'), findsOneWidget);
     });
 
-    testWidgets('with the intro off the child is simply there',
-        (tester) async {
+    testWidgets('with the intro off the child is simply there', (tester) async {
       await tester.pumpWidget(_host(TutorialController()));
 
       expect(_opacity(tester), 1);

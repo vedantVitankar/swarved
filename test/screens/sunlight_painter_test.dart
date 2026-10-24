@@ -19,20 +19,29 @@ void main() {
       expect(
         SunlightPainter.loopTurn,
         closeTo(
-          SunlightPainter.patternLength * 2 * math.pi / SunlightPainter.rayCount,
+          SunlightPainter.patternLength *
+              2 *
+              math.pi /
+              SunlightPainter.rayCount,
           1e-9,
         ),
       );
     });
 
-    test('the long flare is about nine tenths of the sun across, the short '
+    test(
+        'the long flare is about nine tenths of the sun across, the short '
         'one clearly shorter', () {
       expect(SunlightPainter.longArc, 0.9);
       expect(SunlightPainter.shortArc, inInclusiveRange(0.4, 0.7));
     });
 
     testWidgets('paints at every stage without a problem', (tester) async {
-      for (final (bloom, rays) in [(0.0, 0.0), (1.0, 0.0), (0.5, 0.5), (1.0, 1.0)]) {
+      for (final (bloom, rays) in [
+        (0.0, 0.0),
+        (1.0, 0.0),
+        (0.5, 0.5),
+        (1.0, 1.0)
+      ]) {
         await tester.pumpWidget(_sun(SunlightPainter(
           bloom: bloom,
           rays: rays,

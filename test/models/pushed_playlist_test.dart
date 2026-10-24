@@ -28,7 +28,8 @@ void main() {
       final item = pushed.playlist.items.single;
       expect(item.key, 'yt:dQw4w9WgXcQ');
       expect(item.duration, const Duration(seconds: 215));
-      expect(item.artworkUrl, 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+      expect(
+          item.artworkUrl, 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
     });
 
     test('a nameless playlist, or one that is not an object, is skipped', () {

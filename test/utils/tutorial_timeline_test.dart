@@ -22,7 +22,8 @@ void main() {
       expect(TutorialTimeline.lettersShown(Duration.zero, letters), 0);
       expect(TutorialTimeline.lettersShown(total, letters), letters);
       expect(
-        TutorialTimeline.lettersShown(total + const Duration(seconds: 5), letters),
+        TutorialTimeline.lettersShown(
+            total + const Duration(seconds: 5), letters),
         letters,
       );
     });

@@ -292,8 +292,7 @@ void main() {
       );
     });
     await settle();
-    expect(session.only('show'),
-        ['show Local|Me|Album|file:///C:/art/1.jpg']);
+    expect(session.only('show'), ['show Local|Me|Album|file:///C:/art/1.jpg']);
   });
 
   test('a cover that cannot be prepared costs the picture, not the song',

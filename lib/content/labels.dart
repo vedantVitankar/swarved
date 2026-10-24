@@ -111,9 +111,21 @@ class Labels {
   static const downloads = 'On this phone';
   static const clearDownloads = 'Delete';
   static String downloadsSummary(int files, int bytes) {
-    final what = files == 1 ? '1 photo or recording' : '$files photos and recordings';
+    final what =
+        files == 1 ? '1 photo or recording' : '$files photos and recordings';
     final mb = bytes / (1024 * 1024);
     final size = mb < 0.1 ? 'under 0.1 MB' : '${mb.toStringAsFixed(1)} MB';
     return '$what, $size';
   }
+
+  // The app's own updates.
+  static const updateNow = 'Update now';
+  static const updateRetry = 'Try again';
+  static const updatesTitle = 'App version';
+  static const checkForUpdates = 'Check for updates';
+  static const updateChecking = 'Looking for something new...';
+  static const updateUpToDate = 'You have the latest version';
+  static const updateCheckFailed = 'Could not check right now';
+  static const updateWaiting = 'A new version is waiting on Home';
+  static String appVersion(String version) => 'Version $version';
 }

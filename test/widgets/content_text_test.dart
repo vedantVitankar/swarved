@@ -31,8 +31,7 @@ void main() {
   });
 
   testWidgets('shows his words when he wrote some', (tester) async {
-    final service =
-        await _service('{"texts": {"searchTitle": "Hello, baby"}}');
+    final service = await _service('{"texts": {"searchTitle": "Hello, baby"}}');
 
     await tester.pumpWidget(_app(service));
 

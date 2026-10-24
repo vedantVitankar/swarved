@@ -19,6 +19,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'services/server_api.dart';
 import 'services/server_config.dart';
 import 'utils/app_profile.dart';
+import 'services/app_version.dart';
+import 'services/bundled_token_store.dart';
 import 'services/secure_token_store.dart';
 import 'services/connection_service.dart';
 import 'services/stream_endpoint.dart';
@@ -30,6 +32,7 @@ import 'services/content_source.dart';
 import 'services/content_sync.dart';
 import 'services/media_cache.dart';
 import 'services/tutorial_song_service.dart';
+import 'services/update_service.dart';
 import 'services/welcome_service.dart';
 
 Future<void> main() async {
@@ -75,7 +78,7 @@ Future<void> main() async {
   await libraryService.restoreLastLibrary();
 
   final serverConfig = ServerConfig(profile: AppProfile.current);
-  final tokenStore = SecureTokenStore();
+  final tokenStore = BundledTokenStore(inner: SecureTokenStore());
   final serverApi = ServerApi(
     config: serverConfig,
     tokenStore: tokenStore,
@@ -167,6 +170,15 @@ Future<void> main() async {
   contentService.addListener(() => unawaited(voiceService.syncProgress()));
   unawaited(voiceService.syncProgress());
 
+  // The app updates itself on Windows: a card on Home offers a newer version
+  // and one tap installs it. Elsewhere it stays quiet.
+  final updateService = UpdateService(
+    config: serverConfig,
+    tokenStore: tokenStore,
+    installed: readInstalledVersion,
+    supported: Platform.isWindows,
+  );
+
   final welcomeService = WelcomeService(songService: TutorialSongService());
   await welcomeService.load();
 
@@ -183,6 +195,7 @@ Future<void> main() async {
     contentService: contentService,
     welcomeService: welcomeService,
     mediaCache: mediaCache,
+    updateService: updateService,
     voiceService: voiceService,
     systemControls: systemControls,
   ));
@@ -190,6 +203,10 @@ Future<void> main() async {
   // While the app is open it hears about each publish at once. In the
   // background it asks nothing, and on return it catches up first.
   contentSync.start();
+  // A moment after start, so the first screen is not kept waiting.
+  if (updateService.supported) {
+    Timer(const Duration(seconds: 4), () => unawaited(updateService.check()));
+  }
   AppLifecycleListener(
     onHide: contentSync.pause,
     onShow: () {

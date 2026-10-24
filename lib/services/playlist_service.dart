@@ -136,7 +136,9 @@ class PlaylistService extends ChangeNotifier {
   /// A playlist nobody has put a song in or changed: what a fresh install
   /// starts with. It must never replace a real one.
   static bool _untouched(Playlist p) =>
-      p.items.isEmpty && p.updatedAt.isAtSameMomentAs(p.createdAt) && !p.isDeleted;
+      p.items.isEmpty &&
+      p.updatedAt.isAtSameMomentAs(p.createdAt) &&
+      !p.isDeleted;
 
   /// Takes in the playlists the server holds from her other devices, by id:
   /// a playlist this device does not have is added, and for one it has, the

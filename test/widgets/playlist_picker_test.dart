@@ -134,8 +134,7 @@ void main() {
       expect(find.text('For you'), findsNothing);
     });
 
-    testWidgets('a tap changes the tick but saves nothing yet',
-        (tester) async {
+    testWidgets('a tap changes the tick but saves nothing yet', (tester) async {
       _screen(tester);
       final service = await _service();
       final road = service.create('Road trip')!;

@@ -2,8 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:swarved/tutorial/tutorial_controller.dart';
 import 'package:swarved/tutorial/tutorial_step.dart';
 
-TutorialController _blank() =>
-    TutorialController(stage: TutorialStage.blank);
+TutorialController _blank() => TutorialController(stage: TutorialStage.blank);
 
 void _walkToTheEnd(TutorialController c) {
   c
@@ -155,7 +154,8 @@ void main() {
   });
 
   group('TutorialController tour', () {
-    TutorialController touring({bool withSong = false, bool addFolder = false}) {
+    TutorialController touring(
+        {bool withSong = false, bool addFolder = false}) {
       final c = TutorialController(stage: TutorialStage.blank, tour: true)
         ..start(withSong: withSong, addFolder: addFolder)
         ..glide()
@@ -300,8 +300,7 @@ void main() {
       expect(c.restVisible, isTrue);
     });
 
-    test('the song of the day and the note wait for the end of the tour',
-        () {
+    test('the song of the day and the note wait for the end of the tour', () {
       final c = touring(withSong: true);
 
       expect(c.noteVisible, isFalse);

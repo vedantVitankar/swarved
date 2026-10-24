@@ -162,9 +162,7 @@ void main() {
     test('a failed download can be tried again later', () async {
       var fail = true;
       final cache = cacheFor((request) async {
-        return fail
-            ? http.Response('', 500)
-            : http.Response.bytes([5], 200);
+        return fail ? http.Response('', 500) : http.Response.bytes([5], 200);
       });
 
       expect(await cache.fileFor(_photo), isNull);

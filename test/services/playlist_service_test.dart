@@ -163,7 +163,8 @@ void main() {
       final now = DateTime.utc(2026, 12, 1);
       final store = _FakeStore([
         _playlist(Playlist.likedId, 'Liked', kind: PlaylistKind.liked),
-        _playlist('old', 'Old', deletedAt: now.subtract(const Duration(days: 31))),
+        _playlist('old', 'Old',
+            deletedAt: now.subtract(const Duration(days: 31))),
         _playlist('recent', 'Recent',
             deletedAt: now.subtract(const Duration(days: 5))),
       ]);
@@ -310,8 +311,7 @@ void main() {
       expect(service.rename('sent', 'Mine'), isFalse);
     });
 
-    test('delete hides it and restore brings it back with its songs',
-        () async {
+    test('delete hides it and restore brings it back with its songs', () async {
       final service = await loaded();
       final made = service.create('Road')!;
       service.add(made.id, _youtube('a'));
@@ -425,8 +425,7 @@ void main() {
       expect(keysOf(service, Playlist.likedId), ['yt:a', 'yt:b', 'yt:c']);
     });
 
-    test('move refuses places that are not there, or no move at all',
-        () async {
+    test('move refuses places that are not there, or no move at all', () async {
       final service = await loaded();
       service.add(Playlist.likedId, _youtube('a'));
       service.add(Playlist.likedId, _youtube('b'));
@@ -484,8 +483,7 @@ void main() {
       expect(keysOf(service, road.id), isEmpty);
     });
 
-    test('a song taken out and put back before Done keeps its place',
-        () async {
+    test('a song taken out and put back before Done keeps its place', () async {
       final service = await loaded();
       final road = service.create('Road')!;
       final songs = [_youtube('a'), _youtube('b'), _youtube('c')];
@@ -542,8 +540,7 @@ void main() {
       expect(service.playlists, hasLength(1));
     });
 
-    test('ids that are not playlists, and ones he sent, are ignored',
-        () async {
+    test('ids that are not playlists, and ones he sent, are ignored', () async {
       final store = _FakeStore([
         _playlist('sent', 'For you', kind: PlaylistKind.pushed),
       ]);
@@ -555,8 +552,7 @@ void main() {
       expect(service.playlistIdsWith(_youtube('a')), isEmpty);
     });
 
-    test('when nothing changes nobody is told and nothing is saved',
-        () async {
+    test('when nothing changes nobody is told and nothing is saved', () async {
       final store = _FakeStore();
       final service = await loaded(store);
       await service.saved;
@@ -608,8 +604,7 @@ void main() {
       expect(told, 6);
     });
 
-    test('a quick run of changes ends with the newest state on file',
-        () async {
+    test('a quick run of changes ends with the newest state on file', () async {
       final store = _FakeStore();
       final service = await loaded(store);
 
@@ -635,8 +630,8 @@ void main() {
       final second = await loaded(store);
 
       expect(keysOf(second, made.id), ['yt:a']);
-      expect(second.isLiked(_local('Tum Hi Ho', path: '/elsewhere.mp3')),
-          isTrue);
+      expect(
+          second.isLiked(_local('Tum Hi Ho', path: '/elsewhere.mp3')), isTrue);
     });
 
     test('a failed save is survived, and the next one works', () async {
@@ -687,7 +682,9 @@ void main() {
         () async {
       final store = _FakeStore();
       final service = await loaded(store);
-      service.setPushed([his('Mix', ['aaaaaaaaaaa'])]);
+      service.setPushed([
+        his('Mix', ['aaaaaaaaaaa'])
+      ]);
 
       expect(service.byId('pushed_Mix')?.name, 'Mix');
       expect(service.playlists.map((p) => p.id), ['liked']);
@@ -701,11 +698,17 @@ void main() {
       var heard = 0;
       service.addListener(() => heard++);
 
-      service.setPushed([his('Mix', ['aaaaaaaaaaa'])]);
-      service.setPushed([his('Mix', ['aaaaaaaaaaa'])]);
+      service.setPushed([
+        his('Mix', ['aaaaaaaaaaa'])
+      ]);
+      service.setPushed([
+        his('Mix', ['aaaaaaaaaaa'])
+      ]);
       expect(heard, 1);
 
-      service.setPushed([his('Mix', ['aaaaaaaaaaa', 'bbbbbbbbbbb'])]);
+      service.setPushed([
+        his('Mix', ['aaaaaaaaaaa', 'bbbbbbbbbbb'])
+      ]);
       expect(heard, 2);
       service.setPushed(const []);
       expect(heard, 3);
@@ -722,7 +725,8 @@ void main() {
       expect(copy.kind, PlaylistKind.user);
       expect(copy.isEditable, isTrue);
       expect(copy.id, isNot(mix.id));
-      expect(copy.items.map((i) => i.key), ['yt:aaaaaaaaaaa', 'yt:bbbbbbbbbbb']);
+      expect(
+          copy.items.map((i) => i.key), ['yt:aaaaaaaaaaa', 'yt:bbbbbbbbbbb']);
 
       expect(service.saveToLibrary(mix), SaveResult.alreadySaved);
       expect(service.playlists.where((p) => p.name == 'Mix'), hasLength(1));

@@ -16,8 +16,7 @@ final _track = Track(
   folder: 'music',
 );
 
-String _note(String text) =>
-    '{"notes":[{"title":"Kesariya","note":"$text"}]}';
+String _note(String text) => '{"notes":[{"title":"Kesariya","note":"$text"}]}';
 
 /// Answers from a list, and remembers what it was asked.
 class _ScriptedSource implements ContentSource {
@@ -372,8 +371,7 @@ void main() {
 
       await sync.syncOnce();
 
-      expect(told.single,
-          {'0123456789abcdef.jpg', 'fedcba9876543210.m4a'});
+      expect(told.single, {'0123456789abcdef.jpg', 'fedcba9876543210.m4a'});
     });
   });
 

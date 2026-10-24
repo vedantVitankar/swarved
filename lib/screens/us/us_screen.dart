@@ -11,6 +11,7 @@ import 'connection_card.dart';
 import 'downloads_card.dart';
 import 'memory_lane_card.dart';
 import 'recap_card.dart';
+import 'updates_card.dart';
 import 'logbook_card.dart';
 
 /// The corner that's just for the two of them. For now: the logbook.
@@ -41,6 +42,7 @@ class UsScreen extends StatelessWidget {
           const RecapCard(),
           const SizedBox(height: 12),
           const DownloadsCard(),
+          const UpdatesCard(),
           const ConnectionCard(),
         ],
       ),

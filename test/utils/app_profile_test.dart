@@ -4,13 +4,12 @@ import 'package:swarved/utils/app_profile.dart';
 void main() {
   group('AppProfile.resolve', () {
     test('a release build is hers', () {
-      expect(AppProfile.resolve(override: '', release: true),
-          AppProfile.swarnima);
+      expect(
+          AppProfile.resolve(override: '', release: true), AppProfile.swarnima);
     });
 
     test('any other build is the test profile', () {
-      expect(AppProfile.resolve(override: '', release: false),
-          AppProfile.test);
+      expect(AppProfile.resolve(override: '', release: false), AppProfile.test);
     });
 
     test('an override picks a real profile, in any case', () {

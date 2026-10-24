@@ -145,7 +145,8 @@ void main() {
       final track =
           const SongOfTheDay(id: 'yt:dQw4w9WgXcQ', title: 'T').resolve([])!;
 
-      expect(track.artworkUrl, 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+      expect(
+          track.artworkUrl, 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
       expect(track.artworkUrl, SongOfTheDay.thumbnailFor('dQw4w9WgXcQ'));
     });
 

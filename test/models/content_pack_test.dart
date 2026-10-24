@@ -197,8 +197,7 @@ void main() {
          "letters": [{"voice": "fedcba9876543210.m4a"}],
          "x": "not a file.jpg and short.png"}''');
 
-      expect(pack.mediaFiles,
-          {'0123456789abcdef.jpg', 'fedcba9876543210.m4a'});
+      expect(pack.mediaFiles, {'0123456789abcdef.jpg', 'fedcba9876543210.m4a'});
     });
 
     test('a file named twice counts once', () {

@@ -229,8 +229,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('back skips the tour instead of getting stuck',
-        (tester) async {
+    testWidgets('back skips the tour instead of getting stuck', (tester) async {
       _phoneScreen(tester);
       final c = _touring();
       await tester.pumpWidget(_host(c));
@@ -285,8 +284,7 @@ void main() {
       expect(find.text(Labels.welcomeNext), findsOneWidget);
     });
 
-    testWidgets('takes every tap there, the lit part included',
-        (tester) async {
+    testWidgets('takes every tap there, the lit part included', (tester) async {
       var target = 0;
       var underneath = 0;
       await atThePlayer(

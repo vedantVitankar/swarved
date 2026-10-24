@@ -80,8 +80,7 @@ void main() {
       );
     });
 
-    test('the end of a song is judged by the last real position, not zero',
-        () {
+    test('the end of a song is judged by the last real position, not zero', () {
       // The bug: the player reads zero once a song has ended, so a finished
       // song looked cut off at 0:00 and played again, for ever.
       final point = PlayedPoint()

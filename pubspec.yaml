@@ -1,7 +1,7 @@
 name: swarved
 description: SwarVed — a personal music player.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+3
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -31,6 +31,8 @@ dependencies:
   # Local library access + metadata
   file_picker: ^13.1.0
   path: ^1.9.0
+  crypto: ^3.0.3                           # checks the downloaded installer
+  package_info_plus: '>=8.0.0 <11.0.0'     # which version is running
   path_provider: ^2.1.2
   flutter_taglib: ^1.6.0
 

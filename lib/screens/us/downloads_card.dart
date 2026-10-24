@@ -39,7 +39,8 @@ class _DownloadsCardState extends State<DownloadsCard> {
     await cache.clear();
     if (!mounted) return;
     setState(() => _usage = cache.usage());
-    messenger.showSnackBar(const SnackBar(content: Text(Words.downloadsCleared)));
+    messenger
+        .showSnackBar(const SnackBar(content: Text(Words.downloadsCleared)));
   }
 
   @override

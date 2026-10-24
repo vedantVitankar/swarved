@@ -41,7 +41,8 @@ class PlaylistDownloadButton extends StatelessWidget {
         busy: true,
         color: AppColors.accent,
         tooltip: SaveWords.stopDownloading,
-        onPressed: view.stopping ? _absorbTap : () => downloader.cancel(playlistId),
+        onPressed:
+            view.stopping ? _absorbTap : () => downloader.cancel(playlistId),
       );
     }
 

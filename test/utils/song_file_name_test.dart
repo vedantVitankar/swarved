@@ -89,7 +89,8 @@ void main() {
     });
 
     test('a very long name is cut to fit', () {
-      expect(utf8.encode(safeFolderName('a' * 500)).length, lessThanOrEqualTo(200));
+      expect(utf8.encode(safeFolderName('a' * 500)).length,
+          lessThanOrEqualTo(200));
     });
   });
 }

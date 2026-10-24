@@ -265,9 +265,8 @@ class _WelcomeNotesPageState extends State<WelcomeNotesPage> {
             _NoteArrow(
               label: Labels.welcomeNoteNext,
               pointsRight: true,
-              onPressed: _index < notes.length - 1
-                  ? () => _go(_index + 1)
-                  : null,
+              onPressed:
+                  _index < notes.length - 1 ? () => _go(_index + 1) : null,
             ),
           ],
         ),

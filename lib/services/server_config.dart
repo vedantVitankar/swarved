@@ -39,6 +39,19 @@ class ServerConfig {
   /// site can mark each one.
   Uri get voicesPlayedUri => _profiled('/api/voices/played');
 
+  /// The newest release of the app itself for [platform]. The server
+  /// answers with nothing (204) when none is published for this profile.
+  Uri appUpdateUri(String platform) {
+    final uri = _profiled('/api/app-update');
+    return uri.replace(
+      queryParameters: {...uri.queryParameters, 'platform': platform},
+    );
+  }
+
+  /// One installer, by the name the release gives.
+  Uri appUpdateFileUri(String file) =>
+      _profiled('/api/app-update/file/${Uri.encodeComponent(file)}');
+
   /// One uploaded photo or recording, by the name the server gave it.
   /// Photos and recordings belong to a profile on the server, so this names
   /// the profile like content does.

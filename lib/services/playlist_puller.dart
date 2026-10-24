@@ -66,9 +66,8 @@ class PlaylistPuller {
       final token = await _tokenStore.readToken();
       if (token == null || token.trim().isEmpty) return false;
 
-      final response = await _client
-          .get(_config.playlistsUri, headers: {'X-Token': token.trim()})
-          .timeout(_timeout);
+      final response = await _client.get(_config.playlistsUri,
+          headers: {'X-Token': token.trim()}).timeout(_timeout);
       if (response.statusCode != 200) return false;
 
       // Read as UTF-8 whatever the server says, so names in any script

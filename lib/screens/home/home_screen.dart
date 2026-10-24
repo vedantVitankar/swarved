@@ -23,6 +23,7 @@ import '../playlist/playlist_screen.dart';
 import 'home_made_for_you.dart';
 import 'home_tile_grid.dart';
 import 'home_song_of_the_day.dart';
+import 'home_update_card.dart';
 
 enum _HomeFilter { all, folders, notes }
 
@@ -123,6 +124,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // A newer SwarVed, when one is waiting: nothing otherwise. Like the
+          // note, it stays out of the first-time intro.
+          const TutorialReveal(
+            part: TutorialPart.note,
+            child: HomeUpdateCard(),
+          ),
           // Laid out from the start so the intro can find its place, but
           // not drawn until the typed greeting has glided into it.
           Opacity(

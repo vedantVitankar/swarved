@@ -501,9 +501,8 @@ class PlayerService extends ChangeNotifier {
 
     // One of his recordings may come between the two songs. Never when the
     // same song is looping, and never for one that is not on the phone.
-    final voice = _order.repeat == QueueRepeat.one
-        ? null
-        : await _voices?.afterSong();
+    final voice =
+        _order.repeat == QueueRepeat.one ? null : await _voices?.afterSong();
     if (serial != _loadSerial) return; // she chose something meanwhile
     if (voice == null) {
       await _switchTo(index);

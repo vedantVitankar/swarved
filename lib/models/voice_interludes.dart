@@ -58,7 +58,8 @@ class VoiceInterludes {
         : minute >= from || minute < to;
   }
 
-  static final RegExp _clipName = RegExp(r'^[a-f0-9]{16}\.(?:mp3|m4a|ogg|wav)$');
+  static final RegExp _clipName =
+      RegExp(r'^[a-f0-9]{16}\.(?:mp3|m4a|ogg|wav)$');
   static final RegExp _clock = RegExp(r'^(\d{1,2}):(\d{2})$');
 
   /// Anything that is not a `voices` object gives [none]. Bad entries and

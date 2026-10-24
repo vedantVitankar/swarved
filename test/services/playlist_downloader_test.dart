@@ -225,13 +225,11 @@ void main() {
     Future<bool>? second;
     setup.duringSave = (song) {
       if (song.id == 'a') {
-        second = setup.downloader
-            .download(
-              playlistId: 'p1',
-              playlistName: 'Mix',
-              songs: [_song('a'), _song('b')],
-            )
-            .then((result) => result == null);
+        second = setup.downloader.download(
+          playlistId: 'p1',
+          playlistName: 'Mix',
+          songs: [_song('a'), _song('b')],
+        ).then((result) => result == null);
       }
     };
 
@@ -250,13 +248,11 @@ void main() {
     Future<void>? other;
     setup.duringSave = (song) {
       if (song.id == 'a') {
-        other = setup.downloader
-            .download(
-              playlistId: 'p2',
-              playlistName: 'Other',
-              songs: [_song('z')],
-            )
-            .then((_) {});
+        other = setup.downloader.download(
+          playlistId: 'p2',
+          playlistName: 'Other',
+          songs: [_song('z')],
+        ).then((_) {});
       }
     };
 

@@ -27,8 +27,7 @@ void main() {
   }
 
   group('TutorialSongService.prepare', () {
-    test('copies the bundled song into the cache and builds a track',
-        () async {
+    test('copies the bundled song into the cache and builds a track', () async {
       String? readFrom;
       final song = await service(
         readTags: (path) {
@@ -95,8 +94,7 @@ void main() {
       expect(song.track.artist, '');
     });
 
-    test('a song that is not in the app gives no song, not an error',
-        () async {
+    test('a song that is not in the app gives no song, not an error', () async {
       final song = await service(
         loadAsset: (_) async => throw Exception('Unable to load asset'),
       ).prepare(const TutorialSettings());
@@ -127,8 +125,7 @@ void main() {
       expect(second.track.filePath, first.track.filePath);
     });
 
-    test('a different song under the same name replaces the old one',
-        () async {
+    test('a different song under the same name replaces the old one', () async {
       await service().prepare(const TutorialSettings());
 
       final swapped = await service(

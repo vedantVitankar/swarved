@@ -149,8 +149,7 @@ void main() {
     });
 
     test('a blank token counts as none', () async {
-      final result =
-          await _source(_answering(200), token: '   ').fetch();
+      final result = await _source(_answering(200), token: '   ').fetch();
       expect((result as ContentFailed).reason, ContentFailure.unauthorized);
     });
 

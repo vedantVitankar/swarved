@@ -13,8 +13,7 @@ Playlist _playlist(String id, {PlaylistKind kind = PlaylistKind.user}) {
   );
 }
 
-Playlist get _liked =>
-    _playlist(Playlist.likedId, kind: PlaylistKind.liked);
+Playlist get _liked => _playlist(Playlist.likedId, kind: PlaylistKind.liked);
 
 List<String> _ids(List<HomeTile> tiles) => [for (final t in tiles) t.id];
 

@@ -519,8 +519,7 @@ void main() {
       expect(nextButton(tester).onPressed, isNotNull);
     });
 
-    testWidgets('Skip still leaves from here, without playing',
-        (tester) async {
+    testWidgets('Skip still leaves from here, without playing', (tester) async {
       await toTheSong(tester);
 
       await tester.tap(find.text(Labels.welcomeSkip));
@@ -827,8 +826,7 @@ void main() {
       expect(arrow(tester, Labels.welcomeNotePrevious).onPressed, isNotNull);
     });
 
-    testWidgets('with reduced motion they jump straight there',
-        (tester) async {
+    testWidgets('with reduced motion they jump straight there', (tester) async {
       await toTheNotes(tester, reduceMotion: true);
 
       await tester.tap(find.byTooltip(Labels.welcomeNoteNext));
@@ -867,7 +865,8 @@ void main() {
       expect(find.text('the app'), findsOneWidget);
     });
 
-    testWidgets('with reduced motion the opening is skipped but the tour is not',
+    testWidgets(
+        'with reduced motion the opening is skipped but the tour is not',
         (tester) async {
       _roomyScreen(tester);
       final welcome = await _welcome(tester, '{}');

@@ -18,8 +18,7 @@ void main() {
     });
 
     test('says when some songs could not be saved', () {
-      const result =
-          BatchResult(folderName: 'Mix', saved: 1, failed: 2);
+      const result = BatchResult(folderName: 'Mix', saved: 1, failed: 2);
 
       final message = SaveWords.forBatch(result);
 
@@ -60,7 +59,8 @@ void main() {
 
     test('says when she stopped it', () {
       expect(
-        SaveWords.forBatch(const BatchResult(folderName: 'Mix', cancelled: true)),
+        SaveWords.forBatch(
+            const BatchResult(folderName: 'Mix', cancelled: true)),
         'Stopped.',
       );
       expect(

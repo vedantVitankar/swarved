@@ -135,7 +135,8 @@ class Words {
   static const playlistsSaved = 'Saved to your playlists.';
   static const playlistSavedToLibrary = 'Saved to your library.';
   static const playlistAlreadySaved = 'Already in your library.';
-  static const downloadsCleared = 'Deleted. They will come back when you open them.';
+  static const downloadsCleared =
+      'Deleted. They will come back when you open them.';
 
   // A playlist's page and the Playlists view in the Library.
   static const playlistEmpty =
@@ -187,4 +188,14 @@ class Words {
   static String recapPlays(int n) => n == 1 ? 'played once' : 'played $n times';
 
   static const usSubline = 'This corner is just for the two of us.';
+
+  // When a newer SwarVed is waiting for her on Home.
+  static const updateTitle = 'Something new for us';
+  static String updateBody(String version) =>
+      'I added a little something to SwarVed (version $version). It only '
+      'takes a moment, and then it opens again by itself.';
+  static const updateGetting = 'Getting it ready...';
+  static const updateOpening = 'Opening it now...';
+  static const updateFailed =
+      'That did not work this time. Try again in a moment?';
 }

@@ -142,14 +142,14 @@ void main() {
     expect(await run(3), [_a, _b]);
     expect(reports.first, 'null:', reason: 'the server is told');
 
-    expect(await run(3), isEmpty, reason: 'the same token does not reset again');
+    expect(await run(3), isEmpty,
+        reason: 'the same token does not reset again');
 
     settings = make(every: 1, files: const [_a, _b], reset: '200');
     expect(await run(3), [_a, _b]);
   });
 
-  test('it tells the server where it got to without a voice playing',
-      () async {
+  test('it tells the server where it got to without a voice playing', () async {
     settings = make(every: 1, files: const [_a, _b]);
     await run(3); // _a, then _b, then nothing is left
     reports.clear();
@@ -158,8 +158,7 @@ void main() {
     expect(reports, ['$_b:$_a,$_b'], reason: 'everything has played');
   });
 
-  test('a phone that only kept which one played last reports that',
-      () async {
+  test('a phone that only kept which one played last reports that', () async {
     SharedPreferences.setMockInitialValues({'voice_last_v1': _b});
     settings = make(every: 1, files: const [_a, _b]);
 

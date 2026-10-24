@@ -31,7 +31,8 @@ List<ResolvedItem> resolvePlaylist(
   }
   return [
     for (final item in playlist.items)
-      ResolvedItem(item, item.isLocal ? local[item.key] : item.toYoutubeTrack()),
+      ResolvedItem(
+          item, item.isLocal ? local[item.key] : item.toYoutubeTrack()),
   ];
 }
 

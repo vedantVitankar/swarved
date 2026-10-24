@@ -22,7 +22,8 @@ void main() {
     });
 
     test('does not show a size of zero for small files', () {
-      expect(Labels.downloadsSummary(1, 1200), '1 photo or recording, under 0.1 MB');
+      expect(Labels.downloadsSummary(1, 1200),
+          '1 photo or recording, under 0.1 MB');
     });
   });
 }

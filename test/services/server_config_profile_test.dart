@@ -7,8 +7,7 @@ void main() {
   const trial = ServerConfig(profile: AppProfile.test);
 
   group('ServerConfig profile', () {
-    test('hers sends no profile, so older copies of the app are unchanged',
-        () {
+    test('hers sends no profile, so older copies of the app are unchanged', () {
       expect(hers.contentUri.queryParameters, isEmpty);
       expect(hers.contentWaitUri.queryParameters, isEmpty);
       expect(hers.playlistsReportUri.queryParameters, isEmpty);

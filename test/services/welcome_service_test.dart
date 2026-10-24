@@ -92,8 +92,8 @@ void main() {
     test('content.json no longer carries a welcome block', () {
       // The welcome has its own file; the content pushed later must have
       // nothing of it to overwrite.
-      expect(readJson('assets/content/content.json'),
-          isNot(contains('welcome')));
+      expect(
+          readJson('assets/content/content.json'), isNot(contains('welcome')));
     });
 
     test('content.json still loads without it', () {

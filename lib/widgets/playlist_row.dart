@@ -40,7 +40,8 @@ class PlaylistRow extends StatelessWidget {
                   children: [
                     Text(
                       playlist.name,
-                      style: AppType.body.copyWith(color: AppColors.textPrimary),
+                      style:
+                          AppType.body.copyWith(color: AppColors.textPrimary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
