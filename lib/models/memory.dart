@@ -1,3 +1,5 @@
+import 'song_of_the_day.dart';
+
 /// One moment on memory lane: a date, a title, a few words, and usually a
 /// photo, like a note with a picture. Built from the content; a bad entry is
 /// skipped rather than breaking the others.
@@ -21,11 +23,20 @@ class Memory {
   /// name of a photo on the server, or null.
   final String? image;
 
+  /// A song from that day, played from the photo note, or null.
+  final SongOfTheDay? song;
+
+  /// False when he keeps this one for memory lane only, out of the Home
+  /// right-hand section.
+  final bool inPanel;
+
   const Memory({
     required this.date,
     required this.caption,
     this.title = '',
     this.image,
+    this.song,
+    this.inPanel = true,
   });
 
   /// Whether [name] is a photo kept on the server.
@@ -54,6 +65,8 @@ class Memory {
       caption: caption,
       title: text('title'),
       image: usable ? image : null,
+      song: SongOfTheDay.tryParse(map['song']),
+      inPanel: map['hideFromPanel'] != true,
     );
   }
 

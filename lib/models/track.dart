@@ -2,6 +2,10 @@ import '../utils/duration_format.dart';
 import 'track_source.dart';
 
 class Track {
+  /// The folder name of a letter's voice recording. It plays like a song, but
+  /// is never counted in her listening.
+  static const letterRecordingFolder = 'letters';
+
   /// Local songs only. Empty for YouTube tracks: use [id] for identity.
   final String filePath;
   final String title;
@@ -49,6 +53,9 @@ class Track {
         videoId = videoId;
 
   bool get isLocal => source == TrackSource.local;
+
+  /// A recording from one of his letters, not a song.
+  bool get isLetterRecording => isLocal && folder == letterRecordingFolder;
 
   /// Stable identity: the file path for local songs, "yt:<videoId>" for
   /// YouTube. Use this, not filePath, wherever a song must be recognised.

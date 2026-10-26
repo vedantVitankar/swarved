@@ -39,6 +39,9 @@ class ServerConfig {
   /// site can mark each one.
   Uri get voicesPlayedUri => _profiled('/api/voices/played');
 
+  /// Where the app says which letters she has opened.
+  Uri get lettersOpenedUri => _profiled('/api/letters/opened');
+
   /// The newest release of the app itself for [platform]. The server
   /// answers with nothing (204) when none is published for this profile.
   Uri appUpdateUri(String platform) {

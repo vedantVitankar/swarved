@@ -18,6 +18,7 @@ import '../../tutorial/tutorial_step.dart';
 import '../../utils/home_tiles.dart';
 import '../../utils/recent_folders.dart';
 import '../../widgets/page_body.dart';
+import '../../widgets/panel/panel_blocks.dart';
 import '../../widgets/slot_note_card.dart';
 import '../../widgets/slot_text.dart';
 import '../../widgets/swar_chips.dart';
@@ -141,8 +142,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     // A wide window has room for the whole greeting on one line, three
     // folders across, and the song of the day beside the note.
-    final wide =
-        Responsive.of(MediaQuery.sizeOf(context).width) == ScreenClass.expanded;
+    final windowWidth = MediaQuery.sizeOf(context).width;
+    final wide = Responsive.of(windowWidth) == ScreenClass.expanded;
+    // Without room for the right-hand section, what it holds comes at the
+    // bottom of Home instead.
+    final panelBelow = !Responsive.hasRightPanel(windowWidth);
     final pick =
         context.select<ContentService, SongOfTheDay?>((c) => c.songOfTheDay);
     final hasSong = pick?.resolve(library.tracks) != null;
@@ -254,6 +258,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             const TutorialReveal(
               part: TutorialPart.note,
               child: HomeMadeForYou(),
+            ),
+          if (showNote && panelBelow)
+            const TutorialReveal(
+              part: TutorialPart.note,
+              child: Padding(
+                padding: EdgeInsets.only(top: 14),
+                child: PanelBlocks(photoNoteLimit: 3),
+              ),
             ),
         ],
       ),

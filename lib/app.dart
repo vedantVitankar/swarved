@@ -20,6 +20,7 @@ import 'services/playlist_downloader.dart';
 import 'services/save_controller.dart';
 import 'services/saved_songs_index.dart';
 import 'services/song_saver.dart';
+import 'services/letter_service.dart';
 import 'services/update_service.dart';
 import 'services/content_service.dart';
 import 'services/media_cache.dart';
@@ -42,6 +43,9 @@ class SwarVedApp extends StatelessWidget {
 
   /// Looks for a newer version of the app and installs it.
   final UpdateService updateService;
+
+  /// Which of his letters she has opened.
+  final LetterService letterService;
 
   /// Plays his recordings between songs. Optional, so the app also runs
   /// without it.
@@ -66,6 +70,7 @@ class SwarVedApp extends StatelessWidget {
     required this.welcomeService,
     required this.mediaCache,
     required this.updateService,
+    required this.letterService,
     this.voiceService,
     this.systemControls,
   });
@@ -96,6 +101,7 @@ class SwarVedApp extends StatelessWidget {
         Provider.value(value: serverApi),
         ChangeNotifierProvider.value(value: connectionService),
         ChangeNotifierProvider.value(value: updateService),
+        ChangeNotifierProvider.value(value: letterService),
         ChangeNotifierProvider(create: (_) => SearchService(api: serverApi)),
         ChangeNotifierProvider(
           create: (_) => SaveController(

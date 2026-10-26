@@ -21,6 +21,8 @@ import 'services/server_config.dart';
 import 'utils/app_profile.dart';
 import 'services/app_version.dart';
 import 'services/bundled_token_store.dart';
+import 'services/letter_service.dart';
+import 'services/letters_opened_reporter.dart';
 import 'services/secure_token_store.dart';
 import 'services/connection_service.dart';
 import 'services/stream_endpoint.dart';
@@ -170,6 +172,15 @@ Future<void> main() async {
   contentService.addListener(() => unawaited(voiceService.syncProgress()));
   unawaited(voiceService.syncProgress());
 
+  // Which of his letters she has opened, told to the server as she does.
+  final letterService = LetterService(
+    reporter: LettersOpenedReporter(
+      config: serverConfig,
+      tokenStore: tokenStore,
+    ),
+  );
+  await letterService.load();
+
   // The app updates itself on Windows: a card on Home offers a newer version
   // and one tap installs it. Elsewhere it stays quiet.
   final updateService = UpdateService(
@@ -196,6 +207,7 @@ Future<void> main() async {
     welcomeService: welcomeService,
     mediaCache: mediaCache,
     updateService: updateService,
+    letterService: letterService,
     voiceService: voiceService,
     systemControls: systemControls,
   ));

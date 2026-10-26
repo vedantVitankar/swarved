@@ -5,6 +5,7 @@ import '../theme/shape.dart';
 import '../theme/typography.dart';
 import '../utils/date_label.dart';
 import 'memory_photo.dart';
+import 'panel/photo_note_song.dart';
 
 /// A memory as a small card for the right section: the photo, his words in
 /// his handwriting, and the date in gold. Sits straight, never tilted.
@@ -43,6 +44,8 @@ class PhotoNoteCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(longDate(memory.date), style: AppType.goldLabel),
+          // The song from that day, with a button to play it.
+          if (memory.song case final song?) PhotoNoteSong(song: song),
         ],
       ),
     );

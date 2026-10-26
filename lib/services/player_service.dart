@@ -609,6 +609,8 @@ class PlayerService extends ChangeNotifier {
   void _logCurrentListen({required bool completedNaturally}) {
     final track = current;
     if (track == null || _loadedId != track.id) return;
+    // A letter's recording is not a song she listened to.
+    if (track.isLetterRecording) return;
 
     final Duration listened;
     if (completedNaturally) {

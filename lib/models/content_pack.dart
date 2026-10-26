@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'letter.dart';
 import 'memory.dart';
+import 'panel_settings.dart';
 import 'note_line.dart';
 import 'recap_settings.dart';
 import 'note_slot.dart';
 import 'pushed_playlist.dart';
 import 'song_note.dart';
 import 'song_of_the_day.dart';
+import 'together.dart';
 import 'track.dart';
 import 'voice_interludes.dart';
 import '../utils/song_match.dart';
@@ -42,6 +45,15 @@ class ContentPack {
   /// The recordings that surface between songs, and when.
   final VoiceInterludes voices;
 
+  /// What shows in the right-hand section of Home, and in what order.
+  final PanelSettings panel;
+
+  /// Since when, and when they next meet.
+  final Together together;
+
+  /// The "open when" letters, in the order he wrote them.
+  final List<Letter> letters;
+
   /// Every uploaded photo or voice file the content mentions, wherever it
   /// is mentioned, so nothing the content still uses is ever cleaned away.
   final Set<String> mediaFiles;
@@ -56,6 +68,9 @@ class ContentPack {
     this.texts = const {},
     this.playlists = const [],
     this.voices = VoiceInterludes.none,
+    this.panel = PanelSettings.none,
+    this.together = Together.none,
+    this.letters = const [],
     this.mediaFiles = const {},
   });
 
@@ -87,6 +102,9 @@ class ContentPack {
       texts: _parseTexts(decoded['texts']),
       playlists: _parsePlaylists(decoded['playlists']),
       voices: VoiceInterludes.parse(decoded['voices']),
+      panel: PanelSettings.parse(decoded['panel']),
+      together: Together.parse(decoded['together']),
+      letters: _parseLetters(decoded['letters']),
       mediaFiles: Set.unmodifiable({
         for (final match in _mediaName.allMatches(source)) match.group(0)!,
       }),
@@ -96,6 +114,16 @@ class ContentPack {
   /// The names the server gives uploaded files.
   static final RegExp _mediaName =
       RegExp(r'[a-f0-9]{16}\.(?:jpg|png|webp|mp3|m4a|ogg|wav)');
+
+  static List<Letter> _parseLetters(Object? raw) {
+    if (raw is! List) return const [];
+    final seen = <String>{};
+    return List.unmodifiable([
+      for (final entry in raw)
+        if (Letter.tryParse(entry) case final letter? when seen.add(letter.id))
+          letter,
+    ]);
+  }
 
   static List<PushedPlaylist> _parsePlaylists(Object? raw) {
     if (raw is! List) return const [];

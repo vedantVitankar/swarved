@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import '../models/content_pack.dart';
+import '../models/letter.dart';
+import '../models/panel_settings.dart';
+import '../models/together.dart';
 import '../models/memory.dart';
 import '../models/note_line.dart';
 import '../models/note_slot.dart';
@@ -62,6 +65,15 @@ class ContentService extends ChangeNotifier {
 
   /// The moments on memory lane, oldest first. Empty when he wrote none.
   List<Memory> get memories => _pack.memories;
+
+  /// What shows in the right-hand section of Home, and in what order.
+  PanelSettings get panel => _pack.panel;
+
+  /// Since when, and when they next meet.
+  Together get together => _pack.together;
+
+  /// The "open when" letters.
+  List<Letter> get letters => _pack.letters;
 
   /// The song he picked for today, or null.
   SongOfTheDay? get songOfTheDay => _pack.songOfTheDay;

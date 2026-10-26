@@ -125,5 +125,10 @@ key.properties
 
 
 # Installer build output and the optional VC++ runtime
-installer/Output/
-installer/vc_redist.x64.exe
+/installer/Output/
+/installer/vc_redist.x64.exe
+/installer
+
+*.patch
+
+token and commands

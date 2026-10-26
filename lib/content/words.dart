@@ -209,7 +209,18 @@ class Words {
   static const updateFailed =
       'That did not work this time. Try again in a moment?';
 
-  // The right section on wide windows.
+  // The right-hand section of Home.
+  static const pinnedDefaultLabel = 'Pinned for you';
+  static const countdownDefaultLabel = 'Until I see you';
+  static const countdownToday = 'Today';
+  static String countdownUnit(int days) => days == 1 ? 'day' : 'days';
+  static const lettersTitle = 'Open when...';
+  static const letterNew = 'New';
+  static String letterOpensOn(String day) => 'Opens on $day';
+  static const letterPlayVoice = 'Hear me say it';
+  static const letterVoiceMissing =
+      'The recording is not here yet. Try again in a moment.';
+  static const letterClose = 'Close';
   static const photoNotesTitle = 'Photo notes';
   static const photoNotesEmpty =
       'The pictures I keep for you will gather here.';
