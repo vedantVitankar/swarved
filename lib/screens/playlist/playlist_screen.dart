@@ -93,7 +93,7 @@ class _PlaylistBody extends StatelessWidget {
     final player = context.read<PlayerService>();
     final service = context.read<PlaylistService>();
     final playable = playableTracks(lines);
-    final source = PlaySource(playlist.name);
+    final source = PlaySource(playlist.name, playlistId: playlist.id);
 
     final header = PlaylistHeader(
       playlist: playlist,

@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../content/words.dart';
 import '../models/play_source.dart';
 import '../models/playback_problem.dart';
+import '../models/saved_queue.dart';
 import '../models/track.dart';
 import '../utils/played_point.dart';
 import '../utils/stall_detector.dart';
@@ -100,6 +101,15 @@ class PlayerService extends ChangeNotifier {
   final QueueOrder _order = QueueOrder();
 
   List<Track> _queue = [];
+
+  /// Changes each time a different queue is started, so "is this still the
+  /// same queue" is one comparison rather than a walk through every song.
+  int _queueVersion = 0;
+
+  /// While a queue put back from the last session waits for her to press
+  /// play: the second to start from. Nothing is loaded in the audio player
+  /// until then, so this is also what the position shows.
+  Duration? _restoredAt;
   int _currentIndex = -1;
 
   /// Where the queue came from (a playlist), for "Playing from ...". Null
@@ -233,9 +243,11 @@ class PlayerService extends ChangeNotifier {
   /// [_tryAgainQuietly]). The play button shows it as loading.
   bool get _waitingToRetry => _retryTimer?.isActive ?? false;
 
-  Duration get position => _player.position;
+  Duration get position => _restoredAt ?? _player.position;
   Duration get bufferedPosition => _player.bufferedPosition;
-  Duration get duration => _player.duration ?? Duration.zero;
+  Duration get duration => _restoredAt != null
+      ? (current?.duration ?? Duration.zero)
+      : (_player.duration ?? Duration.zero);
 
   /// Current volume in [0.0, 1.0]. Zero means muted via the toggle.
   double get volume => _volume;
@@ -259,6 +271,8 @@ class PlayerService extends ChangeNotifier {
     if (tracks.isEmpty) return;
     _logCurrentListen(completedNaturally: false);
     _queue = tracks;
+    _queueVersion++;
+    _restoredAt = null;
     _source = source;
     _order.start(length: tracks.length, startIndex: startIndex);
     _currentIndex = _order.currentIndex ?? 0;
@@ -282,6 +296,7 @@ class PlayerService extends ChangeNotifier {
   Future<void> _loadAndPlay({Duration? resumeAt}) async {
     final serial = ++_loadSerial;
     _interlude = false;
+    _restoredAt = null; // loading now: no longer waiting
     _stalls.reset();
     _retryTimer?.cancel();
     _played.moveTo(resumeAt ?? Duration.zero);
@@ -395,6 +410,13 @@ class PlayerService extends ChangeNotifier {
   /// to try it again, so no mini player needs a button of its own for that.
   Future<void> togglePlayPause() async {
     if (_loading || _waitingToRetry) return; // already working on it
+    final restoredAt = _restoredAt;
+    if (restoredAt != null) {
+      // The queue from the last session: nothing is loaded yet, so this is
+      // the moment. Start the song from the second she left it at.
+      await _loadAndPlay(resumeAt: restoredAt);
+      return;
+    }
     if (_problem != null) {
       await retry();
       return;
@@ -442,7 +464,7 @@ class PlayerService extends ChangeNotifier {
   /// What a "previous" button does: restart the song if it has been
   /// playing for a while, otherwise go back one song.
   Future<void> restartOrPrevious() async {
-    if (_player.position > _kRestartThreshold || !_order.hasPrevious) {
+    if (position > _kRestartThreshold || !_order.hasPrevious) {
       await seek(Duration.zero);
       return;
     }
@@ -555,7 +577,75 @@ class PlayerService extends ChangeNotifier {
 
   Future<void> seek(Duration position) {
     _played.moveTo(position);
+    if (_restoredAt != null) {
+      // Nothing is loaded yet: remember where she wants it to start.
+      _restoredAt = position;
+      notifyListeners();
+      return Future.value();
+    }
     return _player.seek(position);
+  }
+
+  // -- keeping the queue between sessions ---------------------------------
+
+  /// What the saved queue would hold now, or null when there is nothing worth
+  /// keeping: no queue, or only a letter's recording playing (the queue she
+  /// had before it is still what is saved).
+  SavedQueue? snapshot() {
+    final song = current;
+    if (song == null || song.isLetterRecording) return null;
+    if (_queue.length > SavedQueue.maxTracks) return null;
+    if (_queue.any((t) => t.isLetterRecording)) return null;
+    return SavedQueue(
+      tracks: List<Track>.of(_queue),
+      index: _currentIndex,
+      position: positionToSave,
+      order: _order.toJson(),
+      sourceName: _source?.name,
+      sourcePlaylistId: _source?.playlistId,
+      savedAt: DateTime.now(),
+    );
+  }
+
+  /// How far into the song to save. While one of his voice recordings plays
+  /// between songs, the song waiting after it is saved from its start.
+  Duration get positionToSave => _interlude ? Duration.zero : position;
+
+  /// Everything about the queue except how far into the song she is. It
+  /// changes only when she does something (a new queue, a skip, shuffle,
+  /// repeat), so the saved queue is rewritten for those, and for the position
+  /// only now and then. Null when there is nothing worth saving.
+  String? get saveSignature {
+    final song = current;
+    if (song == null || song.isLetterRecording) return null;
+    return '$_queueVersion|$_currentIndex|${_order.shuffle}|'
+        '${_order.repeat.name}|${_source?.name}|${_source?.playlistId}';
+  }
+
+  /// Puts back the queue from the last session: the songs, the order, the song
+  /// she was on, the playlist it came from, and the second she was at. It
+  /// stays paused and loads no audio; the song starts when she presses play.
+  /// Does nothing, and returns false, if something has already been played
+  /// this time.
+  bool restore(SavedQueue saved) {
+    if (_queue.isNotEmpty) return false;
+    _queue = saved.tracks;
+    _queueVersion++;
+    final name = saved.sourceName;
+    _source = name == null
+        ? null
+        : PlaySource(name, playlistId: saved.sourcePlaylistId);
+    if (!_order.restore(saved.order, length: saved.tracks.length) ||
+        _order.currentIndex != saved.index) {
+      // The saved order does not fit (songs were dropped, or it is damaged):
+      // carry on from the same song with a fresh order.
+      _order.start(length: saved.tracks.length, startIndex: saved.index);
+    }
+    _currentIndex = saved.index;
+    _restoredAt = saved.position;
+    _played.moveTo(saved.position);
+    notifyListeners();
+    return true;
   }
 
   /// Sets the volume and persists it. Dragging the slider to zero is treated

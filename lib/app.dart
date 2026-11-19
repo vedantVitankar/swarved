@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'root_shell.dart';
 import 'screens/welcome/welcome_gate.dart';
@@ -6,6 +9,8 @@ import 'services/library_service.dart';
 import 'services/playlist_service.dart';
 import 'services/player_media_session.dart';
 import 'services/player_service.dart';
+import 'services/playback_keeper.dart';
+import 'services/saved_queue_store.dart';
 import 'services/search_service.dart';
 import 'services/stats_service.dart';
 import 'services/system_media_controls.dart';
@@ -26,6 +31,7 @@ import 'services/content_service.dart';
 import 'services/media_cache.dart';
 import 'services/voice_service.dart';
 import 'services/welcome_service.dart';
+import 'utils/app_profile.dart';
 
 class SwarVedApp extends StatelessWidget {
   final StatsService statsService;
@@ -90,6 +96,18 @@ class SwarVedApp extends StatelessWidget {
               voices: voiceService,
             );
             systemControls?.attach(PlayerMediaSession(player));
+            // Put back what was playing last time (paused), and keep it saved.
+            unawaited(
+              PlaybackKeeper(
+                player: player,
+                store: FileSavedQueueStore(
+                  directory: getApplicationSupportDirectory,
+                  profile: AppProfile.current,
+                  defaultProfile: AppProfile.swarnima,
+                ),
+                libraryTracks: () => libraryService.tracks,
+              ).start(),
+            );
             return player;
           },
         ),

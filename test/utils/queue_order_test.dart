@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:swarved/utils/queue_order.dart';
@@ -26,6 +27,7 @@ List<int> _walk(QueueOrder order) {
 }
 
 void main() {
+  _savingTests();
   group('in order (shuffle off)', () {
     test('starts where it is told', () {
       expect(_started(start: 2).currentIndex, 2);
@@ -250,6 +252,80 @@ void main() {
 
     test('is null for an empty queue', () {
       expect(QueueOrder().upcomingIndex, isNull);
+    });
+  });
+}
+
+void _savingTests() {
+  group('QueueOrder saving and restoring', () {
+    test('a restored order carries on exactly where the saved one was', () {
+      final saved = _started(length: 6, start: 2, shuffle: true, seed: 7)
+        ..repeat = QueueRepeat.all;
+      saved.advance();
+      saved.advance();
+
+      final restored = QueueOrder(random: Random(99));
+      expect(restored.restore(saved.toJson(), length: 6), isTrue);
+
+      expect(restored.currentIndex, saved.currentIndex);
+      expect(restored.shuffle, isTrue);
+      expect(restored.repeat, QueueRepeat.all);
+      expect(restored.upcomingIndex, saved.upcomingIndex);
+      // The whole remaining sequence matches, not just the next song.
+      final fromSaved = <int?>[], fromRestored = <int?>[];
+      for (var i = 0; i < 3; i++) {
+        fromSaved.add(saved.advance());
+        fromRestored.add(restored.advance());
+      }
+      expect(fromRestored, fromSaved);
+    });
+
+    test('the saved form is plain data that survives a round trip as text', () {
+      final saved = _started(length: 4, start: 1, shuffle: true, seed: 3);
+      final text = jsonEncode(saved.toJson());
+      final restored = QueueOrder();
+      expect(restored.restore(jsonDecode(text), length: 4), isTrue);
+      expect(restored.currentIndex, saved.currentIndex);
+    });
+
+    test('an order that does not fit the queue is refused and changes nothing',
+        () {
+      final order = _started(length: 3, start: 1);
+      final good = order.toJson();
+      Map<String, Object?> with_(String key, Object? value) =>
+          {...good, key: value};
+
+      final refused = <Object?>[
+        null,
+        'text',
+        {},
+        with_('order', [0, 1]), // one song short
+        with_('order', [0, 1, 1]), // a position twice
+        with_('order', [0, 1, 3]), // a position outside the queue
+        with_('order', [0, 1, -1]),
+        with_('order', [0, 1, 'x']),
+        with_('cursor', 3),
+        with_('cursor', -1),
+        with_('cursor', '1'),
+        with_('shuffle', 'yes'),
+        with_('repeat', 'forever'),
+      ];
+      for (final json in refused) {
+        expect(order.restore(json, length: 3), isFalse, reason: '$json');
+        expect(order.currentIndex, 1, reason: 'unchanged after $json');
+      }
+      expect(order.restore(good, length: 0), isFalse);
+      expect(order.restore(good, length: 4), isFalse, reason: 'wrong length');
+    });
+
+    test('restoring into a used order replaces it completely', () {
+      final target = _started(length: 5, start: 4, shuffle: true, seed: 2)
+        ..repeat = QueueRepeat.one;
+      final source = _started(length: 5, start: 1);
+      expect(target.restore(source.toJson(), length: 5), isTrue);
+      expect(target.shuffle, isFalse);
+      expect(target.repeat, QueueRepeat.off);
+      expect(target.currentIndex, 1);
     });
   });
 }

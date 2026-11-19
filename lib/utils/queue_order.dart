@@ -45,6 +45,44 @@ class QueueOrder {
   }
 
   /// Begins a new queue of [length] songs, playing [startIndex] first.
+  /// Everything needed to put this order back exactly as it is, for saving
+  /// between sessions: the play order, where we are in it, shuffle and repeat.
+  Map<String, Object?> toJson() => {
+        'order': List<int>.of(_order),
+        'cursor': _cursor,
+        'shuffle': _shuffle,
+        'repeat': repeat.name,
+      };
+
+  /// Puts back what [toJson] wrote, for a queue of [length] songs. Returns
+  /// false, and changes nothing, when it does not fit that queue: the order
+  /// must be every position from 0 to length - 1 once, and the cursor must be
+  /// one of them. The caller then starts a fresh order instead.
+  bool restore(Object? json, {required int length}) {
+    if (json is! Map || length <= 0) return false;
+    final order = json['order'];
+    final cursor = json['cursor'];
+    final shuffle = json['shuffle'];
+    final repeatName = json['repeat'];
+    if (order is! List || order.length != length) return false;
+    if (cursor is! int || cursor < 0 || cursor >= length) return false;
+    if (shuffle is! bool) return false;
+    final parsed = QueueRepeat.values.where((r) => r.name == repeatName);
+    if (parsed.isEmpty) return false;
+
+    final seen = <int>{};
+    for (final position in order) {
+      if (position is! int || position < 0 || position >= length) return false;
+      if (!seen.add(position)) return false; // a position twice
+    }
+
+    _order = [for (final position in order) position as int];
+    _cursor = cursor;
+    _shuffle = shuffle;
+    repeat = parsed.first;
+    return true;
+  }
+
   void start({required int length, required int startIndex}) {
     if (length <= 0) {
       _order = [];
