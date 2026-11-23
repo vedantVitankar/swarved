@@ -45,6 +45,9 @@ class ContentSync {
   /// The tag of the content the app has now.
   String? _etag;
 
+  /// The same, for whoever needs to say which content the app holds.
+  String? get etag => _etag;
+
   /// True until the app has asked once, and after a failure or a return from
   /// the background: the next request answers at once instead of waiting.
   bool _catchUp = true;

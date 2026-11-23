@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../content/words.dart';
 import '../../models/letter.dart';
-import '../../models/track.dart';
 import '../../services/letter_service.dart';
+import '../../services/letter_voice_controller.dart';
 import '../../services/media_cache.dart';
 import '../../services/player_service.dart';
 import '../../theme/colors.dart';
@@ -12,7 +12,7 @@ import '../../theme/shape.dart';
 import '../../theme/typography.dart';
 import '../server_photo.dart';
 import '../sun_mark.dart';
-import '../swar_outlined_button.dart';
+import 'letter_voice_player.dart';
 
 /// Opens [letter], and notes that she did.
 Future<void> showLetter(BuildContext context, Letter letter) {
@@ -24,7 +24,7 @@ Future<void> showLetter(BuildContext context, Letter letter) {
 }
 
 /// A letter, read in full: its heading, photo, words in his handwriting and
-/// a button to hear his recording.
+/// a player for his recording.
 class LetterDialog extends StatelessWidget {
   final Letter letter;
 
@@ -80,7 +80,7 @@ class LetterDialog extends StatelessWidget {
               ],
               if (voice != null) ...[
                 const SizedBox(height: 14),
-                LetterVoiceButton(letter: letter, file: voice),
+                LetterVoiceSection(letter: letter, file: voice),
               ],
               const SizedBox(height: 16),
               Align(
@@ -98,67 +98,48 @@ class LetterDialog extends StatelessWidget {
   }
 }
 
-/// Plays a letter's recording through the player, like a song, so the usual
-/// controls and the media keys work. It is never counted as listening.
-class LetterVoiceButton extends StatefulWidget {
+/// A letter's recording, played on its own: its own button, slider and
+/// times. Starting it pauses the music, and the music stays paused when the
+/// recording ends or the letter is closed. It is never counted as listening,
+/// and the song queue is not touched.
+class LetterVoiceSection extends StatefulWidget {
   final Letter letter;
 
   /// The recording's name on the server.
   final String file;
 
-  const LetterVoiceButton({super.key, required this.letter, required this.file});
+  const LetterVoiceSection({
+    super.key,
+    required this.letter,
+    required this.file,
+  });
 
   @override
-  State<LetterVoiceButton> createState() => _LetterVoiceButtonState();
+  State<LetterVoiceSection> createState() => _LetterVoiceSectionState();
 }
 
-class _LetterVoiceButtonState extends State<LetterVoiceButton> {
-  bool _fetching = false;
-  bool _missing = false;
+class _LetterVoiceSectionState extends State<LetterVoiceSection> {
+  late final LetterVoiceController _voice;
 
-  Future<void> _play() async {
-    final cache = context.read<MediaCache>();
-    final player = context.read<PlayerService>();
-    setState(() {
-      _fetching = true;
-      _missing = false;
-    });
-    final file = await cache.fileFor(widget.file);
-    if (!mounted) return;
-    setState(() {
-      _fetching = false;
-      _missing = file == null;
-    });
-    if (file == null) return;
-    await player.playQueue([
-      Track(
-        filePath: file.path,
-        title: widget.letter.heading,
-        artist: Words.voiceBreakFrom,
-        album: '',
-        duration: Duration.zero,
-        folder: Track.letterRecordingFolder,
-      ),
-    ]);
+  @override
+  void initState() {
+    super.initState();
+    _voice = LetterVoiceController(
+      engine: context.read<PlayerService>(),
+      fetch: context.read<MediaCache>().fileFor,
+      file: widget.file,
+      title: widget.letter.heading,
+      artist: Words.voiceBreakFrom,
+    );
+  }
+
+  /// Closing the letter closes this, which stops the recording.
+  @override
+  void dispose() {
+    _voice.dispose();
+    super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SwarOutlinedButton(
-          label: Words.letterPlayVoice,
-          onPressed: _fetching ? null : _play,
-        ),
-        if (_missing) ...[
-          const SizedBox(height: 6),
-          Text(
-            Words.letterVoiceMissing,
-            style: AppType.bodyMuted.copyWith(color: AppColors.danger),
-          ),
-        ],
-      ],
-    );
-  }
+  Widget build(BuildContext context) => LetterVoicePlayer(controller: _voice);
 }

@@ -220,6 +220,8 @@ class Words {
   static const letterPlayVoice = 'Hear me say it';
   static const letterVoiceMissing =
       'The recording is not here yet. Try again in a moment.';
+  static const letterVoiceFailed =
+      'That recording would not play. Try again in a moment.';
   static const letterClose = 'Close';
   static const photoNotesTitle = 'Photo notes';
   static const photoNotesEmpty =

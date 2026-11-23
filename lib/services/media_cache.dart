@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -13,7 +14,11 @@ typedef MediaDirectory = Future<Directory> Function();
 /// The photos and recordings he uploads. Each is downloaded from the server
 /// once and kept on this phone, so it shows at once next time and without a
 /// connection.
-class MediaCache {
+///
+/// It is also a [ChangeNotifier]: it tells listeners when a file has landed
+/// on this phone (or could not be had), so a screen can show a photo or a
+/// letter only once everything it needs is here.
+class MediaCache extends ChangeNotifier {
   MediaCache({
     required ServerConfig config,
     required TokenStore tokenStore,
@@ -41,6 +46,33 @@ class MediaCache {
   /// single download.
   final Map<String, Future<File?>> _inFlight = {};
 
+  /// The files known to be on this phone, whole.
+  final Set<String> _ready = {};
+
+  /// Why the last attempt to get a file failed, in a few words, until it
+  /// succeeds. Told to the server so he can see where a download breaks.
+  final Map<String, String> _problems = {};
+
+  /// True once [name] is on this phone, whole. Never touches the disk or the
+  /// network, so it is safe to ask while a screen is being drawn.
+  bool isReady(String name) => _ready.contains(name);
+
+  /// Why [name] could not be had on the last try ("HTTP 404", "no token
+  /// saved", "timed out"), or null when it has not failed.
+  String? problemFor(String name) => _problems[name];
+
+  void _markReady(String name) {
+    final hadProblem = _problems.remove(name) != null;
+    if (_ready.add(name) || hadProblem) notifyListeners();
+  }
+
+  void _markProblem(String name, String why, [Object? detail]) {
+    debugPrint('Media $name not fetched: ${detail ?? why}');
+    if (_problems[name] == why) return;
+    _problems[name] = why;
+    notifyListeners();
+  }
+
   Future<Directory> _folder() async {
     final base = await _directory();
     final folder = Directory(p.join(base.path, 'media'));
@@ -53,9 +85,14 @@ class MediaCache {
   /// connection, or the server does not have it). Never throws.
   Future<File?> fileFor(String name) {
     if (!_validName.hasMatch(name)) return Future.value(null);
+    // A block body on purpose: `() => _inFlight.remove(name)` would return
+    // this very future, which then waits for itself and never completes, so
+    // no photo or recording was ever delivered.
     return _inFlight.putIfAbsent(
       name,
-      () => _fetch(name).whenComplete(() => _inFlight.remove(name)),
+      () => _fetch(name).whenComplete(() {
+        _inFlight.remove(name);
+      }),
     );
   }
 
@@ -63,16 +100,27 @@ class MediaCache {
     try {
       final folder = await _folder();
       final file = File(p.join(folder.path, name));
-      if (await file.exists()) return file;
+      if (await file.exists()) {
+        _markReady(name);
+        return file;
+      }
 
       final token = await _tokenStore.readToken();
-      if (token == null || token.trim().isEmpty) return null;
+      if (token == null || token.trim().isEmpty) {
+        _markProblem(name, 'no token saved');
+        return null;
+      }
 
       final response = await _client.get(
         _config.mediaUri(name),
         headers: {'X-Token': token},
       ).timeout(_timeout);
-      if (response.statusCode != 200 || response.bodyBytes.isEmpty) {
+      if (response.statusCode != 200) {
+        _markProblem(name, 'HTTP ${response.statusCode}');
+        return null;
+      }
+      if (response.bodyBytes.isEmpty) {
+        _markProblem(name, 'the server sent nothing');
         return null;
       }
 
@@ -81,9 +129,14 @@ class MediaCache {
       final partial = File('${file.path}.part');
       await partial.writeAsBytes(response.bodyBytes, flush: true);
       await partial.rename(file.path);
+      _markReady(name);
       return file;
     } catch (error) {
-      debugPrint('Media $name not fetched: $error');
+      _markProblem(
+        name,
+        error is TimeoutException ? 'timed out' : error.runtimeType.toString(),
+        error,
+      );
       return null;
     }
   }
@@ -94,7 +147,9 @@ class MediaCache {
     if (!_validName.hasMatch(name)) return null;
     try {
       final file = File(p.join((await _folder()).path, name));
-      return await file.exists() ? file : null;
+      if (!await file.exists()) return null;
+      _markReady(name);
+      return file;
     } catch (error) {
       debugPrint('Media $name not looked up: $error');
       return null;
@@ -118,6 +173,7 @@ class MediaCache {
         final name = p.basename(entry.path);
         if (names.contains(name) || _inFlight.containsKey(name)) continue;
         await entry.delete();
+        if (_ready.remove(name)) notifyListeners();
       }
     } catch (error) {
       debugPrint('Media folder not tidied: $error');
@@ -149,6 +205,10 @@ class MediaCache {
       final folder = await _folder();
       await for (final entry in folder.list()) {
         if (entry is File) await entry.delete();
+      }
+      if (_ready.isNotEmpty) {
+        _ready.clear();
+        notifyListeners();
       }
     } catch (error) {
       debugPrint('Media folder not cleared: $error');

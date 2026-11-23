@@ -4,11 +4,13 @@ import '../../models/panel_settings.dart';
 import '../../theme/colors.dart';
 import '../../theme/shape.dart';
 import '../../theme/typography.dart';
+import '../media_ready.dart';
 import '../server_photo.dart';
 import '../sun_mark.dart';
 
 /// The note he pinned at the top of the right-hand section: a small gold
-/// heading, an optional photo, and his words in his handwriting.
+/// heading, an optional photo, and his words in his handwriting. The photo
+/// appears once it has been downloaded to this phone.
 class PinnedNoteCard extends StatelessWidget {
   final PinnedNote note;
 
@@ -17,6 +19,7 @@ class PinnedNoteCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final photo = note.photo;
+    final showPhoto = photo != null && mediaReady(context, [photo]);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
@@ -35,7 +38,7 @@ class PinnedNoteCard extends StatelessWidget {
               note.label.isEmpty ? Words.pinnedDefaultLabel : note.label,
               style: AppType.goldLabel,
             ),
-            if (photo != null) ...[
+            if (showPhoto) ...[
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppShape.tile),

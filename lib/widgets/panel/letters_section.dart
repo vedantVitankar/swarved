@@ -7,10 +7,12 @@ import '../../theme/colors.dart';
 import '../../theme/shape.dart';
 import '../../theme/typography.dart';
 import '../../utils/date_label.dart';
+import '../media_ready.dart';
 import 'letter_dialog.dart';
 
 /// The "open when" letters: a title, then one row for each. A letter that is
-/// not due yet shows its day and cannot be opened.
+/// not due yet shows its day and cannot be opened. A letter that can be
+/// opened appears only once its photo and recording are on this phone.
 class LettersSection extends StatelessWidget {
   /// His own title, or empty for the usual one.
   final String title;
@@ -21,6 +23,12 @@ class LettersSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final opened = context.watch<LetterService>();
+    final shown = [
+      for (final letter in letters)
+        if (letter.locked || mediaReady(context, [letter.photo, letter.voice]))
+          letter,
+    ];
+    if (shown.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 18),
       child: Column(
@@ -31,7 +39,7 @@ class LettersSection extends StatelessWidget {
             style: AppType.sectionLabel,
           ),
           const SizedBox(height: 10),
-          for (final letter in letters) ...[
+          for (final letter in shown) ...[
             LetterTile(
               letter: letter,
               opened: opened.isOpened(letter.id),

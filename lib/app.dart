@@ -114,7 +114,7 @@ class SwarVedApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: playlistService),
         ChangeNotifierProvider.value(value: contentService),
         ChangeNotifierProvider.value(value: welcomeService),
-        Provider.value(value: mediaCache),
+        ChangeNotifierProvider.value(value: mediaCache),
         Provider.value(value: serverConfig),
         Provider.value(value: serverApi),
         ChangeNotifierProvider.value(value: connectionService),

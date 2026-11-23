@@ -32,6 +32,7 @@ import 'services/content_cache.dart';
 import 'services/content_service.dart';
 import 'services/content_source.dart';
 import 'services/content_sync.dart';
+import 'services/delivery_reporter.dart';
 import 'services/media_cache.dart';
 import 'services/tutorial_song_service.dart';
 import 'services/update_service.dart';
@@ -122,11 +123,24 @@ Future<void> main() async {
   contentService.addListener(showPushedPlaylists);
   showPushedPlaylists();
   final mediaCache = MediaCache(config: serverConfig, tokenStore: tokenStore);
-  final contentSync = ContentSync(
+  // The server is told which content the app holds and which photos and
+  // recordings are on the phone, so he can see what has really arrived.
+  late final ContentSync contentSync;
+  final deliveryReporter = DeliveryReporter(
+    config: serverConfig,
+    tokenStore: tokenStore,
+    mediaCache: mediaCache,
+    etag: () => contentSync.etag,
+  );
+  contentSync = ContentSync(
     source: ServerContentSource(config: serverConfig, tokenStore: tokenStore),
     cache: FileContentCache(profile: AppProfile.current),
     content: contentService,
-    onMedia: (names, fromServer) => mediaCache.sync(names, tidy: fromServer),
+    onMedia: (names, fromServer) async {
+      deliveryReporter.track(names);
+      await mediaCache.sync(names, tidy: fromServer);
+      deliveryReporter.track(names);
+    },
   );
   await contentSync.loadCache();
   // Her playlists follow her to every device: this reads what her other

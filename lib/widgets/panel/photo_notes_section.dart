@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import '../../content/words.dart';
 import '../../models/memory.dart';
 import '../../theme/typography.dart';
+import '../media_ready.dart';
 import '../photo_note_card.dart';
 
 /// His photo notes, newest first, under a title. [limit] keeps only the
 /// newest few, for places with less room. With none to show it says so when
-/// [saySoWhenEmpty], and otherwise takes no room.
+/// [saySoWhenEmpty], and otherwise takes no room. A photo note appears only
+/// once its photo has been downloaded to this phone.
 class PhotoNotesSection extends StatelessWidget {
   /// His own title, or empty for the usual one.
   final String title;
@@ -24,7 +26,11 @@ class PhotoNotesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final newestFirst = memories.reversed.toList();
+    final newestFirst = [
+      for (final memory in memories.reversed)
+        if (!memory.hasServerPhoto || mediaReady(context, [memory.image]))
+          memory,
+    ];
     final shown =
         limit == null ? newestFirst : newestFirst.take(limit!).toList();
     if (shown.isEmpty && !saySoWhenEmpty) return const SizedBox.shrink();

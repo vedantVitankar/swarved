@@ -39,6 +39,10 @@ class ServerConfig {
   /// site can mark each one.
   Uri get voicesPlayedUri => _profiled('/api/voices/played');
 
+  /// Where the app says which content it holds and which photos and
+  /// recordings are on the phone, so he can see what has really arrived.
+  Uri get deliveryReportUri => _profiled('/api/delivery/report');
+
   /// Where the app says which letters she has opened.
   Uri get lettersOpenedUri => _profiled('/api/letters/opened');
 

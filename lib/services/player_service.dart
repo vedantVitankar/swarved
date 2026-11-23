@@ -14,6 +14,7 @@ import '../utils/played_point.dart';
 import '../utils/stall_detector.dart';
 import '../utils/queue_order.dart';
 import '../utils/volume_level.dart';
+import 'clip_engine.dart';
 import 'stats_service.dart';
 import 'queue_prefetcher.dart';
 import 'stream_endpoint.dart';
@@ -77,7 +78,7 @@ class _LoadResult {
   final PlaybackProblem? problem;
 }
 
-class PlayerService extends ChangeNotifier {
+class PlayerService extends ChangeNotifier implements ClipEngine {
   /// Request headers go straight to the platform's own player instead of
   /// through just_audio's local cleartext proxy. YouTube songs need the
   /// X-Token header, and the app only ever talks HTTPS.
@@ -163,10 +164,18 @@ class PlayerService extends ChangeNotifier {
     VoiceInterludeService? voices,
   })  : _prefetcher = prefetcher,
         _voices = voices {
-    _player.playerStateStream
-        .listen((_) => notifyListeners(), onError: _onPlaybackError);
+    _player.playerStateStream.listen((_) {
+      notifyListeners();
+      if (_clipOpen) _emitClip();
+    }, onError: _onPlaybackError);
     _player.playbackEventStream.listen((_) {}, onError: _onPlaybackError);
     _player.positionStream.listen((position) {
+      // A letter's recording is on the player: its position is not the
+      // song's, so it must not be counted as how far the song got.
+      if (_clipOpen) {
+        _emitClip();
+        return;
+      }
       _played.see(position);
       if (_autoRetries > 0 && position - _retryPoint > _kRetryRecovered) {
         _autoRetries = 0; // it has been playing fine again
@@ -187,6 +196,12 @@ class PlayerService extends ChangeNotifier {
 
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
+        // A letter's recording ended. Nothing follows it: the music stays
+        // paused until she presses play.
+        if (_clipOpen) {
+          _emitClip(ClipEnd.finished);
+          return;
+        }
         // His recording ended: on to the song that was waiting for it.
         if (_interlude) {
           unawaited(_loadAndPlay());
@@ -215,7 +230,7 @@ class PlayerService extends ChangeNotifier {
       ? _queue[_currentIndex]
       : null;
 
-  bool get isPlaying => _player.playing;
+  bool get isPlaying => !_clipOpen && _player.playing;
 
   /// One of his recordings is playing between two songs. [current] is
   /// already the song that follows it, so screens show his words instead of
@@ -229,6 +244,7 @@ class PlayerService extends ChangeNotifier {
   /// dropped connection, or the player is waiting for more of it to arrive.
   /// Never true for local songs.
   bool get isLoading {
+    if (_clipOpen) return false; // a letter's recording has the player
     if (_problem != null) return false; // the message takes over
     if (_loading || _waitingToRetry) return true;
     final track = current;
@@ -295,6 +311,7 @@ class PlayerService extends ChangeNotifier {
   /// dropped connection left it.
   Future<void> _loadAndPlay({Duration? resumeAt}) async {
     final serial = ++_loadSerial;
+    _dropClip(); // a song takes the player back from a letter's recording
     _interlude = false;
     _restoredAt = null; // loading now: no longer waiting
     _stalls.reset();
@@ -539,6 +556,7 @@ class PlayerService extends ChangeNotifier {
   /// recording cannot be played, the song simply starts.
   Future<void> _playInterlude(File voice, {required int upNext}) async {
     final serial = ++_loadSerial;
+    _dropClip();
     _stalls.reset();
     _retryTimer?.cancel();
     _prefetcher?.cancel();
@@ -584,6 +602,132 @@ class PlayerService extends ChangeNotifier {
       return Future.value();
     }
     return _player.seek(position);
+  }
+
+  // -- a letter's recording, outside the queue ---------------------------
+  //
+  // On a phone there is one audio player (the lock-screen plugin allows no
+  // more), so a letter's recording borrows it. The queue, the order, the
+  // listening stats and the saved queue are not touched: the song she was on
+  // is put into the same waiting state as a queue from the last session, so
+  // it starts again, from where it was, only when she presses play.
+
+  /// True from opening a recording until it is closed or a song takes over.
+  bool _clipOpen = false;
+
+  /// Bumped when a clip is closed or taken over, so one still opening knows.
+  int _clipSerial = 0;
+
+  final StreamController<ClipStatus> _clipEvents =
+      StreamController<ClipStatus>.broadcast();
+
+  @override
+  Stream<ClipStatus> get clipStatus => _clipEvents.stream;
+
+  void _emitClip([ClipEnd end = ClipEnd.none]) {
+    if (_clipEvents.isClosed || !_clipEvents.hasListener) return;
+    _clipEvents.add(ClipStatus(
+      position: _player.position,
+      duration: _player.duration ?? Duration.zero,
+      playing: _player.playing,
+      end: end,
+    ));
+  }
+
+  @override
+  Future<void> openClip(
+    File file, {
+    required String title,
+    required String artist,
+  }) async {
+    final serial = ++_clipSerial;
+    if (!_clipOpen) {
+      // Whatever was going on stops mattering: a song still loading, a quiet
+      // retry, one of his recordings between songs.
+      _loadSerial++;
+      _retryTimer?.cancel();
+      _prefetcher?.cancel();
+      _stalls.reset();
+      final song = current;
+      if (song != null) {
+        // Where to pick the song up again. A song that had already ended
+        // starts over, and a voice between songs leaves the song after it
+        // to start from its beginning.
+        final resumeAt =
+            _loading || _player.processingState == ProcessingState.completed
+                ? Duration.zero
+                : positionToSave;
+        _restoredAt = resumeAt;
+        _played.moveTo(resumeAt);
+      }
+      _loadedId = null;
+      _loading = false;
+      _problem = null;
+      _resumeAt = null;
+      _autoRetries = 0;
+      _interlude = false;
+      _clipOpen = true;
+      notifyListeners();
+    }
+
+    try {
+      await _player.pause();
+      if (_supportsBackgroundPlayback) {
+        await _player.setAudioSource(
+          AudioSource.uri(
+            Uri.file(file.path),
+            tag: MediaItem(id: 'letter', title: title, artist: artist),
+          ),
+        );
+      } else {
+        await _player.setFilePath(file.path);
+      }
+    } catch (error) {
+      // Closed or taken meanwhile: whoever did that has the player now.
+      if (serial != _clipSerial) return;
+      await closeClip(); // the music stays paused; she can press play
+      rethrow;
+    }
+    // Closed or taken while it was loading. Whoever did that has the player
+    // now, so it is left alone.
+    if (serial != _clipSerial) return;
+    _emitClip(); // the length is known now
+  }
+
+  @override
+  Future<void> playClip() async {
+    if (!_clipOpen) return;
+    // play() finishes only when playback stops again, so it is not awaited.
+    unawaited(_player.play().catchError((Object error) {
+      debugPrint('Letter recording not played: $error');
+    }));
+  }
+
+  @override
+  Future<void> pauseClip() async {
+    if (_clipOpen) await _player.pause();
+  }
+
+  @override
+  Future<void> seekClip(Duration to) async {
+    if (_clipOpen) await _player.seek(to);
+  }
+
+  @override
+  Future<void> closeClip() async {
+    if (!_clipOpen) return;
+    _clipOpen = false;
+    _clipSerial++;
+    await _player.stop();
+    notifyListeners(); // the mini player shows the paused song again
+  }
+
+  /// A song or a voice between songs starts: the recording is gone.
+  void _dropClip() {
+    if (!_clipOpen) return;
+    _clipOpen = false;
+    _clipSerial++;
+    _emitClip(ClipEnd.taken);
   }
 
   // -- keeping the queue between sessions ---------------------------------
@@ -727,6 +871,7 @@ class PlayerService extends ChangeNotifier {
   /// the load itself, so it is ignored here.
   void _onPlaybackError(Object error, [StackTrace? stackTrace]) {
     final track = current;
+    if (_clipOpen) return; // not the song's: see openClip
     if (_loading || track == null || _loadedId != track.id) return;
 
     debugPrint('Playback error on ${track.id}: $error');
@@ -742,6 +887,7 @@ class PlayerService extends ChangeNotifier {
   /// connection was cut and the player never said. Treated like any other
   /// drop, so it is asked for again from the same place.
   void _checkForStall() {
+    if (_clipOpen) return; // a letter's recording is not a stream
     final track = current;
     final position = _player.position;
     final total = _player.duration ?? track?.duration ?? Duration.zero;
@@ -804,6 +950,7 @@ class PlayerService extends ChangeNotifier {
     _watchdog?.cancel();
     _retryTimer?.cancel();
     _prefetcher?.dispose();
+    unawaited(_clipEvents.close());
     // App closing mid-track is the same as a manual skip — same rules.
     _logCurrentListen(completedNaturally: false);
     _player.dispose();
