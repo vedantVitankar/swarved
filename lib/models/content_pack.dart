@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'greeting.dart';
 import 'letter.dart';
 import 'memory.dart';
 import 'panel_settings.dart';
@@ -42,6 +43,10 @@ class ContentPack {
   /// The playlists he made for her, in the order he put them.
   final List<PushedPlaylist> playlists;
 
+  /// His greetings for the top of Home, by the hour, in the order he put
+  /// them. The first that covers the time shows.
+  final List<Greeting> greetings;
+
   /// The recordings that surface between songs, and when.
   final VoiceInterludes voices;
 
@@ -67,6 +72,7 @@ class ContentPack {
     this.recap = const RecapSettings(),
     this.texts = const {},
     this.playlists = const [],
+    this.greetings = const [],
     this.voices = VoiceInterludes.none,
     this.panel = PanelSettings.none,
     this.together = Together.none,
@@ -101,6 +107,7 @@ class ContentPack {
       recap: RecapSettings.parse(decoded['recap']),
       texts: _parseTexts(decoded['texts']),
       playlists: _parsePlaylists(decoded['playlists']),
+      greetings: _parseGreetings(decoded['greetings']),
       voices: VoiceInterludes.parse(decoded['voices']),
       panel: PanelSettings.parse(decoded['panel']),
       together: Together.parse(decoded['together']),
@@ -114,6 +121,14 @@ class ContentPack {
   /// The names the server gives uploaded files.
   static final RegExp _mediaName =
       RegExp(r'[a-f0-9]{16}\.(?:jpg|png|webp|mp3|m4a|ogg|wav)');
+
+  static List<Greeting> _parseGreetings(Object? raw) {
+    if (raw is! List) return const [];
+    return List.unmodifiable([
+      for (final entry in raw)
+        if (Greeting.tryParse(entry) case final greeting?) greeting,
+    ]);
+  }
 
   static List<Letter> _parseLetters(Object? raw) {
     if (raw is! List) return const [];
@@ -193,6 +208,15 @@ class ContentPack {
   /// The note for the folder called [folder], or null.
   NoteLine? folderNoteFor(String folder) =>
       folderNotes[normalizeForMatch(folder)];
+
+  /// The greeting for the hour of [now], the first that covers it, or null
+  /// when none does.
+  Greeting? greetingFor(DateTime now) {
+    for (final greeting in greetings) {
+      if (greeting.covers(now)) return greeting;
+    }
+    return null;
+  }
 
   /// The first note that belongs to [track], or null.
   SongNote? noteFor(Track track) {

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import '../content/words.dart';
 import '../models/content_pack.dart';
+import '../models/greeting.dart';
 import '../models/letter.dart';
 import '../models/panel_settings.dart';
 import '../models/together.dart';
@@ -101,6 +103,18 @@ class ContentService extends ChangeNotifier {
 
   /// The note for the folder called [folder], or null.
   NoteLine? folderNoteFor(String folder) => _pack.folderNoteFor(folder);
+
+  /// The greeting he wrote for the hour of [now] (a local time), or null
+  /// when none covers it and the app uses its own.
+  Greeting? greetingFor(DateTime now) => _pack.greetingFor(now);
+
+  /// The words at the top of Home: his greeting for the hour, else the app's
+  /// own. With [oneLine] the line break becomes a space, for wide windows.
+  String greetingText(DateTime now, {bool oneLine = false}) {
+    final mine = greetingFor(now);
+    if (mine == null) return Words.greeting(now, oneLine: oneLine);
+    return oneLine ? mine.text.replaceFirst('\n', ' ') : mine.text;
+  }
 
   /// What Now Playing shows for [track]: the song's own note, else one of
   /// the general playing notes (always the same one for the same song), else

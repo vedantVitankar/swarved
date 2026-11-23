@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../content/words.dart';
+import '../services/content_service.dart';
 import '../theme/colors.dart';
 import '../theme/typography.dart';
 import '../utils/tutorial_timeline.dart';
@@ -31,7 +33,19 @@ class _TutorialIntroState extends State<TutorialIntro>
   /// Where it lands if the real greeting can't be found.
   static const Offset _fallbackTarget = Offset(16, 72);
 
-  late final String _text = Words.greeting(DateTime.now());
+  late final String _text = _greetingWords();
+
+  /// The same words Home will show: his greeting for this hour when he wrote
+  /// one, else the app's own.
+  String _greetingWords() {
+    final now = DateTime.now();
+    try {
+      return context.read<ContentService>().greetingText(now);
+    } on ProviderNotFoundException {
+      return Words.greeting(now);
+    }
+  }
+
   late final AnimationController _master;
   late final double _textWidth;
   late final double _textHeight;

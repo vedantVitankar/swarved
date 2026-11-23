@@ -139,6 +139,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // intro, tutorial is null or off and everything simply shows.
     final tutorial = TutorialScope.maybeOf(context);
     final greetingShown = tutorial == null || tutorial.greetingVisible;
+    // His greeting for this hour, and the gold line he gave it, if any.
+    final now = DateTime.now();
+    final goldLine = context
+        .select<ContentService, String?>((c) => c.greetingFor(now)?.gold);
 
     // A wide window has room for the whole greeting on one line, three
     // folders across, and the song of the day beside the note.
@@ -166,7 +170,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Opacity(
             opacity: greetingShown ? 1 : 0,
             child: Text(
-              Words.greeting(DateTime.now(), oneLine: wide),
+              context.select<ContentService, String>(
+                (c) => c.greetingText(now, oneLine: wide),
+              ),
               key: tutorial?.greetingKey,
               style: AppType.display,
             ),
@@ -174,11 +180,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           const SizedBox(height: 4),
           TutorialReveal(
             order: 0,
-            child: SlotText(
-              slot: NoteSlot.homeLine,
-              fallback: Words.homeSubline,
-              style: AppType.goldLabel,
-            ),
+            // The greeting's own gold line when it has one, else the usual
+            // lines for this place.
+            child: goldLine != null
+                ? Text(goldLine, style: AppType.goldLabel)
+                : SlotText(
+                    slot: NoteSlot.homeLine,
+                    fallback: Words.homeSubline,
+                    style: AppType.goldLabel,
+                  ),
           ),
           const SizedBox(height: 12),
           TutorialReveal(
