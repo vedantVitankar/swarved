@@ -83,6 +83,15 @@ class Labels {
   static const repeatOne = 'Repeat one';
   static const repeatOff = 'Turn repeat off';
 
+  // The mini player's note and queue buttons, and the queue popup.
+  static const songNote = 'Note for this song';
+  static const noSongNote = 'No note for this song';
+  static const queue = 'Queue';
+  static const queueNowPlaying = 'Now playing';
+  static const queueUpNext = 'Next up';
+  static const queueEmpty = 'Nothing after this song.';
+  static const closePopup = 'Close';
+
   static const mute = 'Mute';
   static const unmute = 'Unmute';
 

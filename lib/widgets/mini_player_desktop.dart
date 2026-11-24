@@ -9,6 +9,7 @@ import '../theme/swar_glyphs.dart';
 import '../theme/shape.dart';
 import '../theme/typography.dart';
 import 'compact_icon_button.dart';
+import 'mini_player_extras.dart';
 import 'track_heart.dart';
 import 'track_save_button.dart';
 import 'play_pause_button.dart';
@@ -55,8 +56,12 @@ class MiniPlayerDesktop extends StatelessWidget {
           const SizedBox(width: _zoneGap),
           const Expanded(flex: 4, child: _ControlsZone()),
           const SizedBox(width: _zoneGap),
-          // Right zone: volume, right-aligned so it mirrors the song zone.
-          const Expanded(flex: 3, child: _VolumeZone()),
+          // Right zone: note, queue and volume, right-aligned so it mirrors
+          // the song zone.
+          Expanded(
+            flex: 3,
+            child: _ExtrasZone(track: track, interlude: interlude),
+          ),
         ],
       ),
     );
@@ -177,18 +182,31 @@ class _ControlsZone extends StatelessWidget {
   }
 }
 
-/// Volume icon and slider, right-aligned so the zone mirrors the song zone.
+/// The note and queue buttons, then the volume icon and slider, right-aligned
+/// so the zone mirrors the song zone. While his recording plays between songs
+/// there is no song to show a note for, so that button is left out.
 /// Align + heightFactor keeps the zone height snug — same pattern as
 /// _ControlsZone above.
-class _VolumeZone extends StatelessWidget {
-  const _VolumeZone();
+class _ExtrasZone extends StatelessWidget {
+  final Track track;
+  final bool interlude;
+
+  const _ExtrasZone({required this.track, required this.interlude});
 
   @override
   Widget build(BuildContext context) {
-    return const Align(
+    return Align(
       alignment: Alignment.centerRight,
       heightFactor: 1,
-      child: VolumeControl(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!interlude) NotesButton(track: track),
+          const QueueButton(),
+          const SizedBox(width: 4),
+          const VolumeControl(),
+        ],
+      ),
     );
   }
 }

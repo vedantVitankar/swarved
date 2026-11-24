@@ -350,6 +350,30 @@ class PlayerService extends ChangeNotifier implements ClipEngine {
     if (sync.changed) _schedulePrefetch(); // the song after this may differ
   }
 
+  /// The song playing and the songs still to come in this loop, in the order
+  /// they will play, for the Queue popup. Empty when nothing is queued.
+  List<Track> get queueFromHere => [
+        for (final position in _order.thisRound)
+          if (position < _queue.length) _queue[position],
+      ];
+
+  /// Changes whenever [queueFromHere] does, so the popup only rebuilds for a
+  /// real change and not for every tick of the position.
+  int get queueFingerprint =>
+      Object.hashAll([for (final track in queueFromHere) track.id]);
+
+  /// Drags a song that is still to come to another place in this loop (see
+  /// [QueueOrder.moveUpcoming] for what [from] and [to] count). The song
+  /// playing is not touched. Answers whether anything changed.
+  bool moveUpcoming(int from, int to) {
+    if (!_order.moveUpcoming(from, to)) return false;
+    _queueVersion++; // the saved queue keeps her order
+    _queueEdits++; // a wait that began before this is out of date
+    notifyListeners();
+    _schedulePrefetch(); // the song after this one may be another now
+    return true;
+  }
+
   /// Turns shuffle on and starts [tracks] from a random song.
   Future<void> playShuffled(List<Track> tracks, {PlaySource? source}) async {
     if (tracks.isEmpty) return;

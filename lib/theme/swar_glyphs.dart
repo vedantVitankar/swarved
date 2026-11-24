@@ -29,6 +29,9 @@ enum SwarGlyph {
   add, // a plus: make something new
   check, // a tick: chosen
   more, // three dots: more choices
+  notes, // a page with writing: a song's note
+  queue, // lines of songs: what plays next
+  grip, // six dots: a handle to drag by
 }
 
 /// What one glyph is made of: a solid part, a line part, or both.
@@ -77,6 +80,9 @@ class SwarGlyphs {
         SwarGlyph.add => GlyphShape(stroke: _add()),
         SwarGlyph.check => GlyphShape(stroke: _check()),
         SwarGlyph.more => GlyphShape(fill: _more()),
+        SwarGlyph.notes => GlyphShape(stroke: _notes()),
+        SwarGlyph.queue => GlyphShape(stroke: _queue()),
+        SwarGlyph.grip => GlyphShape(fill: _grip()),
       };
 
   // ---- From the theme preview ----
@@ -208,6 +214,34 @@ class SwarGlyphs {
     ..addOval(Rect.fromCircle(center: const Offset(5, 12), radius: 1.8))
     ..addOval(Rect.fromCircle(center: const Offset(12, 12), radius: 1.8))
     ..addOval(Rect.fromCircle(center: const Offset(19, 12), radius: 1.8));
+
+  /// A page with three lines of writing: a note.
+  static Path _notes() => Path()
+    ..addRRect(RRect.fromLTRBR(5, 3, 19, 21, const Radius.circular(2)))
+    ..moveTo(8.5, 9)
+    ..lineTo(15.5, 9)
+    ..moveTo(8.5, 13)
+    ..lineTo(15.5, 13)
+    ..moveTo(8.5, 17)
+    ..lineTo(12.5, 17);
+
+  /// Three lines, the last one short: songs lined up.
+  static Path _queue() => Path()
+    ..moveTo(4, 6)
+    ..lineTo(20, 6)
+    ..moveTo(4, 12)
+    ..lineTo(20, 12)
+    ..moveTo(4, 18)
+    ..lineTo(14, 18);
+
+  /// Two columns of three dots: something to hold and drag.
+  static Path _grip() => Path()
+    ..addOval(Rect.fromCircle(center: const Offset(9, 7), radius: 1.5))
+    ..addOval(Rect.fromCircle(center: const Offset(15, 7), radius: 1.5))
+    ..addOval(Rect.fromCircle(center: const Offset(9, 12), radius: 1.5))
+    ..addOval(Rect.fromCircle(center: const Offset(15, 12), radius: 1.5))
+    ..addOval(Rect.fromCircle(center: const Offset(9, 17), radius: 1.5))
+    ..addOval(Rect.fromCircle(center: const Offset(15, 17), radius: 1.5));
 
   static Path _check() => Path()
     ..moveTo(5, 12.5)

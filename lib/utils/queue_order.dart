@@ -19,6 +19,10 @@ class QueueOrder {
   int _cursor = -1;
   bool _shuffle = false;
 
+  /// With shuffle off, true once she has dragged a song to another place:
+  /// the order is hers now and no longer simply 0, 1, 2...
+  bool _custom = false;
+
   QueueRepeat repeat = QueueRepeat.off;
 
   bool get shuffle => _shuffle;
@@ -79,11 +83,13 @@ class QueueOrder {
     _order = [for (final position in order) position as int];
     _cursor = cursor;
     _shuffle = shuffle;
+    _custom = !shuffle && !_isNatural(_order);
     repeat = parsed.first;
     return true;
   }
 
   void start({required int length, required int startIndex}) {
+    _custom = false;
     if (length <= 0) {
       _order = [];
       _cursor = -1;
@@ -97,6 +103,38 @@ class QueueOrder {
       _order = _natural(length);
       _cursor = first;
     }
+  }
+
+  /// The queue positions of this loop from the song playing to the last one
+  /// still to come, in the order they will play. Empty when nothing is queued.
+  List<int> get thisRound => _cursor >= 0 && _cursor < _order.length
+      ? List.unmodifiable(_order.sublist(_cursor))
+      : const [];
+
+  /// Drags a song that is still to come to another place in this loop.
+  /// [from] and [to] count the songs after the one playing (0 is the song
+  /// right after it), and [to] is where the song ends up once it has been
+  /// lifted out. The song playing and the songs already played do not move.
+  /// Answers whether anything changed.
+  bool moveUpcoming(int from, int to) {
+    final first = _cursor + 1;
+    if (_cursor < 0 || first > _order.length) return false;
+    final count = _order.length - first;
+    if (from < 0 || from >= count || to < 0 || to >= count || from == to) {
+      return false;
+    }
+    final upcoming = _order.sublist(first);
+    upcoming.insert(to, upcoming.removeAt(from));
+    _order = [..._order.sublist(0, first), ...upcoming];
+    if (!_shuffle) _custom = true;
+    return true;
+  }
+
+  static bool _isNatural(List<int> order) {
+    for (var i = 0; i < order.length; i++) {
+      if (order[i] != i) return false;
+    }
+    return true;
   }
 
   /// The queue changed under a playing order: songs were added, taken out or
@@ -125,7 +163,7 @@ class QueueOrder {
       return;
     }
 
-    if (!_shuffle) {
+    if (!_shuffle && !_custom) {
       final playing = _cursor >= 0 && _cursor < _order.length
           ? _order[_cursor]
           : null;
@@ -147,10 +185,15 @@ class QueueOrder {
     }
     if (_cursor < 0 || _cursor >= _order.length) cursor = kept.length;
 
-    final fresh = List<int>.of(added)..shuffle(_random);
-    for (final position in fresh) {
-      final first = min(cursor + 1, kept.length);
-      kept.insert(first + _random.nextInt(kept.length - first + 1), position);
+    if (_shuffle) {
+      final fresh = List<int>.of(added)..shuffle(_random);
+      for (final position in fresh) {
+        final first = min(cursor + 1, kept.length);
+        kept.insert(first + _random.nextInt(kept.length - first + 1), position);
+      }
+    } else {
+      // Her own order: a new song simply goes last.
+      kept.addAll(added);
     }
     _order = kept;
     _cursor = cursor;
@@ -170,6 +213,7 @@ class QueueOrder {
   void setShuffle(bool on) {
     if (on == _shuffle) return;
     _shuffle = on;
+    _custom = false;
     final now = currentIndex;
     if (now == null) return;
     if (on) {
