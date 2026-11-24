@@ -13,6 +13,7 @@ import '../models/track.dart';
 import '../utils/played_point.dart';
 import '../utils/stall_detector.dart';
 import '../utils/queue_order.dart';
+import '../utils/queue_sync.dart';
 import '../utils/volume_level.dart';
 import 'clip_engine.dart';
 import 'stats_service.dart';
@@ -106,6 +107,10 @@ class PlayerService extends ChangeNotifier implements ClipEngine {
   /// Changes each time a different queue is started, so "is this still the
   /// same queue" is one comparison rather than a walk through every song.
   int _queueVersion = 0;
+
+  /// Counts the times the queue was changed in place (see [syncQueue]), so a
+  /// wait that began before a change can tell that its answer is out of date.
+  int _queueEdits = 0;
 
   /// While a queue put back from the last session waits for her to press
   /// play: the second to start from. Nothing is loaded in the audio player
@@ -293,6 +298,56 @@ class PlayerService extends ChangeNotifier implements ClipEngine {
     _order.start(length: tracks.length, startIndex: startIndex);
     _currentIndex = _order.currentIndex ?? 0;
     await _loadAndPlay();
+  }
+
+  /// Brings the queue now playing in line with the playlist it came from,
+  /// without stopping or reloading the song. [wanted] is what the playlist can
+  /// play now, in its order; [inPlaylist] is the key of every line it has (a
+  /// local song that is in the playlist but not on this device stays in the
+  /// queue); [sourceName] is the playlist's name now.
+  ///
+  /// New songs are added (with shuffle on, among the songs still to come),
+  /// songs taken out are dropped, and a reorder is followed. The song playing
+  /// always finishes, even if it was just taken out. Does nothing when there
+  /// is no queue.
+  void syncQueue(
+    List<Track> wanted, {
+    required Set<String> inPlaylist,
+    String? sourceName,
+  }) {
+    if (_queue.isEmpty || _currentIndex < 0 || _currentIndex >= _queue.length) {
+      return;
+    }
+
+    var changed = false;
+    final source = _source;
+    if (source != null && sourceName != null && source.name != sourceName) {
+      _source = PlaySource(sourceName, playlistId: source.playlistId);
+      changed = true;
+    }
+
+    final sync = QueueSync.compute(
+      oldQueue: _queue,
+      playing: _currentIndex,
+      wanted: wanted,
+      inPlaylist: inPlaylist,
+    );
+    if (sync.changed) {
+      _order.remap(
+        oldToNew: sync.oldToNew,
+        newLength: sync.queue.length,
+        added: sync.added,
+      );
+      _currentIndex = sync.oldToNew[_currentIndex] ?? _currentIndex;
+      _queue = sync.queue;
+      _queueVersion++;
+      _queueEdits++;
+      changed = true;
+    }
+    if (!changed) return;
+
+    notifyListeners();
+    if (sync.changed) _schedulePrefetch(); // the song after this may differ
   }
 
   /// Turns shuffle on and starts [tracks] from a random song.
@@ -534,15 +589,22 @@ class PlayerService extends ChangeNotifier implements ClipEngine {
   /// semantics. Logging here too would double-count every completed track.
   Future<void> _advanceAfterCompletion() async {
     final serial = _loadSerial;
-    final index = _order.onSongEnded();
+    var index = _order.onSongEnded();
     // Nothing after the last song (and no repeat): playback simply stops.
     if (index == null) return;
 
     // One of his recordings may come between the two songs. Never when the
     // same song is looping, and never for one that is not on the phone.
+    final edits = _queueEdits;
     final voice =
         _order.repeat == QueueRepeat.one ? null : await _voices?.afterSong();
     if (serial != _loadSerial) return; // she chose something meanwhile
+    if (edits != _queueEdits) {
+      // The playlist changed while the recording was being picked: the order
+      // already follows the new queue, so ask it where it stands now.
+      index = _order.currentIndex;
+      if (index == null) return;
+    }
     if (voice == null) {
       await _switchTo(index);
       return;

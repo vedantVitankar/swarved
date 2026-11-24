@@ -99,6 +99,73 @@ class QueueOrder {
     }
   }
 
+  /// The queue changed under a playing order: songs were added, taken out or
+  /// moved, and [newLength] songs are there now. [oldToNew] says where each
+  /// old position went (null when it is gone) and [added] lists the positions
+  /// that are new. The song now playing, and the one after it, stay as they
+  /// are; nothing is reshuffled.
+  ///
+  /// With shuffle off the order simply follows the new queue. With shuffle on
+  /// the order that was drawn is kept, and each new song is slipped in at a
+  /// random place among the songs still to come, so it is heard this round.
+  void remap({
+    required List<int?> oldToNew,
+    required int newLength,
+    required List<int> added,
+  }) {
+    if (newLength <= 0) {
+      _order = [];
+      _cursor = -1;
+      return;
+    }
+    if (_order.isEmpty) {
+      _order = _natural(newLength);
+      if (_shuffle) _order.shuffle(_random);
+      _cursor = 0;
+      return;
+    }
+
+    if (!_shuffle) {
+      final playing = _cursor >= 0 && _cursor < _order.length
+          ? _order[_cursor]
+          : null;
+      _order = _natural(newLength);
+      _cursor = playing == null
+          ? newLength
+          : _positionAtOrAfter(playing, oldToNew, newLength);
+      return;
+    }
+
+    final kept = <int>[];
+    var cursor = kept.length;
+    for (var i = 0; i < _order.length; i++) {
+      final moved = oldToNew[_order[i]];
+      // The cursor is the index its song gets, or, if that song is gone, the
+      // index of the next one that stays.
+      if (i == _cursor) cursor = kept.length;
+      if (moved != null) kept.add(moved);
+    }
+    if (_cursor < 0 || _cursor >= _order.length) cursor = kept.length;
+
+    final fresh = List<int>.of(added)..shuffle(_random);
+    for (final position in fresh) {
+      final first = min(cursor + 1, kept.length);
+      kept.insert(first + _random.nextInt(kept.length - first + 1), position);
+    }
+    _order = kept;
+    _cursor = cursor;
+  }
+
+  /// Where old position [old] is now, or where the next song that stayed is,
+  /// or [newLength] when nothing after it stayed.
+  int _positionAtOrAfter(int old, List<int?> oldToNew, int newLength) {
+    for (var i = old; i < oldToNew.length; i++) {
+      final moved = oldToNew[i];
+      if (moved != null) return moved;
+    }
+    return newLength;
+  }
+
   /// Switches shuffle on or off without changing the song now playing.
   void setShuffle(bool on) {
     if (on == _shuffle) return;

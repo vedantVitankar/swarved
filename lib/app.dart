@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'root_shell.dart';
 import 'screens/welcome/welcome_gate.dart';
 import 'services/library_service.dart';
+import 'services/playlist_queue_follower.dart';
 import 'services/playlist_service.dart';
 import 'services/player_media_session.dart';
 import 'services/player_service.dart';
@@ -108,6 +109,12 @@ class SwarVedApp extends StatelessWidget {
                 libraryTracks: () => libraryService.tracks,
               ).start(),
             );
+            // A song added to the playlist that is playing joins its queue.
+            PlaylistQueueFollower(
+              player: player,
+              playlists: playlistService,
+              libraryTracks: () => libraryService.tracks,
+            ).start();
             return player;
           },
         ),
