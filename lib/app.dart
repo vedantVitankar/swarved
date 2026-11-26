@@ -12,6 +12,9 @@ import 'services/player_media_session.dart';
 import 'services/player_service.dart';
 import 'services/playback_keeper.dart';
 import 'services/saved_queue_store.dart';
+import 'services/search_history_service.dart';
+import 'services/search_history_store.dart';
+import 'services/search_history_watcher.dart';
 import 'services/search_service.dart';
 import 'services/stats_service.dart';
 import 'services/system_media_controls.dart';
@@ -128,6 +131,22 @@ class SwarVedApp extends StatelessWidget {
         ChangeNotifierProvider.value(value: updateService),
         ChangeNotifierProvider.value(value: letterService),
         ChangeNotifierProvider(create: (_) => SearchService(api: serverApi)),
+        ChangeNotifierProvider(
+          create: (_) {
+            final history = SearchHistoryService(
+              store: FileSearchHistoryStore(
+                directory: getApplicationSupportDirectory,
+                profile: AppProfile.current,
+                defaultProfile: AppProfile.swarnima,
+              ),
+            );
+            unawaited(history.load());
+            // A song added to a playlist from the search is remembered too.
+            SearchHistoryWatcher(history: history, playlists: playlistService)
+                .start();
+            return history;
+          },
+        ),
         ChangeNotifierProvider(
           create: (_) => SaveController(
             save: songSaver.save,

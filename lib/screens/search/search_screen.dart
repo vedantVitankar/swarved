@@ -4,12 +4,14 @@ import '../../models/track.dart';
 import '../../services/connection_service.dart';
 import '../../services/library_service.dart';
 import '../../services/player_service.dart';
+import '../../services/search_history_service.dart';
 import '../../services/search_service.dart';
 import '../../theme/responsive.dart';
 import '../../utils/duplicate_filter.dart';
 import '../../utils/local_search.dart';
 import 'local_results_section.dart';
 import 'search_field.dart';
+import 'search_history_section.dart';
 import 'search_welcome.dart';
 import 'youtube_results_section.dart';
 
@@ -39,10 +41,20 @@ class _SearchScreenState extends State<SearchScreen> {
     search.onQueryChanged('');
   }
 
-  /// Plays [tracks] starting at [index], and tucks the keyboard away.
+  /// Plays [tracks] starting at [index], and tucks the keyboard away. The
+  /// song she tapped is remembered under Recent searches.
   void _play(List<Track> tracks, int index) {
     FocusScope.of(context).unfocus();
+    context.read<SearchHistoryService>().recordPlayed(tracks[index]);
     context.read<PlayerService>().playQueue(tracks, startIndex: index);
+  }
+
+  /// A tap on a recent search plays that song alone, and moves it back to
+  /// the top of the list.
+  void _playRecent(Track track) {
+    FocusScope.of(context).unfocus();
+    context.read<SearchHistoryService>().recordPlayed(track);
+    context.read<PlayerService>().playQueue([track]);
   }
 
   @override
@@ -50,10 +62,25 @@ class _SearchScreenState extends State<SearchScreen> {
     final search = context.watch<SearchService>();
     final library = context.watch<LibraryService>().tracks;
     final hasToken = context.watch<ConnectionService>().hasToken;
+    final history = context.watch<SearchHistoryService>();
 
     final localMatches = searchLocal(library, search.query);
     final youtube = withoutLocalDuplicates(search.results, library);
     final youtubeTracks = [for (final r in youtube) r.toTrack()];
+
+    // The songs shown now are the only ones that can be remembered as added
+    // to a playlist from here.
+    history.noteShown(
+      search.query.isEmpty
+          ? const <Track>[]
+          : [...localMatches, ...youtubeTracks],
+    );
+
+    // The remembered songs that can still be played, newest first.
+    final recent = <Track>[
+      for (final entry in history.entries)
+        if (entry.toTrack(library) case final track?) track,
+    ];
 
     return SafeArea(
       child: Align(
@@ -75,7 +102,19 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               Expanded(
                 child: search.query.isEmpty
-                    ? const SearchWelcome()
+                    ? (recent.isEmpty
+                        ? const SearchWelcome()
+                        : Selector<PlayerService, String?>(
+                            selector: (_, player) => player.current?.id,
+                            builder: (context, activeId, _) =>
+                                SearchHistorySection(
+                              tracks: recent,
+                              activeId: activeId,
+                              onPlay: _playRecent,
+                              onRemove: (track) => history.remove(track.id),
+                              onClearAll: history.clearAll,
+                            ),
+                          ))
                     // Only the playing song's id matters here, so position
                     // ticks don't rebuild the results.
                     : Selector<PlayerService, String?>(

@@ -48,6 +48,8 @@ class Labels {
   // Search.
   static const searchHint = 'Songs, artists, anything';
   static const clearSearch = 'Clear search';
+  static const clearAllRecent = 'Clear all';
+  static const removeFromRecent = 'Remove from recent searches';
   static const tryAgain = 'Try again';
 
   // Server connection.

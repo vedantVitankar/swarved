@@ -165,6 +165,7 @@ class Words {
       'Your own songs first, then the whole wide world.';
   static const searchIdle =
       'A song, an artist, anything at all. SwarVed looks here first, then out in the world.';
+  static const searchRecentHeader = 'Recent searches';
   static const searchLocalHeader = 'Already yours';
   static const searchYoutubeHeader = 'Out in the world';
   static const searching = 'Looking for it…';
