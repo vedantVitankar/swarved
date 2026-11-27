@@ -14,6 +14,7 @@ import '../utils/played_point.dart';
 import '../utils/stall_detector.dart';
 import '../utils/queue_order.dart';
 import '../utils/queue_sync.dart';
+import '../utils/skip_count.dart';
 import '../utils/volume_level.dart';
 import 'clip_engine.dart';
 import 'stats_service.dart';
@@ -290,6 +291,9 @@ class PlayerService extends ChangeNotifier implements ClipEngine {
     PlaySource? source,
   }) async {
     if (tracks.isEmpty) return;
+    // Worked out before the queue is replaced: was she listening to a song?
+    final listening = _isListening;
+    final leaving = current?.id;
     _logCurrentListen(completedNaturally: false);
     _queue = tracks;
     _queueVersion++;
@@ -297,8 +301,28 @@ class PlayerService extends ChangeNotifier implements ClipEngine {
     _source = source;
     _order.start(length: tracks.length, startIndex: startIndex);
     _currentIndex = _order.currentIndex ?? 0;
-    await _loadAndPlay();
+    // Choosing another song or playlist counts as a song heard, so a voice
+    // may come first, like an ad before what she picked.
+    final counts = skipCounts(
+      listening: listening,
+      playingId: leaving,
+      chosenId: current?.id,
+    );
+    if (counts) {
+      await _continueTo(_currentIndex, ++_loadSerial, voiceAllowed: true);
+    } else {
+      await _loadAndPlay();
+    }
   }
+
+  /// A song of hers is loaded and playing or paused, not a recording, not a
+  /// queue waiting to be started, not a song that failed.
+  bool get _isListening =>
+      current != null &&
+      !_interlude &&
+      !_clipOpen &&
+      _restoredAt == null &&
+      _problem == null;
 
   /// Brings the queue now playing in line with the playlist it came from,
   /// without stopping or reloading the song. [wanted] is what the playlist can
@@ -538,10 +562,22 @@ class PlayerService extends ChangeNotifier implements ClipEngine {
       await _loadAndPlay(); // skips the recording, on to the song after it
       return;
     }
+    final listening = _isListening;
+    final leaving = current?.id;
     final index = _order.advance();
     if (index == null) return;
+    final counts = skipCounts(
+      listening: listening,
+      playingId: leaving,
+      chosenId: index < _queue.length ? _queue[index].id : null,
+    );
     _logCurrentListen(completedNaturally: false);
-    await _switchTo(index);
+    if (!counts) {
+      await _switchTo(index);
+      return;
+    }
+    // A skipped song counts as a song, so a voice may come before the next.
+    await _continueTo(index, ++_loadSerial, voiceAllowed: true);
   }
 
   /// User-initiated skip backward: always the previous song. Used by the
@@ -613,21 +649,38 @@ class PlayerService extends ChangeNotifier implements ClipEngine {
   /// semantics. Logging here too would double-count every completed track.
   Future<void> _advanceAfterCompletion() async {
     final serial = _loadSerial;
-    var index = _order.onSongEnded();
+    final index = _order.onSongEnded();
     // Nothing after the last song (and no repeat): playback simply stops.
     if (index == null) return;
 
     // One of his recordings may come between the two songs. Never when the
-    // same song is looping, and never for one that is not on the phone.
+    // same song is looping.
+    await _continueTo(
+      index,
+      serial,
+      voiceAllowed: _order.repeat != QueueRepeat.one,
+    );
+  }
+
+  /// The song at [index] is next. Counts the song that just ended or was
+  /// skipped, and plays one of his recordings first when one is due (and is
+  /// on the phone), otherwise the song. [serial] is the [_loadSerial] from
+  /// when this started: if she chose something else while the recording was
+  /// being picked, this does nothing.
+  Future<void> _continueTo(
+    int index,
+    int serial, {
+    required bool voiceAllowed,
+  }) async {
     final edits = _queueEdits;
-    final voice =
-        _order.repeat == QueueRepeat.one ? null : await _voices?.afterSong();
+    final voice = voiceAllowed ? await _voices?.afterSong() : null;
     if (serial != _loadSerial) return; // she chose something meanwhile
     if (edits != _queueEdits) {
       // The playlist changed while the recording was being picked: the order
       // already follows the new queue, so ask it where it stands now.
-      index = _order.currentIndex;
-      if (index == null) return;
+      final now = _order.currentIndex;
+      if (now == null) return;
+      index = now;
     }
     if (voice == null) {
       await _switchTo(index);

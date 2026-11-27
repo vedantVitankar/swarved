@@ -32,7 +32,7 @@ class VoicePlanner {
 
   /// The recording to play now, or null for none.
   ///
-  /// - [songsSince]: songs finished since the last voice, this one included.
+  /// - [songsSince]: songs ended or skipped since the last voice, this one included.
   /// - [playedToday]: voices already played today.
   /// - [onPhone]: the file names that are downloaded. The next waiting
   ///   recording is never skipped: if it is not here yet, no voice plays.

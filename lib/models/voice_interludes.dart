@@ -26,7 +26,8 @@ class VoiceInterludes {
   /// Used when he adds recordings but does not say how often.
   static const defaultEverySongs = 5;
 
-  /// A voice after this many finished songs, at the earliest.
+  /// A voice after this many songs, at the earliest. A song counts when it
+  /// ends by itself and when she skips it or chooses another.
   final int everySongs;
 
   /// No more than this many a day, or null for no limit.

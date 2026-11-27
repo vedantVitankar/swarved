@@ -92,8 +92,8 @@ class VoiceInterludeService {
     return true;
   }
 
-  /// A song has just finished: the recording to play before the next one, or
-  /// null for none.
+  /// A song has just ended, by itself or because she skipped it or chose
+  /// another: the recording to play before the next one, or null for none.
   Future<File?> afterSong() async {
     try {
       final settings = _settings();
