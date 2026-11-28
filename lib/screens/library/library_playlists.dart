@@ -7,6 +7,7 @@ import '../../theme/colors.dart';
 import '../../theme/shape.dart';
 import '../../theme/swar_glyphs.dart';
 import '../../theme/typography.dart';
+import '../../widgets/import_playlist_dialog.dart';
 import '../../widgets/playlist_name_dialog.dart';
 import '../../widgets/playlist_row.dart';
 import '../../widgets/swar_icon.dart';
@@ -32,6 +33,20 @@ class LibraryPlaylists extends StatelessWidget {
     PlaylistScreen.open(context, created.id);
   }
 
+  /// Asks for a YouTube playlist link, then makes a playlist of its songs
+  /// and opens it.
+  static Future<void> _import(BuildContext context) async {
+    final service = context.read<PlaylistService>();
+    final choice = await showImportPlaylistDialog(context);
+    if (choice == null) return;
+    final created = service.createWith(
+      choice.name,
+      [for (final song in choice.songs) song.toTrack()],
+    );
+    if (created == null || !context.mounted) return;
+    PlaylistScreen.open(context, created.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final playlists = context.watch<PlaylistService>().playlists;
@@ -40,7 +55,16 @@ class LibraryPlaylists extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _NewPlaylistRow(onTap: () => _create(context)),
+        _ActionRow(
+          glyph: SwarGlyph.add,
+          label: Labels.newPlaylist,
+          onTap: () => _create(context),
+        ),
+        _ActionRow(
+          glyph: SwarGlyph.download,
+          label: Labels.importFromYoutube,
+          onTap: () => _import(context),
+        ),
         for (final playlist in playlists)
           PlaylistRow(
             playlist: playlist,
@@ -56,11 +80,18 @@ class LibraryPlaylists extends StatelessWidget {
   }
 }
 
-/// The first row: a plus on a velvet block, in the shape of a playlist row.
-class _NewPlaylistRow extends StatelessWidget {
+/// An action at the top of the list: an icon on a velvet block, in the shape
+/// of a playlist row. New playlist, and Import from YouTube.
+class _ActionRow extends StatelessWidget {
+  final SwarGlyph glyph;
+  final String label;
   final VoidCallback onTap;
 
-  const _NewPlaylistRow({required this.onTap});
+  const _ActionRow({
+    required this.glyph,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -81,9 +112,9 @@ class _NewPlaylistRow extends StatelessWidget {
                   color: AppColors.surfaceRaised,
                   borderRadius: BorderRadius.circular(AppShape.thumbnail),
                 ),
-                child: const Center(
+                child: Center(
                   child: SwarIcon(
-                    glyph: SwarGlyph.add,
+                    glyph: glyph,
                     size: 22,
                     color: AppColors.accent,
                   ),
@@ -92,7 +123,7 @@ class _NewPlaylistRow extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  Labels.newPlaylist,
+                  label,
                   style: AppType.body.copyWith(color: AppColors.accent),
                 ),
               ),

@@ -157,6 +157,33 @@ class Words {
   static const playlistsHint =
       'Make one with New playlist, or from the heart on any song.';
   static String playlistDeleted(String playlist) => 'Deleted $playlist.';
+
+  // Importing a YouTube playlist.
+  static const importReading = 'Reading the playlist...';
+  static String importSongs(int count) =>
+      count == 1 ? 'Import 1 song' : 'Import $count songs';
+  static String importCount(int count) =>
+      count == 1 ? '1 song' : '$count songs';
+  static String importSkipped(int count) => count == 1
+      ? "1 song wasn't available and was left out."
+      : "$count songs weren't available and were left out.";
+  static const importTruncated =
+      'The playlist is longer, so only the first songs come.';
+  static const importBadLink =
+      "That doesn't look like a YouTube playlist link.";
+  static const importMix =
+      "YouTube's automatic Mix playlists can't be imported. "
+      'Try a playlist that someone saved.';
+  static const importPrivate =
+      'Liked music and Watch later are private to a YouTube account. '
+      'Put the songs in a playlist and share it first.';
+  static const importUnavailable =
+      "That playlist is private, empty or not there. "
+      'Public and unlisted playlists can be imported.';
+  static const importUnreachable =
+      "Couldn't reach the server. Try again in a moment.";
+  static const importUnauthorized = "The server didn't accept the app's key.";
+  static const importFailed = 'Something went wrong reading that playlist.';
   static String songTakenOut(String playlist) => 'Taken out of $playlist.';
 
   // Search.

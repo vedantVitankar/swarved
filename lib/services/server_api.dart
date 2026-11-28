@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../models/playlist_import.dart';
 import '../models/prefetch_mode.dart';
 import '../models/youtube_result.dart';
 import 'secure_token_store.dart';
@@ -45,6 +46,9 @@ class ServerApi {
   /// lets its answer arrive, instead of calling a healthy server unreachable.
   static const _searchTimeout = Duration(seconds: 10);
 
+  /// The server gives up on reading a playlist after 30 seconds.
+  static const _importTimeout = Duration(seconds: 40);
+
   /// The server only queues the work and answers straight away.
   static const _prefetchTimeout = Duration(seconds: 5);
 
@@ -81,6 +85,17 @@ class ServerApi {
       timeout: _searchTimeout,
       abortTrigger: abortTrigger,
       parse: YoutubeResult.parseList,
+    );
+  }
+
+  /// Asks the server to read the YouTube playlist at [link]. Nothing is
+  /// downloaded: it only lists the songs. A link that can't be imported
+  /// comes back as a [ServerOk] holding the reason.
+  Future<ServerResult<PlaylistImportAnswer>> importPlaylist(String link) {
+    return _requestJson<PlaylistImportAnswer>(
+      _config.playlistImportUri(link),
+      timeout: _importTimeout,
+      parse: PlaylistImportAnswer.parse,
     );
   }
 

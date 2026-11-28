@@ -72,6 +72,13 @@ class ServerConfig {
     );
   }
 
+  /// Where the server is asked to read a YouTube playlist, to import it.
+  Uri playlistImportUri(String link) {
+    return Uri.parse('$baseUrl/api/yt-playlist').replace(
+      queryParameters: {'url': link},
+    );
+  }
+
   /// Where a search for [query] goes. The query is encoded for the URL here,
   /// so spaces and non-English letters travel safely.
   Uri searchUri(String query, {int limit = 10}) {

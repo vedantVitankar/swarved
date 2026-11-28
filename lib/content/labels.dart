@@ -102,6 +102,11 @@ class Labels {
   static const newPlaylist = 'New playlist';
   static const playlistNameHint = 'Name your playlist';
   static const createPlaylist = 'Add this playlist';
+  static const importFromYoutube = 'Import from YouTube';
+  static const importLinkHint = 'Paste a YouTube playlist link';
+  static const importPaste = 'Paste';
+  static const importRead = 'Read playlist';
+  static const importDefaultName = 'YouTube playlist';
   static const done = 'Done';
   static const cancel = 'Cancel';
   static const newBadge = 'New';

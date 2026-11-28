@@ -281,6 +281,26 @@ class PlaylistService extends ChangeNotifier {
     return created;
   }
 
+  /// Makes a playlist called [name] already holding [tracks], in order, each
+  /// song once, and saves it once. Null when the name is empty.
+  Playlist? createWith(String name, Iterable<Track> tracks) {
+    final created = _make(name);
+    if (created == null) return null;
+    final now = _clock();
+    final seen = <String>{};
+    final filled = created.copyWith(
+      items: [
+        for (final track in tracks)
+          if (seen.add(track.playlistKey))
+            PlaylistItem.fromTrack(track, addedAt: now),
+      ],
+      updatedAt: now,
+    );
+    _replace(filled);
+    _changed();
+    return filled;
+  }
+
   /// Renames a playlist of hers. Not Liked songs, and not one he sent.
   bool rename(String id, String name) {
     final playlist = byId(id);
